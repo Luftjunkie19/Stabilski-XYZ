@@ -8,8 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SelectContent } from "@radix-ui/react-select";
 import Image from "next/image";
 import StabilskiStableCoin from '@/public/Logox192.png'
-import {FaXTwitter, FaTelegram, FaDiscord } from "react-icons/fa6"
+import {FaXTwitter, FaTelegram, FaDiscord, FaGithub } from "react-icons/fa6"
 import Link from "next/link";
+
 
 export default function Home() {
   return (
@@ -104,17 +105,21 @@ export default function Home() {
   </div>
 
   <div className="flex items-center gap-4">
-<Link href={''}>
+<Link href={'https://t.me/+x7c1r_FpS3YyYjVk'}>
   <FaTelegram size={30} className="text-[#24A1DE] bg-white rounded-full border border-[#24A1DE]"/>
 </Link>
 
 
-<Link href={''}>
+<Link href={'https://discord.gg/TeTbqc7HeK'}>
   <FaDiscord size={30} className="text-[#5865F2]"  />
 </Link>
 
-<Link href={''}>
+<Link href={'https://x.com/StabilskiO'}>
   <FaXTwitter size={24}  />
+</Link>
+
+<Link href={'https://github.com/Luftjunkie19/Stabilski-XYZ'}>
+<FaGithub size={24} className="text-black"/>
 </Link>
   </div>
 

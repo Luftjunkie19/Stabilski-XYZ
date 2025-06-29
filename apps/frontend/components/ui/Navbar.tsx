@@ -23,8 +23,8 @@ justify-center
 <div className='flex mx-auto max-w-6xl items-center justify-between w-full'>
     <div className="flex items-center space-x-2">
    <Image src={navbarLogo} width={64} height={64} alt="logo" className='w-16 h-16'/>
-   <p className='text-2xl font-bold --font-audiowide text-white tracking-wider'>
-     Stabilski
+   <p className='hidden sm:block text-lg  md:text-2xl font-bold --font-audiowide text-white tracking-wider'>
+     Stabilski.xyz
    </p>
 </div>
 <ConnectKitButton/>

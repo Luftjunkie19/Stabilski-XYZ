@@ -122,19 +122,24 @@
   }
 }
 
+body{
+  overflow-x: hidden;
+  font-family: 'Audiowide', sans-serif;
+}
+
 body::after {
   content: "";
   position: fixed;
   top: -10%;
   left: -10%;
-  width: 40%;
+  width: 50%;
   height: 40%;
   z-index: -1;
   opacity: 0.9;
   border-top-left-radius: 50%;
   border-top-right-radius:50%;
   background-color: #ff3f3f;
-  backdrop-filter: blur(100px);
+  
 animation: magicBlur 15s  infinite 0s alternate;
 }
 
