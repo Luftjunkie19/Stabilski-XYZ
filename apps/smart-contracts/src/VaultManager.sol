@@ -53,6 +53,11 @@ function depositCollateral(address token, uint256 amount) external nonReentrant 
 
 function mintPLST(uint256 amount) external nonReentrant {
 
+    uint256 collateralAmountInUSD = (vaults[msg.sender].collateralAmount * collateralConfigs[vaults[msg.sender].collateralType].priceFeed) / 1e18;
+    uint256 collateralAmountInPLN = collateralAmountInUSD * usdPlnOracle.plnUsdRate / 1e4;
+
+    uint256 maxAllowedAmount = collateralAmountInPLN * collateralConfigs[vaults[msg.sender].collateralType].minCollateralRatio / 1e18;
+
 if(collateralConfigs[vaults[msg.sender].collateralType].priceFeed == address(0)) {
         revert InvalidVault();
     }
@@ -61,12 +66,14 @@ if(collateralConfigs[vaults[msg.sender].collateralType].priceFeed == address(0))
         revert InvalidVault();
     }
 
-    if((vaults[msg.sender].collateralAmount / collateralConfigs[vaults[msg.sender].collateralType].minCollateralRatio) * 1e18  < amount) {
-        revert NotEnoughCollateral();
+
+    if(maxAllowedAmount < amount) {
+        revert UnderCollateralized();
     }
 
-   stabilskiToken.mint(msg.sender, (amount * usdPlnOracle.plnUsdRate) / 1e4); 
-
+   stabilskiToken.mint(msg.sender, amount);
+    
+    
    
 
 }
