@@ -29,8 +29,9 @@ modifier onlyController() {
     }
     _;
 }
-    constructor() ERC20("Stabilski Token", "PLST") Ownable(msg.sender) {
-        
+    constructor(address _controller) ERC20("Stabilski Token", "PLST") Ownable(_controller) {
+        grantRole(DEFAULT_ADMIN_ROLE, _controller); // Grant admin role to controller
+        grantRole(CONTROLLER_ROLE, _controller); // Grant controller role to controller
     }
 
 
