@@ -7,6 +7,7 @@ import {StabilskiToken} from "./StabilskiToken.sol";
 
 import {CollateralManager} from "./CollateralManager.sol";
 
+import {IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 contract VaultManager is ReentrancyGuard {
@@ -61,6 +62,9 @@ function depositCollateral(address token, uint256 amount) external nonReentrant 
 
     vaults[msg.sender].collateralAmount += amount;
     vaults[msg.sender].collateralType = token;
+
+    IERC20(token).transferFrom(msg.sender, address(this), amount);
+
 }
 
 function mintPLST(uint256 amount) external nonReentrant {
@@ -111,6 +115,7 @@ function withdrawCollateral(address token, uint256 amount) external nonReentrant
     }
 
     vaults[msg.sender].collateralAmount -= amount;
+    
 }
 
 
@@ -128,6 +133,7 @@ function liquidateVault(address liquidator) external nonReentrant {
 
   if(maxAllowedAmount < debtAmount) {
   // Liquidate the vault
+  IERC20(vaults[liquidator].collateralType).transfer(msg.sender, vaults[liquidator].collateralAmount);
   delete vaults[liquidator];
   }
 
