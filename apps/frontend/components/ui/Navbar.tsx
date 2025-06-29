@@ -24,7 +24,7 @@ justify-center
     <div className="flex items-center space-x-2">
    <Image src={navbarLogo} width={64} height={64} alt="logo" className='w-16 h-16'/>
    <p className='text-2xl font-bold --font-audiowide text-white tracking-wider'>
-     Stabilski.xyz
+     Stabilski
    </p>
 </div>
 <ConnectKitButton/>

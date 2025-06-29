@@ -1,17 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import Header from "@/components/ui/Header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SelectContent } from "@radix-ui/react-select";
-
+import Image from "next/image";
+import StabilskiStableCoin from '@/public/Logox192.png'
+import {FaXTwitter, FaTelegram, FaDiscord } from "react-icons/fa6"
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="h-screen">
-    <Tabs defaultValue="buy" className="max-w-3xl mx-auto mt-10 w-full">
-  <TabsList>
+    <div className="h-screen flex justify-between items-center w-full flex-col">
+
+<Header/>
+
+    <Tabs defaultValue="buy" className="max-w-3xl flex justify-center items-center mx-auto mt-12 w-full p-3">
+  <TabsList className="self-start">
     <TabsTrigger value="buy">Buy PLST</TabsTrigger>
     <TabsTrigger value="bridge">Bridge Tokens</TabsTrigger>
   </TabsList>
@@ -45,8 +52,75 @@ export default function Home() {
 <Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-xl self-center w-full bg-red-500">Buy Stabilski (PLST)</Button>
 
   </TabsContent>
-  <TabsContent value="bridge">Change your password here.</TabsContent>
+  <TabsContent value="bridge" className="flex flex-col gap-4 max-w-xl w-full">
+    <Card className=" w-full shadow-sm border-red-500 border shadow-black h-96">
+  <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
+  <Label className="text-xl text-red-500">Root Chain PLST</Label>
+<div className="flex items-center gap-4">
+<div className="w-full flex-col gap-1">
+  <Label>Amount</Label>
+    <Input type="number" min={0}  className="w-full"/>
+</div>
+<div className="flex-col gap-1">
+  <Label>Chain</Label>
+ <Select>
+  <SelectTrigger className="w-44">
+    <SelectValue placeholder="Token" />
+  </SelectTrigger>
+  <SelectContent className="w-44 bg-white shadow-sm shadow-black rounded-lg">
+    <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
+    <SelectItem value="SOL">Polygon (MATIC)</SelectItem>
+    <SelectItem value="TERRA">BaseCoin (COIN)</SelectItem>
+  </SelectContent>
+</Select>
+</div>
+</div>
+  </div>
+    <div className="h-1/2 w-full py-1 px-3 flex gap-3 flex-col">
+  <Label className="text-xl text-red-500">Destination Chain</Label>
+   <Select>
+  <SelectTrigger className="w-full">
+    <SelectValue placeholder="Token" />
+  </SelectTrigger>
+  <SelectContent className="bg-white max-w-xl w-full shadow-sm shadow-black rounded-lg">
+    <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
+    <SelectItem value="SOL">Polygon (MATIC)</SelectItem>
+    <SelectItem value="TERRA">BaseCoin (COIN)</SelectItem>
+  </SelectContent>
+</Select>
+  </div>
+
+    </Card>
+
+    <Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-lg self-center w-full bg-red-500">Bridge Tokens</Button>
+  </TabsContent>
 </Tabs>
+
+<div className="flex w-full p-1 items-center  gap-2 justify-center">
+<div className="flex justify-between items-center gap-3 max-w-3xl w-full">
+    <div className="flex items-center gap-2">
+    <Image src={StabilskiStableCoin} width={64} height={64} alt="logo"  className="w-16 h-16"/>
+    <p className="text-white">Stabilski.xyz</p>
+  </div>
+
+  <div className="flex items-center gap-4">
+<Link href={''}>
+  <FaTelegram size={30} className="text-[#24A1DE] bg-white rounded-full border border-[#24A1DE]"/>
+</Link>
+
+
+<Link href={''}>
+  <FaDiscord size={30} className="text-[#5865F2]"  />
+</Link>
+
+<Link href={''}>
+  <FaXTwitter size={24}  />
+</Link>
+  </div>
+
+</div>
+  
+</div>
     </div>
   );
 }

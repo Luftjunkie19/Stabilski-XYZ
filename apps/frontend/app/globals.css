@@ -122,7 +122,7 @@
   }
 }
 
-/* body::after {
+body::after {
   content: "";
   position: fixed;
   top: -10%;
@@ -136,7 +136,7 @@
   background-color: #ff3f3f;
   backdrop-filter: blur(100px);
 animation: magicBlur 15s  infinite 0s alternate;
-} */
+}
 
 body::before {
   content: "";
