@@ -139,7 +139,6 @@ body::after {
   border-top-left-radius: 50%;
   border-top-right-radius:50%;
   background-color: #ff3f3f;
-  
 animation: magicBlur 15s  infinite 0s alternate;
 }
 

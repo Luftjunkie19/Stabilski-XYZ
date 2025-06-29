@@ -110,5 +110,7 @@ constructor(address router, bytes32 _donID) FunctionsClient(router) ConfirmedOwn
         emit Response(requestId, plnUsdRate, s_lastResponse, s_lastError);
     }
 
-
+function getPLNPrice() public view returns (uint256) {
+    return plnUsdRate;
+}
 }
