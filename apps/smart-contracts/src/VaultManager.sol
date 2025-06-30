@@ -147,7 +147,6 @@ if(vaults[vaultOwner].collateralType == address(0)) {
 
   uint256 debtAmount = vaults[vaultOwner].debt;
 
-
    if (debtAmount <= maxAllowedAmount) {
        revert NotEnoughDebt();
     }
@@ -155,14 +154,23 @@ if(vaults[vaultOwner].collateralType == address(0)) {
     // Transfer stablecoin from msg.sender to protocol to repay the debt
     stabilskiToken.transferFrom(msg.sender, address(this), vaults[vaultOwner].debt);
 
+  // Assuming getPLNPrice() returns USD per 1 PLN * 1e4
+uint256 debtInUSD = (debtAmount * 1e4) / usdPlnOracle.getPLNPrice(); // scale up first!
+
+// Step 2: Convert USD to collateral
+uint256 collateralPrice = getCollateralPrice(vaults[vaultOwner].collateralType); // in USD * 1e18
+
+uint256 debtAmountFromCollateral = (debtInUSD * 1e18) / collateralPrice;
 
  // Calculate bounty (e.g. 5%)
-    uint256 bountyCollateral = vaults[vaultOwner].collateralAmount / 100 * 5;
+    uint256 bountyCollateral = (debtAmountFromCollateral * 5) / 100;
 
-    IERC20(vaults[vaultOwner].collateralType).transfer(msg.sender, bountyCollateral);
+    if(debtAmountFromCollateral + bountyCollateral > vaults[vaultOwner].collateralAmount) {
+        revert NotEnoughCollateral();
+    }
+
+    IERC20(vaults[vaultOwner].collateralType).transfer(msg.sender, debtAmountFromCollateral + bountyCollateral);
     
-
-
 stabilskiToken.burn(vaultOwner, debtAmount);
 
   delete vaults[vaultOwner];
