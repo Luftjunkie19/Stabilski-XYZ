@@ -2,10 +2,11 @@
 pragma solidity ^0.8.24;
 
 import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
-import {USDPLNOracle} from "./USDPLNOracle.sol";
-import {StabilskiToken} from "./StabilskiToken.sol";
 
-import {CollateralManager} from "./CollateralManager.sol";
+import {StabilskiTokenInterface} from "./interfaces/StabilskiTokenInterface.sol";
+import {USDPLNOracleInterface} from "./interfaces/USDPLNOracleInterface.sol";
+
+import {CollateralManagerInterface} from "./interfaces/CollateralManagerInterface.sol";
 
 import {IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
@@ -17,7 +18,9 @@ contract VaultManager is ReentrancyGuard {
     error VaultAlreadyExists();
     error UnderCollateralized();
     error NotEnoughPLST();
-    
+
+    event VaultLiquidated(address vaultOwner, address liquidator, uint256 debtAmount, uint256 collateralAmount);
+
   struct Vault {
   uint256 collateralAmount;
   address collateralType;
@@ -25,27 +28,29 @@ contract VaultManager is ReentrancyGuard {
 }
 
     mapping(address => Vault) public vaults;
+    address[] vaultOwners;
   
 
-    USDPLNOracle public usdPlnOracle;
-    StabilskiToken public stabilskiToken;
-    CollateralManager public collateralManager;
+    USDPLNOracleInterface public usdPlnOracle;
+    StabilskiTokenInterface public stabilskiToken;
+    CollateralManagerInterface public collateralManager;
 
 modifier onlyWhitelistedCollateral(address tokenAddress) {
-    (address priceFeed, uint256 minCollateralRatio, bool enabled) = collateralManager.collateralTypes(tokenAddress);
+    (address priceFeed, uint256 minCollateralRatio, bool enabled) = collateralManager.getCollateralInfo(tokenAddress);
     if (priceFeed == address(0)) {
         revert InvalidVault();
     }
     _;
 }
 
-constructor(address _usdPlnOracle, address _stabilskiToken) {
-    usdPlnOracle = USDPLNOracle(_usdPlnOracle);
-    stabilskiToken = StabilskiToken(_stabilskiToken);
+constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralManager) {
+    usdPlnOracle = USDPLNOracleInterface(_usdPlnOracle);
+    stabilskiToken = StabilskiTokenInterface(_stabilskiToken);
+    collateralManager = CollateralManagerInterface(_collateralManager);
 }
 
 function depositCollateral(address token, uint256 amount) external nonReentrant onlyWhitelistedCollateral(token) {
-(address priceFeed,,) = collateralManager.collateralTypes(token);
+(address priceFeed,,) = collateralManager.getCollateralInfo(token);
 
     if (amount == 0) {
         revert NotEnoughCollateral();
@@ -62,6 +67,7 @@ function depositCollateral(address token, uint256 amount) external nonReentrant 
 
     vaults[msg.sender].collateralAmount += amount;
     vaults[msg.sender].collateralType = token;
+    vaultOwners.push(msg.sender);
 
     IERC20(token).transferFrom(msg.sender, address(this), amount);
 
@@ -72,7 +78,7 @@ function mintPLST(uint256 amount) external nonReentrant {
     uint256 collateralAmountInUSD = (vaults[msg.sender].collateralAmount * getCollateralPrice(vaults[msg.sender].collateralType)) / 1e18;
     uint256 collateralAmountInPLN = (collateralAmountInUSD * usdPlnOracle.getPLNPrice()) / 1e4;
 
-    (address priceFeed, uint256 minCollateralRatio, bool enabled) = collateralManager.collateralTypes(vaults[msg.sender].collateralType);
+    (address priceFeed, uint256 minCollateralRatio, bool enabled) = collateralManager.getCollateralInfo(vaults[msg.sender].collateralType);
 
     uint256 maxAllowedAmount = collateralAmountInPLN * minCollateralRatio / 1e18;
 
@@ -120,28 +126,54 @@ function withdrawCollateral(address token, uint256 amount) external nonReentrant
 
 
 // The function is supposed to liquidate the vault
-function liquidateVault(address liquidator) external nonReentrant {
-    (, uint256 minCollateralRatio,) = collateralManager.collateralTypes(vaults[liquidator].collateralType);
+function liquidateVault(address vaultOwner) external nonReentrant {
 
-  uint256 collateralAmountInUSD = vaults[liquidator].collateralAmount * getCollateralPrice(vaults[liquidator].collateralType) / 1e18;
+    if(vaults[vaultOwner].debt == 0) {
+        revert InvalidVault();
+    }
+
+if(vaults[vaultOwner].collateralType == address(0)) {
+        revert InvalidVault();
+    }
+
+
+    (address priceFeed, uint256 minCollateralRatio, bool enabled) = collateralManager.getCollateralInfo(vaults[vaultOwner].collateralType);
+
+  uint256 collateralAmountInUSD = vaults[vaultOwner].collateralAmount * getCollateralPrice(vaults[vaultOwner].collateralType) / 1e18;
 
   uint256 collateralAmountInPLN = collateralAmountInUSD * usdPlnOracle.getPLNPrice() / 1e4;
 
   uint256 maxAllowedAmount = collateralAmountInPLN * minCollateralRatio / 1e18;
 
-  uint256 debtAmount = vaults[liquidator].debt;
+  uint256 debtAmount = vaults[vaultOwner].debt;
 
-  if(maxAllowedAmount < debtAmount) {
-  // Liquidate the vault
-  IERC20(vaults[liquidator].collateralType).transfer(msg.sender, vaults[liquidator].collateralAmount);
-  delete vaults[liquidator];
-  }
+
+   if (debtAmount <= maxAllowedAmount) {
+       revert NotEnoughDebt();
+    }
+
+    // Transfer stablecoin from msg.sender to protocol to repay the debt
+    stabilskiToken.transferFrom(msg.sender, address(this), vaults[vaultOwner].debt);
+
+
+ // Calculate bounty (e.g. 5%)
+    uint256 bountyCollateral = vaults[vaultOwner].collateralAmount / 100 * 5;
+
+    IERC20(vaults[vaultOwner].collateralType).transfer(msg.sender, bountyCollateral);
+    
+
+
+stabilskiToken.burn(vaultOwner, debtAmount);
+
+  delete vaults[vaultOwner];
+  
+  emit VaultLiquidated(vaultOwner, msg.sender, vaults[vaultOwner].debt, bountyCollateral);
 
     
 }
 
 function getCollateralPrice(address token) public view returns (uint256) {
-(address priceFeed,,) = collateralManager.collateralTypes(token);
+(address priceFeed,,) = collateralManager.getCollateralInfo(token);
 
 AggregatorV3Interface priceFeedAgreagator = AggregatorV3Interface(priceFeed);
 (, int256 answer,,,) = priceFeedAgreagator.latestRoundData();

@@ -82,7 +82,7 @@ function toggleCollateral(address token) external{
     collateral.isActive = !collateral.isActive;
 }
 
-function getTokenPrice(address token) public view returns (int256) {
+function getTokenPrice(address token) public view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(token);
            (
             /* uint80 roundId */,
@@ -92,9 +92,12 @@ function getTokenPrice(address token) public view returns (int256) {
             /*uint80 answeredInRound*/
         ) = priceFeed.latestRoundData();
 
-        return answer;
+        return uint256(answer);
     }
 
+function getCollateralInfo(address token) public view returns (address, uint256, bool) {
+    return (collateralTypes[token].priceFeed, collateralTypes[token].minCollateralRatio, collateralTypes[token].isActive);
+}
 
 
 
