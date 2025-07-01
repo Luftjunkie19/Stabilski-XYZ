@@ -4,7 +4,6 @@ import {  Audiowide
 import "./globals.css";
 import { Web3Provider } from "@/lib/Web3Provider";
 import Navbar from "@/components/ui/Navbar";
-import HackerBackground from "@/components/eldoraui/hackerbg";
 
 // const poppins = Lexend({
 //   variable: "--font-lexend",

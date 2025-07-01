@@ -121,7 +121,7 @@ function withdrawCollateral(address token, uint256 amount) external nonReentrant
     }
 
     vaults[msg.sender].collateralAmount -= amount;
-    
+    IERC20(token).transferFrom(address(this), msg.sender, amount);
 }
 
 
@@ -129,6 +129,10 @@ function withdrawCollateral(address token, uint256 amount) external nonReentrant
 function liquidateVault(address vaultOwner) external nonReentrant {
 
     if(vaults[vaultOwner].debt == 0) {
+        revert InvalidVault();
+    }
+
+    if(vaults[vaultOwner].collateralAmount == 0) {
         revert InvalidVault();
     }
 
