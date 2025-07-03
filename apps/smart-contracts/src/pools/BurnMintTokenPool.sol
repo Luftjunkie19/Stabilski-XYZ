@@ -1,6 +1,295 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.30;
+pragma solidity ^0.8.24;
 
-contract BurnMintTokenPool {
-    // Add your contract logic here
+import {TokenPool} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/pools/TokenPool.sol";
+
+import {Pool}  from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/Pool.sol";
+import {RateLimiter} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/RateLimiter.sol";
+
+import {Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import {EnumerableSet} from "../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+
+import {IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IRouter} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/interfaces/IRouter.sol";
+
+contract StabilskiTokenPool is  TokenPool, Ownable {
+
+using RateLimiter for RateLimiter.TokenBucket;
+
+error AllowListNotEnabled();
+error CallerIsNotARampOnRouter(address caller);
+error ChainAlreadyExists(uint64 chainSelector);
+error ChainNotAllowed(uint64 remoteChainSelector);
+error CursedByRMN();
+error InvalidDecimalArgs(uint8 expected, uint8 actual);
+error InvalidRemoteChainDecimals(bytes sourcePoolData);
+error InvalidRemotePoolForChain(uint64 remoteChainSelector, bytes remotePoolAddress);
+error InvalidSourcePoolAddress(bytes sourcePoolAddress);
+error InvalidToken(address token);
+error MismatchedArrayLengths();
+error OverflowDetected(uint8 remoteDecimals, uint8 localDecimals, uint256 remoteAmount);
+error PoolAlreadyAdded(uint64 remoteChainSelector, bytes remotePoolAddress);
+
+
+
+event AllowListAdd(address sender);
+event AllowListRemove(address sender);
+event Burned(address indexed sender, uint256 amount);
+event Minted(address indexed sender, address indexed recipient, uint256 amount);
+event ChainAdded(
+  uint64 remoteChainSelector,
+  bytes remoteToken,
+  RateLimiter.Config outboundRateLimiterConfig,
+  RateLimiter.Config inboundRateLimiterConfig
+);
+event ChainConfigured(
+  uint64 remoteChainSelector,
+  RateLimiter.Config outboundRateLimiterConfig,
+  RateLimiter.Config inboundRateLimiterConfig
+);
+event ChainRemoved(uint64 remoteChainSelector);
+event RemotePoolAdded(uint64 indexed remoteChainSelector, bytes remotePoolAddress);
+event Released(address indexed sender, address indexed recipient, uint256 amount);
+event RemotePoolRemoved(uint64 indexed remoteChainSelector, bytes remotePoolAddress);
+event RouterUpdated(address oldRouter, address newRouter);
+event RateLimitAdminSet(address rateLimitAdmin);
+
+struct RemoteChainConfig {
+  RateLimiter.TokenBucket outboundRateLimiterConfig;
+  RateLimiter.TokenBucket inboundRateLimiterConfig;
+  bytes remoteTokenAddress;
+  EnumerableSet.Bytes32Set remotePools;
+}
+
+IERC20 internal immutable i_token;
+uint8 internal immutable i_tokenDecimals;
+address internal immutable i_rmnProxy;
+bool internal immutable i_allowlistEnabled;
+EnumerableSet.AddressSet internal s_allowlist;
+IRouter internal s_router;
+EnumerableSet.UintSet internal s_remoteChainSelectors;
+mapping(uint64 remoteChainSelector => RemoteChainConfig) internal s_remoteChainConfigs;
+mapping(bytes32 poolAddressHash => bytes poolAddress) internal s_remotePoolAddresses;
+constructor(
+    IERC20 token,
+    uint8 localTokenDecimals,
+    address[] memory allowList,
+    address rmnProxy,
+    address router
+)TokenPool(token, localTokenDecimals, allowList, rmnProxy, router) Ownable(router) {
+  i_token=token;
+  i_tokenDecimals = localTokenDecimals;
+for (uint256 i = 0; i < allowList.length; i++) {
+  s_allowlist.add(allowList[i]);
+}
+  i_rmnProxy = rmnProxy;
+  s_router = IRouter(router);
+}
+
+
+function _transferOwnership(address newOwner) internal virtual override {
+  transferOwnership(newOwner);
+}
+
+function transferOwnership(address newOwner) public onlyOwner {
+  _transferOwnership(newOwner);
+  emit OwnershipTransferred(address(this), newOwner);
+}
+
+function owner() public view override returns (address) {
+  return address(this);
+}
+
+function lockOrBurn(
+  Pool.LockOrBurnInV1 calldata lockOrBurnIn
+) external virtual override returns (Pool.LockOrBurnOutV1 memory){
+  _validateLockOrBurn(lockOrBurnIn);
+
+i_token.burn(lockOrBurnIn.sender, lockOrBurnIn.amount);
+
+  emit Burned(lockOrBurnIn.sender, lockOrBurnIn.amount);
+
+  return Pool.LockOrBurnOutV1({
+    receiver: lockOrBurnIn.receiver,
+    remoteChainSelector: lockOrBurnIn.remoteChainSelector,
+    originalSender: lockOrBurnIn.sender,
+    amount: lockOrBurnIn.amount,
+    localToken: lockOrBurnIn.localToken
+  });
+}
+
+function balanceOf(address account) external view virtual override returns (uint256){
+    return i_token.balanceOf(account);
+}
+
+
+function releaseOrMint(Pool.ReleaseOrMintInV1 calldata releaseOrMintIn) external returns (Pool.ReleaseOrMintOutV1 memory){
+  _validateReleaseOrMint(releaseOrMintIn);
+i_token.mint(releaseOrMintIn.recipient, releaseOrMintIn.amount);
+
+  emit Minted(releaseOrMintIn.sender, releaseOrMintIn.recipient, releaseOrMintIn.amount);
+
+  return Pool.ReleaseOrMintOutV1({
+    destinationAmount: releaseOrMintIn.amount
+  });
+}
+
+function _applyAllowListUpdates(address[] memory removes, address[] memory adds) internal{
+  for (uint256 i = 0; i < removes.length; i++) {
+    s_allowlist.remove(removes[i]);
+    emit AllowListRemove(removes[i]);
+  }
+  for (uint256 i = 0; i < adds.length; i++) {
+    s_allowlist.add(adds[i]);
+    emit AllowListAdd(adds[i]);
+  }
+}
+
+function _onlyOffRamp(uint64 remoteChainSelector) internal view{
+    if(!s_remoteChainSelectors.contains(remoteChainSelector)){
+    revert ChainNotAllowed(remoteChainSelector);
+  }
+
+  if(msg.sender != s_router){
+    revert CallerIsNotARampOnRouter(msg.sender);
+  }
+}
+
+function _onlyOnRamp(uint64 remoteChainSelector) internal view{
+  if(!s_remoteChainSelectors.contains(remoteChainSelector)){
+    revert ChainNotAllowed(remoteChainSelector);
+  }
+
+  if(msg.sender != s_router){
+    revert CallerIsNotARampOnRouter(msg.sender);
+  }
+}
+
+function _parseRemoteDecimals(bytes memory sourcePoolData) internal view virtual returns (uint8){
+  if(sourcePoolData == bytes(0) || uint8(sourcePoolData) > type(uint8).max()){
+    revert InvalidSourcePoolAddress(sourcePoolData);
+  }
+
+  return uint8(sourcePoolData);
+
+}
+
+function _setRateLimitConfig(
+  uint64 remoteChainSelector,
+  RateLimiter.Config memory outboundConfig,
+  RateLimiter.Config memory inboundConfig
+) internal {
+
+  s_remoteChainConfigs[remoteChainSelector].outboundRateLimiterConfig = outboundConfig;
+  s_remoteChainConfigs[remoteChainSelector].inboundRateLimiterConfig = inboundConfig;
+  emit ChainConfigured(remoteChainSelector, outboundConfig, inboundConfig);
+}
+
+function _setRemotePool(uint64 remoteChainSelector, bytes memory remotePoolAddress) internal {
+
+if(remotePoolAddress == bytes(0)){
+  revert ZeroAddressNotAllowed();
+}
+
+if(s_remotePoolAddresses[bytes(remotePoolAddress)] != bytes(0)){
+  revert PoolAlreadyAdded(remoteChainSelector, remotePoolAddress);
+}
+
+  s_remotePoolAddresses[keccak256(remotePoolAddress)] = remotePoolAddress;
+  emit RemotePoolAdded(remoteChainSelector, remotePoolAddress);
+}
+
+function addRemotePool(uint64 remoteChainSelector, bytes calldata remotePoolAddress) external onlyOwner{
+  _setRemotePool(remoteChainSelector, remotePoolAddress);
+  emit RemotePoolAdded(remoteChainSelector, remotePoolAddress);
+}
+
+function applyAllowListUpdates(address[] calldata removes, address[] calldata adds) external
+override
+onlyOwner{
+  _applyAllowListUpdates(removes, adds);
+}
+function applyChainUpdates(
+  uint64[] calldata remoteChainSelectorsToRemove,
+  ChainUpdate[] calldata chainsToAdd
+) external virtual onlyOwner{
+  
+  for(uint i = 0; i < remoteChainSelectorsToRemove.length; i++){
+    s_remoteChainSelectors.remove(remoteChainSelectorsToRemove[i]); 
+  }
+
+  for(uint i = 0; i < chainsToAdd.length; i++){
+    s_remoteChainSelectors.add(chainsToAdd[i].remoteChainSelector);
+  }
+
+}
+
+
+function getAllowList() external view returns (address[] memory){
+  return s_allowlist.values();
+}
+
+function getAllowListEnabled() external override view returns (bool){
+  return i_allowlistEnabled;
+}
+
+function getRateLimitAdmin() external view returns (address){
+  return s_rateLimitAdmin;
+}
+
+function getRemotePools(uint64 remoteChainSelector) public view returns (bytes[] memory){
+  return s_remoteChainConfigs[remoteChainSelector].remotePools.values();
+}
+
+function getRemoteToken(uint64 remoteChainSelector) public view returns (bytes memory){
+  return s_remoteChainConfigs[remoteChainSelector].remoteTokenAddress;
+}
+
+function getRmnProxy() public view returns (address rmnProxy){
+  return rmnProxy;
+}
+
+function getRouter() public view returns (address router){
+  return s_router;
+}
+function getSupportedChains() public view override returns (uint64[] memory) {
+  return s_remoteChainSelectors.values();
+}
+
+function isSupportedChain(uint64 remoteChainSelector) public view returns (bool){
+  return s_remoteChainSelectors.contains(remoteChainSelector);
+}
+
+function getToken() public view returns (IERC20 token){
+  return i_token;
+}
+
+function getTokenDecimals() public view virtual returns (uint8 decimals){
+  return i_token.decimals();
+}
+
+function isRemotePool(uint64 remoteChainSelector, bytes calldata remotePoolAddress) public view returns (bool){
+  return s_remotePoolAddresses[keccak256(remotePoolAddress)] != bytes(0);
+}
+
+function removeRemotePool(uint64 remoteChainSelector, bytes calldata remotePoolAddress) external onlyOwner{
+  _setRemotePool(remoteChainSelector, bytes(0));
+  emit RemotePoolRemoved(remoteChainSelector, remotePoolAddress);
+}
+
+function setChainRateLimiterConfig(
+  uint64 remoteChainSelector,
+  RateLimiter.Config memory outboundConfig,
+  RateLimiter.Config memory inboundConfig
+) external{
+  _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
+  emit ChainConfigured(remoteChainSelector, outboundConfig, inboundConfig);
+}
+
+
+function setRouter(address newRouter) public onlyOwner{
+  s_router = newRouter;
+  emit RouterUpdated(s_router, newRouter);
+}
+
 }

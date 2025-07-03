@@ -29,7 +29,7 @@ using FunctionsRequest for FunctionsRequest.Request;
     bytes32 donID;
     uint256 public plnUsdRate;
     uint256 public lastTimeStamp;
-    uint256 public interval = 3600; // 1 hour in seconds
+    uint256 public interval = 1 days; // 1 hour in seconds
 
 string private source = string(
     abi.encodePacked(

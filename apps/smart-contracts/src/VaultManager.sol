@@ -21,6 +21,12 @@ contract VaultManager is ReentrancyGuard {
 
     event VaultLiquidated(address vaultOwner, address liquidator, uint256 debtAmount, uint256 collateralAmount);
 
+    event CollateralDeposited(address vaultOwner, address token, uint256 amount);
+    event CollateralWithdrawn(address vaultOwner, address token, uint256 amount);
+    event DebtRepaid(address vaultOwner, uint256 amount, address token);
+    event StabilskiTokenMinted(address vaultOwner, uint256 amount);
+
+
   struct Vault {
   uint256 collateralAmount;
   address collateralType;
@@ -71,6 +77,8 @@ function depositCollateral(address token, uint256 amount) external nonReentrant 
 
     IERC20(token).transferFrom(msg.sender, address(this), amount);
 
+    emit CollateralDeposited(msg.sender, token, amount);
+
 }
 
 function mintPLST(uint256 amount) external nonReentrant {
@@ -98,6 +106,7 @@ if(priceFeed == address(0)) {
    stabilskiToken.mint(msg.sender, amount);
    vaults[msg.sender].debt += amount;
 
+emit StabilskiTokenMinted(msg.sender, amount);
 
 }
 
@@ -112,6 +121,7 @@ function repayPLST(uint256 amount) external nonReentrant {
 
     vaults[msg.sender].debt -= amount;
     stabilskiToken.burn(msg.sender, amount);
+    emit DebtRepaid(msg.sender, amount, address(stabilskiToken));
 }
 
 function withdrawCollateral(address token, uint256 amount) external nonReentrant onlyWhitelistedCollateral(token) {
@@ -122,6 +132,8 @@ function withdrawCollateral(address token, uint256 amount) external nonReentrant
 
     vaults[msg.sender].collateralAmount -= amount;
     IERC20(token).transferFrom(address(this), msg.sender, amount);
+
+    emit CollateralWithdrawn(msg.sender, token, amount);
 }
 
 
@@ -140,8 +152,7 @@ if(vaults[vaultOwner].collateralType == address(0)) {
         revert InvalidVault();
     }
 
-
-    (address priceFeed, uint256 minCollateralRatio, bool enabled) = collateralManager.getCollateralInfo(vaults[vaultOwner].collateralType);
+    (, uint256 minCollateralRatio,) = collateralManager.getCollateralInfo(vaults[vaultOwner].collateralType);
 
   uint256 collateralAmountInUSD = vaults[vaultOwner].collateralAmount * getCollateralPrice(vaults[vaultOwner].collateralType) / 1e18;
 
@@ -194,4 +205,20 @@ return uint256(answer) * 1e18 / (10 ** decimals);
 
 }
 
+
+function getVaultHealthFactor(address vaultOwner, address token) public view returns (uint256) {
+
+    if(vaults[vaultOwner].debt == 0 || vaults[vaultOwner].collateralAmount == 0 || vaults[vaultOwner].collateralType == address(0)) {
+        return 0;
+    }
+
+
+
+    (, uint256 minCollateralRatio,) = collateralManager.getCollateralInfo(token);
+    uint256 collateralAmountInUSD = vaults[vaultOwner].collateralAmount * getCollateralPrice(token) / 1e18;
+    uint256 collateralAmountInPLN = collateralAmountInUSD * usdPlnOracle.getPLNPrice() / 1e4;
+    uint256 maxAllowedAmount = collateralAmountInPLN * minCollateralRatio / 1e18;
+    uint256 debtAmount = vaults[vaultOwner].debt;
+    return (debtAmount / maxAllowedAmount) * 1e18;
+}
 }
