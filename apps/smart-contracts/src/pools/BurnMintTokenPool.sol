@@ -9,7 +9,9 @@ import {RateLimiter} from "../../lib/chainlink-brownie-contracts/contracts/src/v
 import {Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import {EnumerableSet} from "../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
-import {IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {ConfirmedOwnerWithProposal} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/access/ConfirmedOwnerWithProposal.sol";
+import {IERC20} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/vendor/openzeppelin-solidity/v5.0.2/contracts/token/ERC20/IERC20.sol";
+
 import {IRouter} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/interfaces/IRouter.sol";
 
 contract StabilskiTokenPool is  TokenPool, Ownable {
@@ -17,42 +19,20 @@ contract StabilskiTokenPool is  TokenPool, Ownable {
 using RateLimiter for RateLimiter.TokenBucket;
 
 error AllowListNotEnabled();
-error CallerIsNotARampOnRouter(address caller);
 error ChainAlreadyExists(uint64 chainSelector);
 error ChainNotAllowed(uint64 remoteChainSelector);
 error CursedByRMN();
 error InvalidDecimalArgs(uint8 expected, uint8 actual);
 error InvalidRemoteChainDecimals(bytes sourcePoolData);
 error InvalidRemotePoolForChain(uint64 remoteChainSelector, bytes remotePoolAddress);
-error InvalidSourcePoolAddress(bytes sourcePoolAddress);
-error InvalidToken(address token);
 error MismatchedArrayLengths();
 error OverflowDetected(uint8 remoteDecimals, uint8 localDecimals, uint256 remoteAmount);
 error PoolAlreadyAdded(uint64 remoteChainSelector, bytes remotePoolAddress);
 
 
-
-event AllowListAdd(address sender);
-event AllowListRemove(address sender);
-event Burned(address indexed sender, uint256 amount);
-event Minted(address indexed sender, address indexed recipient, uint256 amount);
-event ChainAdded(
-  uint64 remoteChainSelector,
-  bytes remoteToken,
-  RateLimiter.Config outboundRateLimiterConfig,
-  RateLimiter.Config inboundRateLimiterConfig
-);
-event ChainConfigured(
-  uint64 remoteChainSelector,
-  RateLimiter.Config outboundRateLimiterConfig,
-  RateLimiter.Config inboundRateLimiterConfig
-);
-event ChainRemoved(uint64 remoteChainSelector);
 event RemotePoolAdded(uint64 indexed remoteChainSelector, bytes remotePoolAddress);
-event Released(address indexed sender, address indexed recipient, uint256 amount);
 event RemotePoolRemoved(uint64 indexed remoteChainSelector, bytes remotePoolAddress);
-event RouterUpdated(address oldRouter, address newRouter);
-event RateLimitAdminSet(address rateLimitAdmin);
+
 
 struct RemoteChainConfig {
   RateLimiter.TokenBucket outboundRateLimiterConfig;
@@ -70,14 +50,20 @@ IRouter internal s_router;
 EnumerableSet.UintSet internal s_remoteChainSelectors;
 mapping(uint64 remoteChainSelector => RemoteChainConfig) internal s_remoteChainConfigs;
 mapping(bytes32 poolAddressHash => bytes poolAddress) internal s_remotePoolAddresses;
+
+modifier onlyOwner() override(Ownable, ConfirmedOwnerWithProposal) {
+    require(Ownable.owner() == _msgSender(), "Ownable: caller is not the owner");
+    _;
+}
+
 constructor(
     IERC20 token,
     uint8 localTokenDecimals,
     address[] memory allowList,
     address rmnProxy,
     address router
-)TokenPool(token, localTokenDecimals, allowList, rmnProxy, router) Ownable(router) {
-  i_token=token;
+)TokenPool(token, allowList, rmnProxy, router) Ownable(router) {
+  i_token=IERC20(token);
   i_tokenDecimals = localTokenDecimals;
 for (uint256 i = 0; i < allowList.length; i++) {
   s_allowlist.add(allowList[i]);
@@ -87,16 +73,16 @@ for (uint256 i = 0; i < allowList.length; i++) {
 }
 
 
-function _transferOwnership(address newOwner) internal virtual override {
-  transferOwnership(newOwner);
+function _transferOwnership(address newOwner) internal override(Ownable, ConfirmedOwnerWithProposal) {
+    super._transferOwnership(newOwner);
 }
 
-function transferOwnership(address newOwner) public onlyOwner {
+function transferOwnership(address newOwner) public onlyOwner override(Ownable, ConfirmedOwnerWithProposal) {
   _transferOwnership(newOwner);
   emit OwnershipTransferred(address(this), newOwner);
 }
 
-function owner() public view override returns (address) {
+function owner() public view override(Ownable, ConfirmedOwnerWithProposal) returns (address) {
   return address(this);
 }
 
@@ -225,7 +211,7 @@ function applyChainUpdates(
 }
 
 
-function getAllowList() external view returns (address[] memory){
+function getAllowList() external view  override returns (address[] memory){
   return s_allowlist.values();
 }
 
@@ -233,7 +219,7 @@ function getAllowListEnabled() external override view returns (bool){
   return i_allowlistEnabled;
 }
 
-function getRateLimitAdmin() external view returns (address){
+function getRateLimitAdmin() external view override returns (address){
   return s_rateLimitAdmin;
 }
 
@@ -241,26 +227,26 @@ function getRemotePools(uint64 remoteChainSelector) public view returns (bytes[]
   return s_remoteChainConfigs[remoteChainSelector].remotePools.values();
 }
 
-function getRemoteToken(uint64 remoteChainSelector) public view returns (bytes memory){
+function getRemoteToken(uint64 remoteChainSelector) public view override returns (bytes memory){
   return s_remoteChainConfigs[remoteChainSelector].remoteTokenAddress;
 }
 
-function getRmnProxy() public view returns (address rmnProxy){
+function getRmnProxy() public view override returns (address rmnProxy){
   return rmnProxy;
 }
 
-function getRouter() public view returns (address router){
+function getRouter() public view override returns (address router){
   return s_router;
 }
 function getSupportedChains() public view override returns (uint64[] memory) {
   return s_remoteChainSelectors.values();
 }
 
-function isSupportedChain(uint64 remoteChainSelector) public view returns (bool){
+function isSupportedChain(uint64 remoteChainSelector) public view override returns (bool){
   return s_remoteChainSelectors.contains(remoteChainSelector);
 }
 
-function getToken() public view returns (IERC20 token){
+function getToken() public view virtual override returns (IERC20 token){
   return i_token;
 }
 
@@ -281,13 +267,13 @@ function setChainRateLimiterConfig(
   uint64 remoteChainSelector,
   RateLimiter.Config memory outboundConfig,
   RateLimiter.Config memory inboundConfig
-) external{
+) external override{
   _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
   emit ChainConfigured(remoteChainSelector, outboundConfig, inboundConfig);
 }
 
 
-function setRouter(address newRouter) public onlyOwner{
+function setRouter(address newRouter) public onlyOwner override{
   s_router = newRouter;
   emit RouterUpdated(s_router, newRouter);
 }
