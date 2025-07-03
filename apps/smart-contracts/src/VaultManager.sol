@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.30;
 
 import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
@@ -7,11 +7,12 @@ import {StabilskiTokenInterface} from "./interfaces/StabilskiTokenInterface.sol"
 import {USDPLNOracleInterface} from "./interfaces/USDPLNOracleInterface.sol";
 
 import {CollateralManagerInterface} from "./interfaces/CollateralManagerInterface.sol";
-
+import {SafeERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 contract VaultManager is ReentrancyGuard {
+    using SafeERC20 for IERC20;
     error InvalidVault();
     error NotEnoughCollateral();
     error NotEnoughDebt();
@@ -71,11 +72,11 @@ function depositCollateral(address token, uint256 amount) external nonReentrant 
     }
     
 
+
+    IERC20(token).transferFrom(msg.sender, address(this), amount);
     vaults[msg.sender].collateralAmount += amount;
     vaults[msg.sender].collateralType = token;
     vaultOwners.push(msg.sender);
-
-    IERC20(token).transferFrom(msg.sender, address(this), amount);
 
     emit CollateralDeposited(msg.sender, token, amount);
 
@@ -167,7 +168,7 @@ if(vaults[vaultOwner].collateralType == address(0)) {
     }
 
     // Transfer stablecoin from msg.sender to protocol to repay the debt
-    stabilskiToken.transferFrom(msg.sender, address(this), vaults[vaultOwner].debt);
+    IERC20(address(stabilskiToken)).transferFrom(msg.sender, address(this), debtAmount);
 
   // Assuming getPLNPrice() returns USD per 1 PLN * 1e4
 uint256 debtInUSD = (debtAmount * 1e4) / usdPlnOracle.getPLNPrice(); // scale up first!

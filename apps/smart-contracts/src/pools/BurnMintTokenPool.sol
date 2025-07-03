@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.30;
 
-import {TokenPool} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/pools/TokenPool.sol";
+import {TokenPool} from "../../lib/chainlink-ccip/chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol";
 
 import {Pool}  from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/Pool.sol";
 import {RateLimiter} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/RateLimiter.sol";
@@ -10,7 +10,7 @@ import {Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable
 import {EnumerableSet} from "../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 import {ConfirmedOwnerWithProposal} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/access/ConfirmedOwnerWithProposal.sol";
-import {IERC20} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/vendor/openzeppelin-solidity/v5.0.2/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import {IRouter} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/interfaces/IRouter.sol";
 
@@ -57,54 +57,41 @@ modifier onlyOwner() override(Ownable, ConfirmedOwnerWithProposal) {
 }
 
 constructor(
-    IERC20 token,
+    address token,
     uint8 localTokenDecimals,
     address[] memory allowList,
     address rmnProxy,
     address router
-)TokenPool(token, allowList, rmnProxy, router) Ownable(router) {
-  i_token=IERC20(token);
+) TokenPool(IERC20(token), allowList, rmnProxy, router) Ownable(router) {
+  i_token = token;
   i_tokenDecimals = localTokenDecimals;
-for (uint256 i = 0; i < allowList.length; i++) {
-  s_allowlist.add(allowList[i]);
-}
+  for (uint256 i = 0; i < allowList.length; i++) {
+    EnumerableSet.add(s_allowlist, allowList[i]);
+  }
   i_rmnProxy = rmnProxy;
   s_router = IRouter(router);
 }
 
-
-function _transferOwnership(address newOwner) internal override(Ownable, ConfirmedOwnerWithProposal) {
-    super._transferOwnership(newOwner);
-}
-
-function transferOwnership(address newOwner) public onlyOwner override(Ownable, ConfirmedOwnerWithProposal) {
-  _transferOwnership(newOwner);
-  emit OwnershipTransferred(address(this), newOwner);
-}
-
-function owner() public view override(Ownable, ConfirmedOwnerWithProposal) returns (address) {
-  return address(this);
-}
 
 function lockOrBurn(
   Pool.LockOrBurnInV1 calldata lockOrBurnIn
 ) external virtual override returns (Pool.LockOrBurnOutV1 memory){
   _validateLockOrBurn(lockOrBurnIn);
 
-i_token.burn(lockOrBurnIn.sender, lockOrBurnIn.amount);
+i_token.burn(lockOrBurnIn.originalSender, lockOrBurnIn.amount);
 
   emit Burned(lockOrBurnIn.sender, lockOrBurnIn.amount);
 
   return Pool.LockOrBurnOutV1({
     receiver: lockOrBurnIn.receiver,
     remoteChainSelector: lockOrBurnIn.remoteChainSelector,
-    originalSender: lockOrBurnIn.sender,
+    originalSender: lockOrBurnIn.originalSender,
     amount: lockOrBurnIn.amount,
     localToken: lockOrBurnIn.localToken
   });
 }
 
-function balanceOf(address account) external view virtual override returns (uint256){
+function balanceOf(address account) external view returns (uint256){
     return i_token.balanceOf(account);
 }
 
@@ -113,14 +100,14 @@ function releaseOrMint(Pool.ReleaseOrMintInV1 calldata releaseOrMintIn) external
   _validateReleaseOrMint(releaseOrMintIn);
 i_token.mint(releaseOrMintIn.recipient, releaseOrMintIn.amount);
 
-  emit Minted(releaseOrMintIn.sender, releaseOrMintIn.recipient, releaseOrMintIn.amount);
+  emit Minted(releaseOrMintIn.originalSender, releaseOrMintIn.recipient, releaseOrMintIn.amount);
 
   return Pool.ReleaseOrMintOutV1({
     destinationAmount: releaseOrMintIn.amount
   });
 }
 
-function _applyAllowListUpdates(address[] memory removes, address[] memory adds) internal{
+function _applyAllowListUpdates(address[] memory removes, address[] memory adds) internal override{
   for (uint256 i = 0; i < removes.length; i++) {
     s_allowlist.remove(removes[i]);
     emit AllowListRemove(removes[i]);
@@ -131,7 +118,7 @@ function _applyAllowListUpdates(address[] memory removes, address[] memory adds)
   }
 }
 
-function _onlyOffRamp(uint64 remoteChainSelector) internal view{
+function _onlyOffRamp(uint64 remoteChainSelector) internal override view{
     if(!s_remoteChainSelectors.contains(remoteChainSelector)){
     revert ChainNotAllowed(remoteChainSelector);
   }
@@ -141,7 +128,7 @@ function _onlyOffRamp(uint64 remoteChainSelector) internal view{
   }
 }
 
-function _onlyOnRamp(uint64 remoteChainSelector) internal view{
+function _onlyOnRamp(uint64 remoteChainSelector) internal override view{
   if(!s_remoteChainSelectors.contains(remoteChainSelector)){
     revert ChainNotAllowed(remoteChainSelector);
   }
@@ -164,7 +151,7 @@ function _setRateLimitConfig(
   uint64 remoteChainSelector,
   RateLimiter.Config memory outboundConfig,
   RateLimiter.Config memory inboundConfig
-) internal {
+) internal override {
 
   s_remoteChainConfigs[remoteChainSelector].outboundRateLimiterConfig = outboundConfig;
   s_remoteChainConfigs[remoteChainSelector].inboundRateLimiterConfig = inboundConfig;
@@ -244,10 +231,6 @@ function getSupportedChains() public view override returns (uint64[] memory) {
 
 function isSupportedChain(uint64 remoteChainSelector) public view override returns (bool){
   return s_remoteChainSelectors.contains(remoteChainSelector);
-}
-
-function getToken() public view virtual override returns (IERC20 token){
-  return i_token;
 }
 
 function getTokenDecimals() public view virtual returns (uint8 decimals){
