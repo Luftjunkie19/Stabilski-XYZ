@@ -1,3 +1,21 @@
 [submodule "apps/smart-contracts/lib/chainlink-evm"]
 	path = apps/smart-contracts/lib/chainlink-evm
 	url = https://github.com/smartcontractkit/chainlink-evm
+[submodule "apps/smart-contracts/lib/openzeppelin-contracts"]
+	path = apps/smart-contracts/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "apps/smart-contracts/lib/chainlink-brownie-contracts"]
+	path = apps/smart-contracts/lib/chainlink-brownie-contracts
+	url = https://github.com/smartcontractkit/chainlink-brownie-contracts
+[submodule "apps/smart-contracts/lib/foundry-chainlink-toolkit"]
+	path = apps/smart-contracts/lib/foundry-chainlink-toolkit
+	url = https://github.com/smartcontractkit/foundry-chainlink-toolkit
+[submodule "apps/smart-contracts/lib/chainlink-ccip"]
+	path = apps/smart-contracts/lib/chainlink-ccip
+	url = https://github.com/smartcontractkit/chainlink-ccip
+[submodule "apps/smart-contracts/lib/ccip"]
+	path = apps/smart-contracts/lib/ccip
+	url = https://github.com/smartcontractkit/ccip
+[submodule "apps/smart-contracts/lib/chainlink-local"]
+	path = apps/smart-contracts/lib/chainlink-local
+	url = https://github.com/smartcontractkit/chainlink-local
