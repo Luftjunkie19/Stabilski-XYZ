@@ -1,0 +1,3 @@
+[submodule "apps/smart-contracts/lib/chainlink-evm"]
+	path = apps/smart-contracts/lib/chainlink-evm
+	url = https://github.com/smartcontractkit/chainlink-evm
