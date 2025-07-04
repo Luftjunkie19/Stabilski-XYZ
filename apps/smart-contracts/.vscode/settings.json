@@ -1,9 +1,10 @@
 {
     "wake.compiler.solc.remappings": [
         "@chainlink/contracts/=lib/chainlink-brownie-contracts/contracts/",
+        "@openzeppelin/=lib/openzeppelin-contracts/",
         "@chainlink/contracts-ccip/=lib/chainlink-local/lib/chainlink-ccip/chains/evm/",
         "@chainlink/local/src/=lib/chainlink-local/src/",
-        "@openzeppelin/=lib/foundry-chainlink-toolkit/lib/openzeppelin-contracts/",
+        "ccip/=lib/ccip/",
         "chainlink-brownie-contracts/=lib/foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.6/vendor/@arbitrum/nitro-contracts/src/",
         "chainlink-ccip/=lib/chainlink-ccip/",
         "chainlink-evm/=lib/chainlink-evm/",
@@ -12,7 +13,6 @@
         "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
         "forge-std/=lib/chainlink-local/lib/forge-std/src/",
         "foundry-chainlink-toolkit/=lib/foundry-chainlink-toolkit/",
-        "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
         "openzeppelin-contracts/=lib/openzeppelin-contracts/"
     ]
 }
