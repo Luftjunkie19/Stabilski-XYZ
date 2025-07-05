@@ -16,14 +16,19 @@ export default function Home() {
   return (
     <div className="h-screen flex justify-between items-center w-full flex-col">
 
-<Header/>
 
-    <Tabs defaultValue="buy" className="max-w-3xl flex justify-center items-center mx-auto mt-12 w-full p-3">
+
+    <Tabs defaultValue="buy" className="max-w-5xl flex justify-center items-center mx-auto mt-8 w-full p-3">
   <TabsList className="self-start">
-    <TabsTrigger value="buy">Buy PLST</TabsTrigger>
+    <TabsTrigger value="intro">Introduction</TabsTrigger>
+    <TabsTrigger value="collateral">Put Collateral</TabsTrigger>
+    <TabsTrigger value="borrow">Borrow PLST</TabsTrigger>
     <TabsTrigger value="bridge">Bridge Tokens</TabsTrigger>
   </TabsList>
-  <TabsContent value="buy" className="flex flex-col gap-4 max-w-2xl w-full">
+  <TabsContent value="intro" className="flex flex-col gap-3 max-w-3xl w-full">
+    <Header/>
+  </TabsContent>
+    <TabsContent value="collateral" className="flex flex-col gap-4 max-w-2xl w-full">
 
 <Card className=" w-full shadow-sm border-red-500 border shadow-black h-96">
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
@@ -43,7 +48,7 @@ export default function Home() {
 </div>
   </div>
     <div className="h-1/2 py-1 px-3 flex gap-3 flex-col">
-  <Label className="text-xl text-red-500">You Receive</Label>
+  <Label className="text-xl text-red-500">You Borrow (Max.)</Label>
 <div className="p-2 rounded-lg border-gray-300 border">
   <p className="text-red-500 font-semibold">120 PLST</p>
 </div>
@@ -51,6 +56,38 @@ export default function Home() {
 </Card>
 
 <Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-xl self-center w-full bg-red-500">Buy Stabilski (PLST)</Button>
+
+  </TabsContent>
+  <TabsContent value="borrow" className="flex flex-col gap-4 max-w-lg w-full">
+
+<Card className=" w-full shadow-sm border-red-500 border shadow-black h-96">
+  <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
+  <Label className="text-xl text-red-500">You Borrow</Label>
+<div className="flex items-center gap-4">
+  <Input type="number" min={0}  className="w-full"/>
+ <Select>
+  <SelectTrigger className="w-44">
+    <SelectValue placeholder="Chain Vaults" />
+  </SelectTrigger>
+  <SelectContent className="w-44 bg-white shadow-sm shadow-black rounded-lg">
+    <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
+    <SelectItem value="SOL">Polygon (MATIC)</SelectItem>
+    <SelectItem value="TERRA">BaseCoin (COIN)</SelectItem>
+  </SelectContent>
+</Select>
+</div>
+  </div>
+    <div className="h-1/2 py-1 px-3 items-center flex gap-3 flex-col">
+ <p className="text-red-500 text-2xl tracking">Your position is</p>
+
+<p>150%</p>
+
+<p>Collaterized</p>
+
+  </div>
+</Card>
+
+<Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Borrow Stabilski (PLST)</Button>
 
   </TabsContent>
   <TabsContent value="bridge" className="flex flex-col gap-4 max-w-xl w-full">
