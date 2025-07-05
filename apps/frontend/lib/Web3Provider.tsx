@@ -1,27 +1,22 @@
 'use client';
 import { WagmiProvider, createConfig, http } from "wagmi";
-import { arbitrumSepolia, baseSepolia, polygonAmoy, sepolia } from "wagmi/chains";
+import {  monadTestnet, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConnectKitProvider, getDefaultConfig } from "connectkit";
 
 const config = createConfig(
   getDefaultConfig({
     // Your dApps chains
-    chains: [sepolia, baseSepolia, polygonAmoy, arbitrumSepolia],
+    chains: [sepolia, monadTestnet],
     transports: {
       // RPC URL for each chain
       [sepolia.id]: http(
         `https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`,
       ),
-      [baseSepolia.id]: http(
+      [monadTestnet.id]: http(
         `https://base-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`,
       ),
-      [polygonAmoy.id]: http(
-        `https://polygon-mumbai.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`,
-      ),
-      [arbitrumSepolia.id]: http(
-        `https://arbitrum-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`,
-      )
+    
     },
 
     // Required API Keys

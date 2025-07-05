@@ -145,7 +145,7 @@ export default function Home() {
 </Tabs>
 
 <div className="flex flex-col  w-full p-1 items-center sm:flex-row  gap-2 justify-center">
-<div className="flex flex-wrap  justify-between items-center gap-3 max-w-3xl w-full">
+<div className="flex flex-wrap   m  justify-between items-center gap-3 max-w-3xl w-full">
     <div className="flex items-center gap-2">
     <Image src={StabilskiStableCoin} width={64} height={64} alt="logo"  className="w-16 h-16"/>
     <p className="text-white">Stabilski.xyz</p>
