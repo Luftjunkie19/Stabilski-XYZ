@@ -1,14 +1,66 @@
-## STABILSKI, Polish Złoty StableCoin
+## Foundry
 
-**STABILSKI is a protocol which enables you to deposit a collateral for PLST Tokens. This solution will be (Before work-started time 27.06.2025) cross-chain which means people will be able to transfer this token between different chains, not only one specific chain.**
+**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
-![](https://pbs.twimg.com/profile_banners/1937397911677206529/1750747440/1500x500)
+Foundry consists of:
 
-The Protocol will consist out of 6 files:
+-   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
+-   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
+-   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
+-   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
-- **AccessControlManager.sol**: Role-based access (admin, oracle, liquidator, bridge)
-- **AutomationManager.sol**: Chainlink Automation to trigger updates and liquidation checks
-- **CollateralManager.sol**: Handles deposits, redemptions, minting, and liquidations
-- **CrossChainBridge.sol**: Mock bridge for burn/mint mechanics between chains
-- **OracleAdapter.sol**: Integrates Chainlink Functions to get USD/PLN price
-- **StabilskiToken**: ERC20 mintable/burnable stablecoin (PLST)
+## Documentation
+
+https://book.getfoundry.sh/
+
+## Usage
+
+### Build
+
+```shell
+$ forge build
+```
+
+### Test
+
+```shell
+$ forge test
+```
+
+### Format
+
+```shell
+$ forge fmt
+```
+
+### Gas Snapshots
+
+```shell
+$ forge snapshot
+```
+
+### Anvil
+
+```shell
+$ anvil
+```
+
+### Deploy
+
+```shell
+$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+```
+
+### Cast
+
+```shell
+$ cast <subcommand>
+```
+
+### Help
+
+```shell
+$ forge --help
+$ anvil --help
+$ cast --help
+```

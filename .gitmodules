@@ -19,3 +19,6 @@
 [submodule "apps/smart-contracts/lib/chainlink-ccip"]
 	path = apps/smart-contracts/lib/chainlink-ccip
 	url = https://github.com/smartcontractkit/chainlink-ccip
+[submodule "apps/smart-contracts/lib/forge-std"]
+	path = apps/smart-contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
