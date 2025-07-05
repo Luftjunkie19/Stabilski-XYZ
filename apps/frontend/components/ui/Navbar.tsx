@@ -5,11 +5,6 @@ import React from 'react'
 import navbarLogo from "../../public/Logox192.png"
 import { ConnectKitButton } from 'connectkit'
 
-
-
-
-
-
 function Navbar() {
   return (
     <div
@@ -27,7 +22,7 @@ justify-center
      Stabilski.xyz
    </p>
 </div>
-<ConnectKitButton/>
+<ConnectKitButton  />
 </div>
 
     </div>

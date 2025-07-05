@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SelectContent } from "@radix-ui/react-select";
 import Image from "next/image";
 import StabilskiStableCoin from '@/public/Logox192.png'
+import StabilskiStableCoin2 from '@/public/Logox512.png'
 import {FaXTwitter, FaTelegram, FaDiscord, FaGithub } from "react-icons/fa6"
 import Link from "next/link";
 
@@ -15,20 +16,27 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div className="h-screen flex justify-between items-center w-full flex-col">
-
-
-
-    <Tabs defaultValue="buy" className="max-w-5xl flex justify-center items-center mx-auto mt-8 w-full p-3">
-  <TabsList className="self-start">
+    <Tabs defaultValue="intro" className="max-w-5xl flex justify-center items-center mx-auto mt-8 w-full p-3">
+  <TabsList className="self-start overflow-x-auto w-full">
     <TabsTrigger value="intro">Introduction</TabsTrigger>
     <TabsTrigger value="collateral">Put Collateral</TabsTrigger>
     <TabsTrigger value="borrow">Borrow PLST</TabsTrigger>
     <TabsTrigger value="bridge">Bridge Tokens</TabsTrigger>
   </TabsList>
+
   <TabsContent value="intro" className="flex flex-col gap-3 max-w-3xl w-full">
     <Header/>
+    <div className="flex w-full justify-between items-center flex-col sm:flex-row">
+
+<Image src={StabilskiStableCoin2} width={240} height={240} alt="logo" className="w-60 h-60"/>
+<div className="flex flex-col gap-2 max-w-md w-full">
+  <p className="text-3xl text-shadow-lg shadow-black font-bold text-red-500">Stabilski.XYZ</p>
+  <p>It is a Polish StableCoin Lending Protocol, where you truly experience the Polish Złoty Power. </p>
+</div>
+    </div>
   </TabsContent>
-    <TabsContent value="collateral" className="flex flex-col gap-4 max-w-2xl w-full">
+
+    <TabsContent value="collateral" className="flex flex-col gap-4 max-w-xl w-full">
 
 <Card className=" w-full shadow-sm border-red-500 border shadow-black h-96">
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
@@ -55,10 +63,11 @@ export default function Home() {
   </div>
 </Card>
 
-<Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-xl self-center w-full bg-red-500">Buy Stabilski (PLST)</Button>
+<Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Put Collateral</Button>
 
   </TabsContent>
-  <TabsContent value="borrow" className="flex flex-col gap-4 max-w-lg w-full">
+
+  <TabsContent value="borrow" className="flex flex-col gap-4 max-w-xl w-full">
 
 <Card className=" w-full shadow-sm border-red-500 border shadow-black h-96">
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
@@ -90,6 +99,7 @@ export default function Home() {
 <Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Borrow Stabilski (PLST)</Button>
 
   </TabsContent>
+
   <TabsContent value="bridge" className="flex flex-col gap-4 max-w-xl w-full">
     <Card className=" w-full shadow-sm border-red-500 border shadow-black h-96">
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
@@ -130,12 +140,12 @@ export default function Home() {
 
     </Card>
 
-    <Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-lg self-center w-full bg-red-500">Bridge Tokens</Button>
+    <Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Bridge Tokens</Button>
   </TabsContent>
 </Tabs>
 
-<div className="flex w-full p-1 items-center  gap-2 justify-center">
-<div className="flex justify-between items-center gap-3 max-w-3xl w-full">
+<div className="flex flex-col  w-full p-1 items-center sm:flex-row  gap-2 justify-center">
+<div className="flex flex-wrap  justify-between items-center gap-3 max-w-3xl w-full">
     <div className="flex items-center gap-2">
     <Image src={StabilskiStableCoin} width={64} height={64} alt="logo"  className="w-16 h-16"/>
     <p className="text-white">Stabilski.xyz</p>
