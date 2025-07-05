@@ -31,9 +31,9 @@ modifier onlyController() {
     }
     _;
 }
-    constructor(address _controller) ERC20("Stabilski Token", "PLST") Ownable(_controller) {
-        grantRole(DEFAULT_ADMIN_ROLE, _controller); // Grant admin role to controller
-        grantRole(CONTROLLER_ROLE, _controller); // Grant controller role to controller
+    constructor() ERC20("Stabilski Token", "PLST") Ownable(msg.sender) {
+        grantRole(DEFAULT_ADMIN_ROLE, msg.sender); // Grant admin role to controller
+        grantRole(CONTROLLER_ROLE, msg.sender); // Grant controller role to controller
     }
 
 
@@ -52,12 +52,12 @@ modifier onlyController() {
     }
     
 
-function grantControllerRole(bytes32 role, address account) external onlyOwner {
-    _grantRole(role, account);
+function grantControllerRole(address account) external onlyOwner {
+    _grantRole(CONTROLLER_ROLE, account);
     }
 
-function revokeControllerRole(bytes32 role, address account) external onlyOwner {
-    _revokeRole(role, account);
+function revokeControllerRole(address account) external onlyOwner {
+    _revokeRole(CONTROLLER_ROLE, account);
     }
 
 }

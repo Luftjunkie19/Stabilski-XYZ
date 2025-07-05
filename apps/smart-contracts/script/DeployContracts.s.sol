@@ -7,17 +7,25 @@ import {VaultManager} from "../src/VaultManager.sol";
 import {StabilskiToken} from "../src/StabilskiToken.sol";
 import {USDPLNOracle} from "../src/USDPLNOracle.sol";
 import {CollateralManager} from "../src/CollateralManager.sol";
-import {BurnMintTokenPool} from "../src/pools/BurnMintTokenPool.sol";
+import {StabilskiTokenPool} from "../src/pools/StabilskiTokenPool.sol";
 
 contract DeployContracts is Script {
 
-function run() public returns (VaultManager, StabilskiToken, USDPLNOracle, CollateralManager, BurnMintTokenPool) {
+function run() public returns (VaultManager, StabilskiToken, USDPLNOracle, CollateralManager, StabilskiTokenPool) {
     // Deploy contracts
-    CollateralManager collateralManager = new CollateralManager();
-    USDPLNOracle usdPlnOracle = new USDPLNOracle();
     StabilskiToken stabilskiToken = new StabilskiToken();
-    VaultManager vaultManager = new VaultManager();
-    BurnMintTokenPool burnMintTokenPool = new BurnMintTokenPool();
+    USDPLNOracle usdPlnOracle = new USDPLNOracle();
+    CollateralManager collateralManager = new CollateralManager();
+    VaultManager vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager));
+    stabilskiToken.grantControllerRole(address(vaultManager));
+    stabilskiToken.transferOwnership(address(vaultManager));
+    StabilskiTokenPool stabilskiTokenPool = new StabilskiTokenPool(
+        IERC20(address(stabilskiToken)), 
+        18, 
+    [0xd],
+    /* proxy rpc address */ 
+    address(vaultManager),
+ /* router rpc address */ address(vaultManager));
 
 }
 
