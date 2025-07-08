@@ -99,7 +99,6 @@ export default function Home() {
 <Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Borrow Stabilski (PLST)</Button>
 
   </TabsContent>
-
   <TabsContent value="bridge" className="flex flex-col gap-4 max-w-xl w-full">
     <Card className=" w-full shadow-sm border-red-500 border shadow-black h-96">
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
@@ -143,7 +142,6 @@ export default function Home() {
     <Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Bridge Tokens</Button>
   </TabsContent>
 </Tabs>
-
 <div className="flex flex-col  w-full p-1 items-center sm:flex-row  gap-2 justify-center">
 <div className="flex flex-wrap   m  justify-between items-center gap-3 max-w-3xl w-full">
     <div className="flex items-center gap-2">

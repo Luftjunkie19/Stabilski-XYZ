@@ -9,7 +9,6 @@ error InvalidMinCollateralRatio();
 error CollateralAlreadyExists();
 error TokenPriceNotAvailable();
 
-
 struct CollateralInfo{
     address priceFeed;
     uint256 minCollateralRatio;
@@ -17,7 +16,26 @@ struct CollateralInfo{
 }
 
 mapping(address => CollateralInfo) public collateralTypes;
+address[] public collateralTokens;
+constructor(address[] memory _collateralTokens, address[] memory _priceFeeds, uint256[] memory _minCollateralRatios) {
 
+    for(uint256 i = 0; i < _collateralTokens.length; i++) {
+        collateralTypes[_collateralTokens[i]] = CollateralInfo({
+            priceFeed: _priceFeeds[i],
+            minCollateralRatio: _minCollateralRatios[i],
+            isActive: true
+        });
+        collateralTokens.push(_collateralTokens[i]);
+    }
+
+}
+
+modifier onlyActiveCollateral(address token) {
+    if (!collateralTypes[token].isActive || collateralTypes[token].priceFeed == address(0)) {
+        revert TokenPriceNotAvailable();
+    }
+    _;
+}
 
 function addCollateralType(
     address collateralToken,
@@ -82,8 +100,8 @@ function toggleCollateral(address token) external{
     collateral.isActive = !collateral.isActive;
 }
 
-function getTokenPrice(address token) public view returns (uint256) {
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(token);
+function getTokenPrice(address token) public view onlyActiveCollateral(token) returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(collateralTypes[token].priceFeed);
            (
             /* uint80 roundId */,
             int256 answer,
@@ -91,15 +109,17 @@ function getTokenPrice(address token) public view returns (uint256) {
             /*uint256 updatedAt*/,
             /*uint80 answeredInRound*/
         ) = priceFeed.latestRoundData();
-
-        return uint256(answer);
+uint8 decimals = priceFeed.decimals();
+        return uint256(answer) * 1e18 / (10 ** decimals);
     }
 
-function getCollateralInfo(address token) public view returns (address, uint256, bool) {
+function getCollateralInfo(address token) public view onlyActiveCollateral(token) returns (address, uint256, bool) {
     return (collateralTypes[token].priceFeed, collateralTypes[token].minCollateralRatio, collateralTypes[token].isActive);
 }
 
-
+function getCollateralTokens() public view returns (address[] memory) {
+    return collateralTokens;
+}
 
 }
 

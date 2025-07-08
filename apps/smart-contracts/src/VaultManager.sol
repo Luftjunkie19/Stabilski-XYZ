@@ -16,6 +16,7 @@ contract VaultManager is ReentrancyGuard {
     error InvalidVault();
     error NotEnoughCollateral();
     error NotEnoughDebt();
+    error InvalidCollateralToken();
     error VaultAlreadyExists();
     error UnderCollateralized();
     error NotEnoughPLST();
@@ -30,11 +31,12 @@ contract VaultManager is ReentrancyGuard {
 
   struct Vault {
   uint256 collateralAmount;
-  address collateralType;
+  address collateralTypeToken;
   uint256 debt;
 }
 
-    mapping(address => Vault) public vaults;
+// User ==> Token ==> Vault
+    mapping(address => mapping(address => Vault)) public vaults;
     address[] vaultOwners;
   
 
@@ -50,44 +52,49 @@ modifier onlyWhitelistedCollateral(address tokenAddress) {
     _;
 }
 
+modifier NoEnoughAmount(uint256 tokenAmount, address tokenAddress) {
+    if(tokenAmount == 0 || IERC20(tokenAddress).balanceOf(msg.sender) < tokenAmount) {
+        revert NotEnoughCollateral();
+    }
+    _;
+}
+
+modifier noCollateralAmount(address tokenAddress) {
+        if(vaults[msg.sender][tokenAddress].collateralAmount > 0) {
+    revert VaultAlreadyExists();
+}
+_;
+}
+
 constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralManager) {
     usdPlnOracle = USDPLNOracleInterface(_usdPlnOracle);
     stabilskiToken = StabilskiTokenInterface(_stabilskiToken);
     collateralManager = CollateralManagerInterface(_collateralManager);
 }
 
-function depositCollateral(address token, uint256 amount) external nonReentrant onlyWhitelistedCollateral(token) {
+function depositCollateral(address token, uint256 amount) external nonReentrant onlyWhitelistedCollateral(token) NoEnoughAmount(amount, token) noCollateralAmount(token) {
 (address priceFeed,,) = collateralManager.getCollateralInfo(token);
 
-    if (amount == 0) {
-        revert NotEnoughCollateral();
-    }
-
-    if(vaults[msg.sender].collateralAmount > 0) {
-    revert VaultAlreadyExists();
-}
-
     if(priceFeed == address(0)) {
-        revert InvalidVault();
+        revert InvalidCollateralToken();
     }
     
 
-
     IERC20(token).transferFrom(msg.sender, address(this), amount);
-    vaults[msg.sender].collateralAmount += amount;
-    vaults[msg.sender].collateralType = token;
+    vaults[msg.sender][token].collateralAmount += amount;
+    vaults[msg.sender][token].collateralTypeToken = token;
     vaultOwners.push(msg.sender);
 
     emit CollateralDeposited(msg.sender, token, amount);
 
 }
 
-function mintPLST(uint256 amount) external nonReentrant {
+function mintPLST(address collateralToken, uint256 amount) external nonReentrant NoEnoughAmount(amount, collateralToken){
+    (address priceFeed, uint256 minCollateralRatio, bool enabled) = collateralManager.getCollateralInfo(vaults[msg.sender][collateralToken].collateralTypeToken);
 
-    uint256 collateralAmountInUSD = (vaults[msg.sender].collateralAmount * getCollateralPrice(vaults[msg.sender].collateralType)) / 1e18;
+    uint256 collateralAmountInUSD = (vaults[msg.sender][collateralToken].collateralAmount * collateralManager.getTokenPrice(priceFeed)) / 1e18;
     uint256 collateralAmountInPLN = (collateralAmountInUSD * usdPlnOracle.getPLNPrice()) / 1e4;
 
-    (address priceFeed, uint256 minCollateralRatio, bool enabled) = collateralManager.getCollateralInfo(vaults[msg.sender].collateralType);
 
     uint256 maxAllowedAmount = collateralAmountInPLN * minCollateralRatio / 1e18;
 
@@ -105,33 +112,33 @@ if(priceFeed == address(0)) {
     }
 
    stabilskiToken.mint(msg.sender, amount);
-   vaults[msg.sender].debt += amount;
+   vaults[msg.sender][collateralToken].debt += amount;
 
 emit StabilskiTokenMinted(msg.sender, amount);
 
 }
 
-function repayPLST(uint256 amount) external nonReentrant {
+function repayPLST(address collateralToken, uint256 amount) external nonReentrant {
     if(amount == 0 || amount > stabilskiToken.balanceOf(msg.sender)) {
         revert NotEnoughPLST();
     }
 
-    if(vaults[msg.sender].debt < amount) {
+    if(vaults[msg.sender][collateralToken].debt < amount) {
         revert NotEnoughDebt();
     }
 
-    vaults[msg.sender].debt -= amount;
+    vaults[msg.sender][collateralToken].debt -= amount;
     stabilskiToken.burn(msg.sender, amount);
     emit DebtRepaid(msg.sender, amount, address(stabilskiToken));
 }
 
 function withdrawCollateral(address token, uint256 amount) external nonReentrant onlyWhitelistedCollateral(token) {
 
-    if(amount == 0 || amount > vaults[msg.sender].collateralAmount) {
+    if(amount == 0 || amount > vaults[msg.sender][token].collateralAmount) {
         revert NotEnoughCollateral();
     }
 
-    vaults[msg.sender].collateralAmount -= amount;
+    vaults[msg.sender][token].collateralAmount -= amount;
     IERC20(token).transferFrom(address(this), msg.sender, amount);
 
     emit CollateralWithdrawn(msg.sender, token, amount);
@@ -139,29 +146,29 @@ function withdrawCollateral(address token, uint256 amount) external nonReentrant
 
 
 // The function is supposed to liquidate the vault
-function liquidateVault(address vaultOwner) external nonReentrant {
+function liquidateVault(address vaultOwner, address token) external nonReentrant {
 
-    if(vaults[vaultOwner].debt == 0) {
+    if(vaults[vaultOwner][token].debt == 0) {
         revert InvalidVault();
     }
 
-    if(vaults[vaultOwner].collateralAmount == 0) {
+    if(vaults[vaultOwner][token].collateralAmount == 0) {
         revert InvalidVault();
     }
 
-if(vaults[vaultOwner].collateralType == address(0)) {
+if(vaults[vaultOwner][token].collateralTypeToken == address(0)) {
         revert InvalidVault();
     }
 
-    (, uint256 minCollateralRatio,) = collateralManager.getCollateralInfo(vaults[vaultOwner].collateralType);
+    (, uint256 minCollateralRatio,) = collateralManager.getCollateralInfo(vaults[vaultOwner][token].collateralTypeToken);
 
-  uint256 collateralAmountInUSD = vaults[vaultOwner].collateralAmount * getCollateralPrice(vaults[vaultOwner].collateralType) / 1e18;
+  uint256 collateralAmountInUSD = vaults[vaultOwner][token].collateralAmount * collateralManager.getTokenPrice(vaults[vaultOwner][token].collateralTypeToken) / 1e18;
 
   uint256 collateralAmountInPLN = collateralAmountInUSD * usdPlnOracle.getPLNPrice() / 1e4;
 
   uint256 maxAllowedAmount = collateralAmountInPLN * minCollateralRatio / 1e18;
 
-  uint256 debtAmount = vaults[vaultOwner].debt;
+  uint256 debtAmount = vaults[vaultOwner][token].debt;
 
    if (debtAmount <= maxAllowedAmount) {
        revert NotEnoughDebt();
@@ -174,52 +181,42 @@ if(vaults[vaultOwner].collateralType == address(0)) {
 uint256 debtInUSD = (debtAmount * 1e4) / usdPlnOracle.getPLNPrice(); // scale up first!
 
 // Step 2: Convert USD to collateral
-uint256 collateralPrice = getCollateralPrice(vaults[vaultOwner].collateralType); // in USD * 1e18
+uint256 collateralPrice = collateralManager.getTokenPrice(vaults[vaultOwner][token].collateralTypeToken); // in USD * 1e18
 
 uint256 debtAmountFromCollateral = (debtInUSD * 1e18) / collateralPrice;
 
  // Calculate bounty (e.g. 5%)
     uint256 bountyCollateral = (debtAmountFromCollateral * 5) / 100;
 
-    if(debtAmountFromCollateral + bountyCollateral > vaults[vaultOwner].collateralAmount) {
+    if(debtAmountFromCollateral + bountyCollateral > vaults[vaultOwner][token].collateralAmount) {
         revert NotEnoughCollateral();
     }
 
-    IERC20(vaults[vaultOwner].collateralType).transfer(msg.sender, debtAmountFromCollateral + bountyCollateral);
+    IERC20(vaults[vaultOwner][token].collateralTypeToken).transfer(msg.sender, debtAmountFromCollateral + bountyCollateral);
     
 stabilskiToken.burn(vaultOwner, debtAmount);
 
-  delete vaults[vaultOwner];
+  delete vaults[vaultOwner][token];
   
-  emit VaultLiquidated(vaultOwner, msg.sender, vaults[vaultOwner].debt, bountyCollateral);
+  emit VaultLiquidated(vaultOwner, msg.sender, vaults[vaultOwner][token].debt, bountyCollateral);
 
     
 }
 
-function getCollateralPrice(address token) public view returns (uint256) {
-(address priceFeed,,) = collateralManager.getCollateralInfo(token);
 
-AggregatorV3Interface priceFeedAgreagator = AggregatorV3Interface(priceFeed);
-(, int256 answer,,,) = priceFeedAgreagator.latestRoundData();
-uint8 decimals = priceFeedAgreagator.decimals();
-return uint256(answer) * 1e18 / (10 ** decimals);
-
-}
 
 
 function getVaultHealthFactor(address vaultOwner, address token) public view returns (uint256) {
 
-    if(vaults[vaultOwner].debt == 0 || vaults[vaultOwner].collateralAmount == 0 || vaults[vaultOwner].collateralType == address(0)) {
+    if(vaults[vaultOwner][token].debt == 0 || vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0)) {
         return 0;
     }
 
-
-
     (, uint256 minCollateralRatio,) = collateralManager.getCollateralInfo(token);
-    uint256 collateralAmountInUSD = vaults[vaultOwner].collateralAmount * getCollateralPrice(token) / 1e18;
+    uint256 collateralAmountInUSD = vaults[vaultOwner][token].collateralAmount * collateralManager.getTokenPrice(token) / 1e18;
     uint256 collateralAmountInPLN = collateralAmountInUSD * usdPlnOracle.getPLNPrice() / 1e4;
     uint256 maxAllowedAmount = collateralAmountInPLN * minCollateralRatio / 1e18;
-    uint256 debtAmount = vaults[vaultOwner].debt;
+    uint256 debtAmount = vaults[vaultOwner][token].debt;
     return (debtAmount / maxAllowedAmount) * 1e18;
 }
 }
