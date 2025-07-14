@@ -8,24 +8,31 @@ error InvalidPriceFeed();
 error InvalidMinCollateralRatio();
 error CollateralAlreadyExists();
 error TokenPriceNotAvailable();
+error NotAllowedChain();
 
 struct CollateralInfo{
     address priceFeed;
     uint256 minCollateralRatio;
     bool isActive;
+    uint256 liquidationBonus;
+    uint256 punishment;
 }
-
+// Token ==> CollateralInfo
 mapping(address => CollateralInfo) public collateralTypes;
-address[] public collateralTokens;
-constructor(address[] memory _collateralTokens, address[] memory _priceFeeds, uint256[] memory _minCollateralRatios) {
 
-    for(uint256 i = 0; i < _collateralTokens.length; i++) {
+// Chain ==> CollateralTokens
+mapping(uint256=>address[]) public collateralTokens;
+constructor(address[] memory _collateralTokens, address[] memory _priceFeeds, uint256[] memory _minCollateralRatios)  {
+
+ for(uint256 i = 0; i < _collateralTokens.length; i++) {
         collateralTypes[_collateralTokens[i]] = CollateralInfo({
             priceFeed: _priceFeeds[i],
             minCollateralRatio: _minCollateralRatios[i],
-            isActive: true
+            isActive: true,
+            liquidationBonus: 5,
+            punishment: 3
         });
-        collateralTokens.push(_collateralTokens[i]);
+        collateralTokens[block.chainid].push(_collateralTokens[i]);
     }
 
 }
@@ -37,67 +44,55 @@ modifier onlyActiveCollateral(address token) {
     _;
 }
 
+modifier onlyAllowedChains() {
+   if(block.chainid != 11155111 && block.chainid != 421614){
+        revert NotAllowedChain();
+    }
+    _;
+}
+
+modifier onlyExistingCollateral(address token){
+if(collateralTypes[token].priceFeed == address(0) || collateralTypes[token].minCollateralRatio == 0) {
+    revert InvalidCollateralToken();
+}
+_;
+}
+
+
+
 function addCollateralType(
     address collateralToken,
     address priceFeed,
-    uint256 minCollateralRatio
+    uint256 minCollateralRatio,
+    uint256 liquidationBonus,
+    uint256 punishment
 ) external {
     collateralTypes[collateralToken] = CollateralInfo({
         priceFeed: priceFeed,
         minCollateralRatio: minCollateralRatio,
-        isActive: true
+        isActive: true,
+         liquidationBonus: liquidationBonus,
+            punishment: punishment
     });
-    }
-
-function updateFeed(address token, address newPriceFeed, uint256 newMinCollateralRatio) external {
-  
-    if (collateralTypes[token].priceFeed == address(0)) {
-        revert InvalidCollateralToken();
-    }
-    if (collateralTypes[token].minCollateralRatio == 0) {
-        revert InvalidMinCollateralRatio();
-    }
-    if (!collateralTypes[token].isActive) {
-        revert CollateralAlreadyExists();
-    }
-    if (newPriceFeed == address(0)) {
-        revert InvalidPriceFeed();
-    }
-
-    collateralTypes[token] = CollateralInfo({
-        priceFeed: newPriceFeed,
-        minCollateralRatio: newMinCollateralRatio,
-        isActive: true});
     }
 
 function updateCollateral(
     address collateralToken,
     address priceFeed,
     uint256 minCollateralRatio
-) external {
-    if (collateralToken == address(0)) {
-        revert InvalidCollateralToken();
-    }
-    if (priceFeed == address(0)) {
-        revert InvalidPriceFeed();
-    }
-    if (minCollateralRatio == 0) {
-        revert InvalidMinCollateralRatio();
-    }
+) external onlyExistingCollateral(collateralToken) {
+   
 
-    collateralTypes[collateralToken] = CollateralInfo({
-        priceFeed: priceFeed,
-        minCollateralRatio: minCollateralRatio,
-        isActive: true
-    });
+    collateralTypes[collateralToken].minCollateralRatio = minCollateralRatio;
+    collateralTypes[collateralToken].priceFeed = priceFeed;
 }
 
 function toggleCollateral(address token) external{
-    CollateralInfo storage collateral = collateralTypes[token];
-    if (collateral.priceFeed == address(0)) {
+    
+    if (collateralTypes[token].priceFeed == address(0)) {
         revert InvalidCollateralToken();
     }
-    collateral.isActive = !collateral.isActive;
+   collateralTypes[token].isActive = !collateralTypes[token].isActive;
 }
 
 function getTokenPrice(address token) public view onlyActiveCollateral(token) returns (uint256) {
@@ -113,13 +108,14 @@ uint8 decimals = priceFeed.decimals();
         return uint256(answer) * 1e18 / (10 ** decimals);
     }
 
-function getCollateralInfo(address token) public view onlyActiveCollateral(token) returns (address, uint256, bool) {
-    return (collateralTypes[token].priceFeed, collateralTypes[token].minCollateralRatio, collateralTypes[token].isActive);
+function getCollateralInfo(address token) public view onlyActiveCollateral(token) returns (address, uint256, bool, uint256, uint256) {
+    return (collateralTypes[token].priceFeed, collateralTypes[token].minCollateralRatio, collateralTypes[token].isActive, collateralTypes[token].liquidationBonus, collateralTypes[token].punishment);
 }
 
-function getCollateralTokens() public view returns (address[] memory) {
-    return collateralTokens;
+function getCollateralTokens() public view onlyAllowedChains returns (address[] memory) {
+    return collateralTokens[block.chainid];
 }
+
 
 }
 

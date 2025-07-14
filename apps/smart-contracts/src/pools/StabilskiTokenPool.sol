@@ -1,39 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {TokenPool} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/pools/TokenPool.sol";
+import {BurnMintTokenPool
+} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/pools/BurnMintTokenPool.sol";
 
 import {Pool}  from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/Pool.sol";
 import {RateLimiter} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/RateLimiter.sol";
 
 import {Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import {EnumerableSet} from "../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
-
 import {ConfirmedOwnerWithProposal} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/access/ConfirmedOwnerWithProposal.sol";
-import {
-    IERC20
-} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 import {StabilskiTokenInterface} from "../interfaces/StabilskiTokenInterface.sol";
 import {IRouter} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/interfaces/IRouter.sol";
 import {ERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
-contract StabilskiTokenPool is  TokenPool, Ownable {
+
+import {IBurnMintERC20} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/token/ERC20/IBurnMintERC20.sol";
+contract StabilskiTokenPool is  BurnMintTokenPool, Ownable {
 
 using RateLimiter for RateLimiter.TokenBucket;
 
-
+error NotOwnerSender();
 constructor(
-    IERC20 token,
+    address token,
     uint8 localTokenDecimals,
     address[] memory allowList,
     address rmnProxy,
     address router
-) TokenPool(token, allowList, rmnProxy, router) Ownable(router) {
-
+) BurnMintTokenPool(IBurnMintERC20(token), allowList, rmnProxy, router) Ownable(router) {
 }
 
 modifier onlyOwner() override(Ownable, ConfirmedOwnerWithProposal) {
-    require(Ownable.owner() == _msgSender(), "Ownable: caller is not the owner");
+if(Ownable.owner() != _msgSender()){
+    revert NotOwnerSender();
+}
     _;
 }
 
@@ -68,7 +68,8 @@ function transferOwnership(address newOwner) public override(ConfirmedOwnerWithP
   _transferOwnership(newOwner);
 }
 
-function releaseOrMint(Pool.ReleaseOrMintInV1 calldata releaseOrMintIn) external returns (Pool.ReleaseOrMintOutV1 memory){
+function releaseOrMint(Pool.ReleaseOrMintInV1 calldata releaseOrMintIn) external override
+ returns (Pool.ReleaseOrMintOutV1 memory){
   _validateReleaseOrMint(releaseOrMintIn);
 StabilskiTokenInterface(address(i_token)).mint(releaseOrMintIn.receiver, releaseOrMintIn.amount);
 
@@ -79,6 +80,9 @@ StabilskiTokenInterface(address(i_token)).mint(releaseOrMintIn.receiver, release
   });
 }
 
+function getRemoteToken() external view returns (address){
+    return address(i_token);
+}
 
 
 

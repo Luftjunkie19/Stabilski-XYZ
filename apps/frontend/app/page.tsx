@@ -9,29 +9,30 @@ import { SelectContent } from "@radix-ui/react-select";
 import Image from "next/image";
 import StabilskiStableCoin from '@/public/Logox192.png'
 import StabilskiStableCoin2 from '@/public/Logox512.png'
-import {FaXTwitter, FaTelegram, FaDiscord, FaGithub } from "react-icons/fa6"
+import {FaXTwitter, FaTelegram, FaDiscord, FaGithub, FaEthereum, FaBitcoin, FaLink } from "react-icons/fa6"
 import Link from "next/link";
+import { SiChainlink } from "react-icons/si";
 
 
 export default function Home() {
   return (
     <div className="h-screen flex justify-between items-center w-full flex-col">
-    <Tabs defaultValue="intro" className="max-w-5xl flex justify-center items-center mx-auto mt-8 w-full p-3">
-  <TabsList className="self-start overflow-x-auto w-full">
+    <Tabs defaultValue="intro" className="max-w-6xl flex justify-center items-center mx-auto mt-8 w-full p-3">
+  <TabsList className="self-start overflow-x-auto w-full max-w-xl ">
     <TabsTrigger value="intro">Introduction</TabsTrigger>
     <TabsTrigger value="collateral">Put Collateral</TabsTrigger>
     <TabsTrigger value="borrow">Borrow PLST</TabsTrigger>
     <TabsTrigger value="bridge">Bridge Tokens</TabsTrigger>
   </TabsList>
 
-  <TabsContent value="intro" className="flex flex-col gap-3 max-w-3xl w-full">
+  <TabsContent value="intro" className="flex flex-col gap-3 max-w-4xl w-full">
     <Header/>
     <div className="flex w-full justify-between items-center flex-col sm:flex-row">
 
 <Image src={StabilskiStableCoin2} width={240} height={240} alt="logo" className="w-60 h-60"/>
-<div className="flex flex-col gap-2 max-w-md w-full">
+<div className="flex flex-col gap-2 max-w-lg w-full">
   <p className="text-3xl text-shadow-lg shadow-black font-bold text-red-500">Stabilski.XYZ</p>
-  <p>It is a Polish StableCoin Lending Protocol, where you truly experience the Polish Złoty Power. </p>
+  <p>It is a Lending Protocol for the Polish Złoty, where you can exchange your WETH, LINK and WBTC tokens on Sepolia Ethereum Testnet for PLST (Stabilski Tokens). You can also exchange your LINK on Arbitrum Sepolia Testnet for PLST.</p>
 </div>
     </div>
   </TabsContent>
@@ -47,10 +48,10 @@ export default function Home() {
   <SelectTrigger className="w-44">
     <SelectValue placeholder="Token" />
   </SelectTrigger>
-  <SelectContent className="w-44 bg-white shadow-sm shadow-black rounded-lg">
-    <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
-    <SelectItem value="SOL">Polygon (MATIC)</SelectItem>
-    <SelectItem value="TERRA">BaseCoin (COIN)</SelectItem>
+  <SelectContent className="w-64 relative bg-white shadow-sm shadow-black rounded-lg">
+    <SelectItem value="WETH"> <FaEthereum className="text-zinc-500"/> Wrapped Ethereum (WETH)</SelectItem>
+    <SelectItem value="WBTC"><FaBitcoin className="text-orange-500"/> Wrapped Bitcoin (WBTC)</SelectItem>
+    <SelectItem value="LINK "><SiChainlink className="text-blue-500" /> Chainlink (LINK)</SelectItem>
   </SelectContent>
 </Select>
 </div>

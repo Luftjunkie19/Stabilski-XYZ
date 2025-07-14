@@ -8,3 +8,8 @@ remappings = [
     "@chainlink/contracts/=lib/chainlink-brownie-contracts/contracts/",
     "@openzeppelin/=lib/openzeppelin-contracts/"
 ]
+
+[rpc_endpoints]
+ETH_SEPOLIA_RPC_URL="https://eth-sepolia.g.alchemy.com/v2/bwlhh2eGj0MA1bXE6h31Z"
+
+ARB_SEPOLIA_RPC_URL="https://arb-sepolia.g.alchemy.com/v2/bwlhh2eGj0MA1bXE6h31Z"

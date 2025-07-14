@@ -13,6 +13,6 @@ function toggleCollateral(address token) external;
 
 function getTokenPrice(address token) external view returns(uint256);
 
-function getCollateralInfo(address token) external view returns (address, uint256, bool);
+function getCollateralInfo(address token) external view returns (address, uint256, bool, uint256, uint256);
 
 }

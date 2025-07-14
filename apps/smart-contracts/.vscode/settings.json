@@ -1,4 +1,7 @@
 {
+   
+    "solidity.defaultCompiler": "localNodeModule",
+
     "wake.compiler.solc.remappings": [
         "@chainlink/contracts/=lib/chainlink-brownie-contracts/contracts/",
         "@openzeppelin/=lib/openzeppelin-contracts/",

@@ -6,11 +6,13 @@ import {FunctionsRequest} from "../lib/chainlink-brownie-contracts/contracts/src
 import {AutomationCompatibleInterface} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/automation/AutomationCompatible.sol";
 contract USDPLNOracle is FunctionsClient, ConfirmedOwner, AutomationCompatibleInterface  {
 using FunctionsRequest for FunctionsRequest.Request;
+
+error InvalidUSDPLNRate();
   // State variables to store the last request ID, response, and error
     bytes32 public s_lastRequestId;
     bytes public s_lastResponse;
     bytes public s_lastError;
-
+    uint256 public s_lastFinalizationTimestamp;
     // Custom error type
     error UnexpectedRequestID(bytes32 requestId);
 
@@ -31,7 +33,7 @@ using FunctionsRequest for FunctionsRequest.Request;
     string private source = string(
         abi.encodePacked(
             "const apiResponse = await Functions.makeHttpRequest({ url: \"https://api.nbp.pl/api/exchangerates/rates/a/usd/?format=json\" });",
-            "if (apiResponse.error) { return Functions.encodeUint256(Math.round(0)); }",
+            "if (apiResponse.error) { throw new Error(apiResponse.error); }",
             "const { data } = apiResponse;",
             "return Functions.encodeUint256(Math.round(Number(data.rates[0].mid) * 10000));"
         )
@@ -49,6 +51,14 @@ constructor(address router, bytes32 _donID, uint64 _subscriptionId) FunctionsCli
     subscriptionId = _subscriptionId;
     s_subscriptionIds[_donID] = subscriptionId;
 }
+
+modifier onlyValidPLNUSDRate() {
+   if ((plnUsdRate < 1e4) ||  (block.timestamp - s_lastFinalizationTimestamp > interval * 2)) {
+        revert InvalidUSDPLNRate();
+    }
+    _;
+}
+
  function sendRequest() public returns (bytes32 requestId) {
         FunctionsRequest.Request memory req;
         req.initializeRequestForInlineJavaScript(source); 
@@ -59,8 +69,10 @@ constructor(address router, bytes32 _donID, uint64 _subscriptionId) FunctionsCli
             gasLimit,
             donID
         );
+        lastTimeStamp = block.timestamp;
         return s_lastRequestId;
     }
+
 
 
     function checkUpkeep(
@@ -71,7 +83,7 @@ constructor(address router, bytes32 _donID, uint64 _subscriptionId) FunctionsCli
         override
         returns (bool upkeepNeeded, bytes memory /* performData */)
     {
-        upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
+        upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;    
     }
 
  function performUpkeep(bytes calldata /* performData */) external override {
@@ -93,6 +105,7 @@ constructor(address router, bytes32 _donID, uint64 _subscriptionId) FunctionsCli
         s_lastResponse = response;
         plnUsdRate = abi.decode(response, (uint256));
         s_lastError = err;
+        s_lastFinalizationTimestamp = block.timestamp;
 
         // Emit an event to log the response
         emit Response(requestId, plnUsdRate, s_lastResponse, s_lastError);
@@ -102,7 +115,7 @@ function getTheSource() public view returns (string memory) {
     return source;
 }
 
-function getPLNPrice() public view returns (uint256) {
+function getPLNPrice() public view onlyValidPLNUSDRate returns  (uint256) {
     return plnUsdRate;
 }
 }
