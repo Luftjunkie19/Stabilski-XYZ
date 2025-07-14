@@ -1,5 +1,5 @@
 deploy-sepolia:
-	forge script script/DeployOracle.s.sol \
+	forge script script/DeployProductionContracts.s.sol \
 		--fork-url $(ETH_SEPOLIA_RPC_URL) \
 		--sender 0x9F724ab3520f6dD4Be3A093FdA9Ad8F45997291F \
 		--account primaryWallet \
@@ -11,7 +11,7 @@ deploy-sepolia:
 
 
 deploy-arbitrum:
-	forge script script/DeployOracle.s.sol \
+	forge script script/DeployProductionContracts.s.sol \
 		--fork-url $(ARB_SEPOLIA_RPC_URL) \
 		--sender 0x9F724ab3520f6dD4Be3A093FdA9Ad8F45997291F \
 		--account primaryWallet \

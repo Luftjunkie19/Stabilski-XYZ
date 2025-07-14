@@ -1,0 +1,36 @@
+export const usdplnOracleEthSepoliaAddress="0x7D4429396f5C0C6489C8992759f12eF2ff9E7BfC";
+
+export const usdplnOracleArbitrumSepoliaAddress="0xcd4357dA774aDDD3a3Ef4defA3FA6209607F61F5";
+
+export const usdplnOracleEthSepoliaABI=[
+{"type":"constructor","inputs":[{"name":"router","type":"address","internalType":"address"},{"name":"_donID","type":"bytes32","internalType":"bytes32"},
+{"name":"_subscriptionId","type":"uint64","internalType":"uint64"}],"stateMutability":"nonpayable"},
+{"type":"function","name":"acceptOwnership","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"checkUpkeep","inputs":[{"name":"","type":"bytes","internalType":"bytes"}],
+"outputs":[{"name":"upkeepNeeded","type":"bool","internalType":"bool"},{"name":"","type":"bytes","internalType":"bytes"}],"stateMutability":"view"},
+{"type":"function","name":"getPLNPrice","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+{"type":"function","name":"getTheSource","inputs":[],"outputs":[{"name":"","type":"string","internalType":"string"}],"stateMutability":"view"},
+{"type":"function","name":"handleOracleFulfillment",
+"inputs":[{"name":"requestId","type":"bytes32","internalType":"bytes32"},{"name":"response","type":"bytes","internalType":"bytes"},
+{"name":"err","type":"bytes","internalType":"bytes"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"interval","inputs":[],
+"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+{"type":"function","name":"lastTimeStamp","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+{"type":"function","name":"owner","inputs":[],"outputs":[{"name":"","type":"address","internalType":"address"}],"stateMutability":"view"},
+{"type":"function","name":"performUpkeep","inputs":[{"name":"","type":"bytes","internalType":"bytes"}],"outputs":[],"stateMutability":"nonpayable"},
+{"type":"function","name":"plnUsdRate","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+{"type":"function","name":"s_lastError","inputs":[],"outputs":[{"name":"","type":"bytes","internalType":"bytes"}],"stateMutability":"view"},
+{"type":"function","name":"s_lastFinalizationTimestamp","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+{"type":"function","name":"s_lastRequestId","inputs":[],"outputs":[{"name":"","type":"bytes32","internalType":"bytes32"}],"stateMutability":"view"},
+{"type":"function","name":"s_lastResponse","inputs":[],"outputs":[{"name":"","type":"bytes","internalType":"bytes"}],"stateMutability":"view"},
+{"type":"function","name":"s_subscriptionIds","inputs":[{"name":"donID","type":"bytes32","internalType":"bytes32"}],
+"outputs":[{"name":"subscriptionId","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+{"type":"function","name":"sendRequest","inputs":[],"outputs":[{"name":"requestId","type":"bytes32","internalType":"bytes32"}],"stateMutability":"nonpayable"},
+{"type":"function","name":"subscriptionId","inputs":[],"outputs":[{"name":"","type":"uint64","internalType":"uint64"}],"stateMutability":"view"},
+{"type":"function","name":"transferOwnership","inputs":[{"name":"to","type":"address","internalType":"address"}],"outputs":[],"stateMutability":"nonpayable"},
+{"type":"event","name":"OwnershipTransferRequested","inputs":[{"name":"from","type":"address","indexed":true,"internalType":"address"},{"name":"to","type":"address","indexed":true,"internalType":"address"}],"anonymous":false},
+{"type":"event","name":"OwnershipTransferred","inputs":[{"name":"from","type":"address","indexed":true,"internalType":"address"},{"name":"to","type":"address","indexed":true,"internalType":"address"}],"anonymous":false},
+{"type":"event","name":"RequestFulfilled","inputs":[{"name":"id","type":"bytes32","indexed":true,"internalType":"bytes32"}],"anonymous":false},
+{"type":"event","name":"RequestSent","inputs":[{"name":"id","type":"bytes32","indexed":true,"internalType":"bytes32"}],"anonymous":false},
+{"type":"event","name":"Response","inputs":[{"name":"requestId","type":"bytes32","indexed":true,"internalType":"bytes32"},{"name":"plnUsdRate","type":"uint256","indexed":false,"internalType":"uint256"},
+{"name":"response","type":"bytes","indexed":false,"internalType":"bytes"},{"name":"err","type":"bytes","indexed":false,"internalType":"bytes"}],"anonymous":false},{"type":"error","name":"EmptySource","inputs":[]},
+{"type":"error","name":"InvalidUSDPLNRate","inputs":[]},{"type":"error","name":"NoInlineSecrets","inputs":[]},{"type":"error","name":"OnlyRouterCanFulfill","inputs":[]},
+{"type":"error","name":"UnexpectedRequestID","inputs":[{"name":"requestId","type":"bytes32","internalType":"bytes32"}]}]

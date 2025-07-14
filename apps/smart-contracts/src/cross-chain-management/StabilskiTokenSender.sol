@@ -26,7 +26,7 @@ function bridgeTokens(
         address destReceiver, // address on destination chain
         uint256 amount) external payable {
 
-        StabilskiTokenInterface(pool.getRemoteToken()).approve(address(this), amount);
+        StabilskiTokenInterface(pool.getRemoteToken()).approve(address(router), amount);
 // Create LockOrBurnInV1 struct
         Pool.LockOrBurnInV1 memory burnParams = Pool.LockOrBurnInV1({
             originalSender: msg.sender,
@@ -58,7 +58,9 @@ function bridgeTokens(
         uint256 fees = router.getFee(destinationChainSelector, message);
         if (msg.value < fees) revert InsufficientFunds();
 
-StabilskiTokenInterface(destinationToken).approve(address(router), amount);
+StabilskiTokenInterface(pool.getRemoteToken()).approve(address(pool), amount);
+
+
         // Send via CCIP
         router.ccipSend{value: fees}(destinationChainSelector, message);
 }

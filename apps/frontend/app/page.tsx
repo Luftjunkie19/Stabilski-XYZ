@@ -9,7 +9,7 @@ import { SelectContent } from "@radix-ui/react-select";
 import Image from "next/image";
 import StabilskiStableCoin from '@/public/Logox192.png'
 import StabilskiStableCoin2 from '@/public/Logox512.png'
-import {FaXTwitter, FaTelegram, FaDiscord, FaGithub, FaEthereum, FaBitcoin, FaLink } from "react-icons/fa6"
+import {FaXTwitter, FaTelegram, FaDiscord, FaGithub, FaEthereum, FaBitcoin } from "react-icons/fa6"
 import Link from "next/link";
 import { SiChainlink } from "react-icons/si";
 

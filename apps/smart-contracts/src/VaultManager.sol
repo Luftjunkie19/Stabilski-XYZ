@@ -248,22 +248,6 @@ if (debtAmount == 0) return type(uint256).max;
     return  (collateralAmountInPLN / debtAmount) * decimalPointsNormalizer;
 }
 
-function getFlawedHealthFactor(address vaultOwner, address token) public view returns (uint256) {
-    
-    if(vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0)) {
-        return 0;
-    }
-    
-    uint256 collateralAmountInUSD = vaults[vaultOwner][token].collateralAmount * collateralManager.getTokenPrice(token) / decimalPointsNormalizer;
-    uint256 collateralAmountInPLN = ((collateralAmountInUSD * usdPlnOracle.getPLNPrice() / decimalPointsForUsdPlnRate) * 65) / 100;
-
-    uint256 debtAmount = vaults[vaultOwner][token].debt;
-
-if (debtAmount == 0) return type(uint256).max;
-
-    return  (collateralAmountInPLN / debtAmount) * decimalPointsNormalizer;
-}
-
 
 function getIsHealthyAfterWithdrawal(uint256 amount, address token) public view returns (bool) {
      uint256 collateralAmountAfterWithdrawal = vaults[msg.sender][token].collateralAmount - amount;
@@ -283,7 +267,7 @@ function getIsHealthyAfterWithdrawal(uint256 amount, address token) public view 
 
 
 function isLiquidatable(address vaultOwner, address token) public view returns (bool) {
-    uint256 healthFactor = getFlawedHealthFactor(vaultOwner, token);
+    uint256 healthFactor = getVaultHealthFactor(vaultOwner, token);
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
     
     // Apply a 15% liquidation threshold buffer
