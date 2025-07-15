@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { TabsContent } from './ui/tabs'
 import { Label } from './ui/label'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select'
@@ -9,18 +9,18 @@ import { SiChainlink } from 'react-icons/si'
 import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { Input } from './ui/input'
-import { useAccount, useReadContracts, useWriteContract } from 'wagmi'
+import { useAccount, useReadContract, useReadContracts, useWriteContract } from 'wagmi'
 import { ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 
 import { ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/smart-contracts-abi/VaultManager';
 import {  stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/smart-contracts-abi/CollateralManager';
-import { readContract } from 'viem/actions';
+import { usdplnOracleABI, usdplnOracleEthSepoliaAddress } from '@/smart-contracts-abi/USDPLNOracle';
 
 
 
 function ColltateralTab() {
   const [amount, setAmount] = useState<number>(0);
-  const [token, setToken] = useState<`0x${string}`>();
+  const [token, setToken] = useState<`0x${string}` | undefined>(undefined);
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
     const {chainId, address}=useAccount();
 
@@ -28,6 +28,7 @@ function ColltateralTab() {
 
     });
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const arrayOfContracts=[
    {
          'abi':SEPOLIA_ETH_WBTC_ABI,
@@ -76,7 +77,7 @@ function ColltateralTab() {
     }
     ]});
 
-      const {data:collateralData}=useReadContracts({contracts:[
+      const {data:collateralTokenPriceData}=useReadContracts({contracts:[
    {
          'abi':stabilskiTokenCollateralManagerAbi,
         'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
@@ -100,6 +101,80 @@ function ColltateralTab() {
     }
     ]});
 
+         const {data:collateralData}=useReadContracts({contracts:[
+   {
+         'abi':stabilskiTokenCollateralManagerAbi,
+        'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
+        'functionName':'getCollateralInfo',
+        'args':[SEPOLIA_ETH_WBTC_ADDR],
+        chainId:SEPOLIA_ETH_CHAINID
+    },
+        {
+         'abi':stabilskiTokenCollateralManagerAbi,
+        'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
+        'functionName':'getCollateralInfo',
+        'args':[SEPOLIA_ETH_WETH_ADDR],
+        chainId:SEPOLIA_ETH_CHAINID
+    },
+        {
+         'abi':stabilskiTokenCollateralManagerAbi,
+        'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
+        'functionName':'getCollateralInfo',
+        'args':[SEPOLIA_ETH_LINK_ADDR],
+        chainId:SEPOLIA_ETH_CHAINID
+    }
+    ]});
+
+    const {data:usdplnOraclePrice}=useReadContract({
+         'abi': usdplnOracleABI,
+        'address':usdplnOracleEthSepoliaAddress,
+        'functionName':'getPLNPrice',
+        'args':[],
+        chainId:SEPOLIA_ETH_CHAINID
+    })
+
+    const {data:vaultContractInfo}=useReadContracts({
+        contracts:[
+            {
+                'abi':vaultManagerAbi,
+                'address':ethSepoliaVaultManagerAddress,
+                'functionName':'getCollateralValue',
+                'args':[address, SEPOLIA_ETH_WBTC_ADDR],
+                chainId:SEPOLIA_ETH_CHAINID
+            },
+            {
+                'abi':vaultManagerAbi,
+                'address':ethSepoliaVaultManagerAddress,
+                'functionName':'getCollateralValue',
+                'args':[address, SEPOLIA_ETH_WETH_ADDR],
+                chainId:SEPOLIA_ETH_CHAINID
+            },
+            {
+              abi:vaultManagerAbi,
+              address:ethSepoliaVaultManagerAddress,
+              functionName:'getCollateralValue',
+              args:[address, SEPOLIA_ETH_LINK_ADDR],
+              chainId:SEPOLIA_ETH_CHAINID
+            }
+            
+        ]
+    })
+
+    const getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken= useCallback(()=>{
+      if(!collateralTokenPriceData && !usdplnOraclePrice && !token && !collateralData) return 0;
+      
+      if(collateralData && collateralTokenPriceData && usdplnOraclePrice && token){
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+ return (
+  ((amount * Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === token)]!.result) * Number(usdplnOraclePrice) * 1e18)/1e22)
+  / Number((collateralData as unknown as any)[arrayOfContracts.findIndex(c => c.address === token)]!.result[arrayOfContracts.findIndex(c => c.address === token)][1])
+);
+
+}
+
+},[amount,collateralData,collateralTokenPriceData,token,usdplnOraclePrice, arrayOfContracts])
+
+
 
 
   return (
@@ -109,10 +184,10 @@ function ColltateralTab() {
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
   <Label className="text-xl text-red-500">You Give</Label>
 <div className="flex items-center gap-4">
-  <Input onChange={(e)=>setAmount(Number(e.target.value))} type="number" min={0} max={maximumAmount}  className="w-full"/>
+  <Input step={0.01} onChange={(e)=>setAmount(Number(e.target.value))} type="number" min={0} max={maximumAmount}  className="w-full"/>
  <Select value={token} onValueChange={(value) => {
 setToken(value as `0x${string}`);
-if(data) setMaximumAmount(Number(data[arrayOfContracts.findIndex(contract => contract.address === value)].result) / 1e18)
+if(data) setMaximumAmount(Number(data[arrayOfContracts.findIndex(contract => contract.address === value)].result) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 :1e18));
  }}>
   <SelectTrigger className="w-44">
     <SelectValue  placeholder="Token" />
@@ -130,32 +205,57 @@ if(data) setMaximumAmount(Number(data[arrayOfContracts.findIndex(contract => con
 </Select>
 </div>
   </div>
-    <div className="h-1/2 py-1 px-3 flex gap-3 flex-col">
+    <div className="h-1/2 py-1 px-3 flex gap-3 flex-col w-full">
   <Label className="text-lg text-zinc-700">You Will Be Able To Borrow (Max.)</Label>
-<div className="p-2 rounded-lg border-gray-300 border">
-  <p>{0}</p>
-</div>  
+<div className="flex w-full items-center gap-2">
+  <div className="p-2 w-full rounded-lg border-gray-300 border">
+  <p className='text-red-500'>{getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken() ?? 0}</p>
+</div>
+<p className='text-red-500'>PLST</p>
+</div>
   </div>
-</Card>
-{data && 
-<div onClick={() => console.log(data)} className="w-full flex items-center gap-6">
+  {data && 
+<div className="flex flex-col gap-1 px-4">
+<p>Balances</p>
+  <div className="w-full flex items-center gap-6">
 <div className='flex items-center gap-1'>
   <FaBitcoin className='text-orange-500'/>: {(data[0] && Number(data[0].result) / 1e8).toFixed(4)}
 </div>
 <div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/>: {(data[1] && Number(data[1].result) / 1e18).toFixed(6)}</div>
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/>: {data[2] && (Number(data[2].result) / 1e18).toFixed(4)}</div>
 </div>
+</div>
+}
+</Card>
+
+
+{collateralTokenPriceData && 
+<div className="flex flex-col gap-1">
+  <p>Crypto Prices (USD)</p>
+<div onClick={() => console.log(collateralTokenPriceData)} className="w-full flex items-center gap-6">
+<div className='flex items-center gap-1'>
+  <FaBitcoin className='text-orange-500'/>: {collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(4)} $
+</div>
+<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/>: {(collateralTokenPriceData[1] && Number(collateralTokenPriceData[1].result)/ 1e18).toFixed(4)} $</div>
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/>: {collateralTokenPriceData[2] && (Number(collateralTokenPriceData[2].result) / 1e18).toFixed(4)} $</div>
+</div>
+</div>
 }
 
-{collateralData && 
-<div onClick={() => console.log(collateralData)} className="w-full flex items-center gap-6">
+
+{vaultContractInfo &&
+<div className="flex flex-col gap-1">
+<p>Your Collateral</p>
+<div  className="w-full flex items-center gap-6">
 <div className='flex items-center gap-1'>
-  <FaBitcoin className='text-orange-500'/>: {collateralData[0] && (Number(collateralData[0].result) / 1e18).toFixed(4)} $
+  <FaBitcoin className='text-orange-500'/>: {vaultContractInfo[0] && (Number(vaultContractInfo[0].result) / 1e18).toFixed(4)} PLST
 </div>
-<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/>: {(collateralData[1] && Number(collateralData[1].result)/ 1e18).toFixed(4)} $</div>
-<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/>: {collateralData[2] && (Number(collateralData[2].result) / 1e18).toFixed(4)} $</div>
+<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/>: {(vaultContractInfo[1] && Number(vaultContractInfo[1].result)/ 1e18).toFixed(4)} PLST</div>
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/>: {vaultContractInfo[2] && (Number(vaultContractInfo[2].result) / 1e18).toFixed(4)} PLST</div>
+</div>
 </div>
 }
+
 
 <div className="flex flex-wrap w-full gap-2 justify-center">
 <Button onClick={()=>{
