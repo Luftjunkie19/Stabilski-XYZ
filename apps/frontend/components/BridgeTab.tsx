@@ -13,10 +13,9 @@ import arbitrumLogo from "@/public/arbitrum-logo.png";
 import { FaEthereum } from 'react-icons/fa6';
 import { useAccount, useReadContract } from 'wagmi';
 import { stabilskiTokenABI, stabilskiTokenEthSepoliaAddress } from '@/smart-contracts-abi/StabilskiToken';
+import { ARBITRUM_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
 
-type Props = {}
-
-function BridgeTab({}: Props) {
+function BridgeTab() {
 
 const {chainId, address}=useAccount();
 
@@ -36,7 +35,7 @@ const {data}=useReadContract({
 <div className="flex items-center gap-4">
 <div className="w-full flex-col gap-1">
   <Label>Amount</Label>
-    <Input type="number" min={0}  className="w-full"/>
+    <Input type="number" min={0} max={Number(data)/1e18} className="w-full"/>
 </div>
 <div className="flex-col gap-1">
   <Label>Chain</Label>
@@ -45,20 +44,22 @@ const {data}=useReadContract({
     <SelectValue onChange={(event) => console.log(event.target)} placeholder="Token" />
   </SelectTrigger>
   <SelectContent className="w-44 bg-white shadow-sm shadow-black rounded-lg">
-<SelectItem className='text-xs flex items-center gap-2' value="ETH">
+{chainId === ARBITRUM_SEPOLIA_CHAINID ? (
+  <SelectItem className='text-xs flex items-center gap-2' value={`${ARBITRUM_SEPOLIA_CHAINID}`}>
 <Image src={arbitrumLogo} className='w-5 h-5' width={20} height={20} alt='logo'/>
     <span>
         Arbitrum Sepolia (ARB)
     </span>
 </SelectItem>
-    <SelectItem className='text-xs' value="ETH"><FaEthereum className="text-gray-500"/>  Ethereum Sepolia (ETH)</SelectItem>
+) : ( <SelectItem className='text-xs' value={`${SEPOLIA_ETH_CHAINID}`}><FaEthereum className="text-gray-500"/>  Ethereum Sepolia (ETH)</SelectItem>)}
+   
   </SelectContent>
 </Select>
 </div>
 </div>
 
 <div className="">
-    <p>Balance: {data as unknown as bigint && Number(data)}</p>
+    <p>Balance: {data as unknown as bigint && Number(data) / 1e18} <span className='text-red-500'>PLST</span></p>
 </div>
   </div>
     <div className="h-1/2 w-full py-1 px-3 flex gap-3 flex-col">

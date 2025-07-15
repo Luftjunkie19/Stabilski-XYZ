@@ -8,9 +8,9 @@ import ColltateralTab from './ColltateralTab';
 import BridgeTab from './BridgeTab';
 import BorrowTab from './BorrowTab';
 
-type Props = {}
 
-function TabsContainer({}: Props) {
+
+function TabsContainer() {
 
   return (
       <Tabs defaultValue="intro" className="max-w-6xl flex justify-center items-center mx-auto mt-8 w-full p-3">

@@ -1,6 +1,6 @@
 export const stabilskiTokenPoolSepoliaEthAddress="0x245425E1DA2eC49ccD82A1781175e57633Bc9c1A";
 
-export const stabilskiTokenPoolArbitrumSepoliaAddress="0xeFF01cf34f233ae5De5ff2273428845F68Cf7c51";
+export const stabilskiTokenPoolArbitrumSepoliaAddress="0x7dE57967219960e91f7af3282A8Aa8F008C408ba";
 
 
 export const stabilskiTokenPoolABI=[

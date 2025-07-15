@@ -1,6 +1,6 @@
 export const ethSepoliaVaultManagerAddress="0x78Ba6A13e63396bA12F5F26BD69c2721eb5c4122";
 
-export const arbitrumSepoliaVaultManagerAddress="0xFD1d71f34024f84958FB99653C5b97CDfBF67721";
+export const arbitrumSepoliaVaultManagerAddress="0xFA9EBCC1F20fa8be9AECE724ba8B5Ce3F546cb30";
 
 export const vaultManagerAbi=[
 {"type":"constructor","inputs":[{"name":"_usdPlnOracle","type":"address","internalType":"address"},
@@ -16,7 +16,8 @@ export const vaultManagerAbi=[
 {"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"inPLN","type":"uint256","internalType":"uint256"}],
 "stateMutability":"view"},
 {"type":"function","name":"getIsHealthyAfterWithdrawal","inputs":[{"name":"amount","type":"uint256","internalType":"uint256"},{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},
-{"type":"function","name":"getMaxBorrowableStabilskiTokens","inputs":[{"name":"owner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"amount","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"getVaultHealthFactor","inputs":[{"name":"vaultOwner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+{"type":"function","name":"getMaxBorrowableStabilskiTokens","inputs":[{"name":"owner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"amount","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+{"type":"function","name":"getVaultHealthFactor","inputs":[{"name":"vaultOwner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
 {"type":"function","name":"getVaultInfo","inputs":[{"name":"owner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"collateralAmount","type":"uint256","internalType":"uint256"},{"name":"debt","type":"uint256","internalType":"uint256"},{"name":"collateralToken","type":"address","internalType":"address"},{"name":"healthFactor","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"isLiquidatable","inputs":[{"name":"vaultOwner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},
 {"type":"function","name":"liquidateVault","inputs":[{"name":"vaultOwner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[],"stateMutability":"nonpayable"},
 {"type":"function","name":"mintPLST","inputs":[{"name":"collateralToken","type":"address","internalType":"address"},{"name":"amount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},

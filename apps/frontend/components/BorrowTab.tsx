@@ -11,11 +11,11 @@ import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { Input } from './ui/input'
 import { useAccount, useReadContract, useReadContracts, useWriteContract } from 'wagmi'
-import {  SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
+import {  ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 
-import { ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/smart-contracts-abi/VaultManager';
+import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/smart-contracts-abi/VaultManager';
 import {  stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/smart-contracts-abi/CollateralManager';
-import { usdplnOracleABI, usdplnOracleEthSepoliaAddress } from '@/smart-contracts-abi/USDPLNOracle';
+import { usdplnOracleABI, usdplnOracleArbitrumSepoliaAddress, usdplnOracleEthSepoliaAddress } from '@/smart-contracts-abi/USDPLNOracle';
 
 
 function BorrowTab() {
@@ -132,6 +132,14 @@ const {chainId, address}=useAccount();
         chainId:SEPOLIA_ETH_CHAINID
     })
 
+const {data:arbitrumOraclePrice}=useReadContract({
+  'abi': usdplnOracleABI,
+ 'address':usdplnOracleArbitrumSepoliaAddress,
+ 'functionName':'getPLNPrice',
+ 'args':[],
+ chainId:SEPOLIA_ETH_CHAINID
+})
+
     const {data:vaultContractInfo}=useReadContracts({
         contracts:[
             {
@@ -181,6 +189,13 @@ const {chainId, address}=useAccount();
           functionName:'getMaxBorrowableStabilskiTokens',
           args:[address, SEPOLIA_ETH_LINK_ADDR],
           chainId:SEPOLIA_ETH_CHAINID
+        },
+        {
+          abi:vaultManagerAbi,
+          address:arbitrumSepoliaVaultManagerAddress,
+          functionName:'getMaxBorrowableStabilskiTokens',
+          args:[address, ARBITRUM_SEPOLIA_LINK_ADDR],
+          chainId:SEPOLIA_ETH_CHAINID
         }
       ]
     })
@@ -193,7 +208,7 @@ const {chainId, address}=useAccount();
         return 0
       }
 
-      const collateralMaxBorrowable = (maxBorrowableData as unknown as any)[arrayOfContracts.findIndex((contract) => contract.address === token)]?.result ?? 0;
+      const collateralMaxBorrowable = (maxBorrowableData as unknown as any)[arrayOfContracts.findIndex((contract) => contract.address === token)].result ?? 0;
      
 
       return Number(collateralMaxBorrowable as unknown as bigint) / 10 ** 18;
@@ -251,7 +266,8 @@ const borrowPolishStableCoin= ()=>{
 
   </div>
 </Card>
-
+<p onClick={()=>console.log(arbitrumOraclePrice, usdplnOraclePrice)}>Click and check</p>
+{arbitrumOraclePrice as unknown as bigint && <p className="text-red-500 text-2xl tracking">Arbitrum Oracle Price: {Number(arbitrumOraclePrice)}</p>}
 <Button onClick={borrowPolishStableCoin} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Borrow Stabilski (PLST)</Button>
 
   </TabsContent>

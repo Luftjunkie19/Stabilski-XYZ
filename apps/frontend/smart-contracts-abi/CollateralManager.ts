@@ -1,6 +1,6 @@
 export const stabilskiTokenSepoliaEthCollateralManagerAddress="0x71D75acb5D76eC8890075ba522f17B1Fd1AD603e";
 
-export const stabilskiTokenArbitrumSepoliaCollateralManagerAddress="0xbCfE224dccD3a9C81A3EbD2ee65b9c12a557908F";
+export const stabilskiTokenArbitrumSepoliaCollateralManagerAddress="0x69530CFC4563354C4fa83Cb7003FA1DB135CAb22";
 
 export const stabilskiTokenCollateralManagerAbi=[
 {"type":"constructor","inputs":[{"name":"_collateralTokens","type":"address[]","internalType":"address[]"},{"name":"_priceFeeds","type":"address[]","internalType":"address[]"},{"name":"_minCollateralRatios","type":"uint256[]","internalType":"uint256[]"}],"stateMutability":"nonpayable"},
