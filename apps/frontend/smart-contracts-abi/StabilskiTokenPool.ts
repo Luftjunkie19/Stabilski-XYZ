@@ -3,7 +3,7 @@ export const stabilskiTokenPoolSepoliaEthAddress="0x245425E1DA2eC49ccD82A1781175
 export const stabilskiTokenPoolArbitrumSepoliaAddress="0xeFF01cf34f233ae5De5ff2273428845F68Cf7c51";
 
 
-export const stabilskiTokenPoolEthSepoliaABI=[
+export const stabilskiTokenPoolABI=[
 {"type":"constructor","inputs":[{"name":"token","type":"address","internalType":"address"},{"name":"localTokenDecimals","type":"uint8","internalType":"uint8"},
 {"name":"allowList","type":"address[]","internalType":"address[]"},{"name":"rmnProxy","type":"address","internalType":"address"},
 {"name":"router","type":"address","internalType":"address"}],"stateMutability":"nonpayable"},

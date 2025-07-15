@@ -2,7 +2,7 @@ export const usdplnOracleEthSepoliaAddress="0x7D4429396f5C0C6489C8992759f12eF2ff
 
 export const usdplnOracleArbitrumSepoliaAddress="0xcd4357dA774aDDD3a3Ef4defA3FA6209607F61F5";
 
-export const usdplnOracleEthSepoliaABI=[
+export const usdplnOracleABI=[
 {"type":"constructor","inputs":[{"name":"router","type":"address","internalType":"address"},{"name":"_donID","type":"bytes32","internalType":"bytes32"},
 {"name":"_subscriptionId","type":"uint64","internalType":"uint64"}],"stateMutability":"nonpayable"},
 {"type":"function","name":"acceptOwnership","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"checkUpkeep","inputs":[{"name":"","type":"bytes","internalType":"bytes"}],

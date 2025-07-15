@@ -2,7 +2,7 @@ export const stabilskiTokenSepoliaEthCollateralManagerAddress="0x71D75acb5D76eC8
 
 export const stabilskiTokenArbitrumSepoliaCollateralManagerAddress="0xbCfE224dccD3a9C81A3EbD2ee65b9c12a557908F";
 
-export const stabilskiTokenSepoliaEthCollateralManager=[
+export const stabilskiTokenCollateralManagerAbi=[
 {"type":"constructor","inputs":[{"name":"_collateralTokens","type":"address[]","internalType":"address[]"},{"name":"_priceFeeds","type":"address[]","internalType":"address[]"},{"name":"_minCollateralRatios","type":"uint256[]","internalType":"uint256[]"}],"stateMutability":"nonpayable"},
 {"type":"function","name":"addCollateralType","inputs":[{"name":"collateralToken","type":"address","internalType":"address"},{"name":"priceFeed","type":"address","internalType":"address"},{"name":"minCollateralRatio","type":"uint256","internalType":"uint256"},{"name":"liquidationBonus","type":"uint256","internalType":"uint256"},{"name":"punishment","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},
 {"type":"function","name":"collateralTokens","inputs":[{"name":"","type":"uint256","internalType":"uint256"},{"name":"","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"address","internalType":"address"}],"stateMutability":"view"},

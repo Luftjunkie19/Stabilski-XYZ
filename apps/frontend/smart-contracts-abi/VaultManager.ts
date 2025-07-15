@@ -2,7 +2,7 @@ export const ethSepoliaVaultManagerAddress="0x78Ba6A13e63396bA12F5F26BD69c2721eb
 
 export const arbitrumSepoliaVaultManagerAddress="0xFD1d71f34024f84958FB99653C5b97CDfBF67721";
 
-export const sepoliaEthereumVaultManager=[
+export const vaultManagerAbi=[
 {"type":"constructor","inputs":[{"name":"_usdPlnOracle","type":"address","internalType":"address"},
 {"name":"_stabilskiToken","type":"address","internalType":"address"},
 {"name":"_collateralManager","type":"address","internalType":"address"}],"stateMutability":"nonpayable"},
