@@ -9,6 +9,7 @@ import { useAccount, useReadContract, useReadContracts } from 'wagmi';
 import StabilskiStableCoin from '@/public/Logox32.png';
 import { stabilskiTokenABI, stabilskiTokenEthSepoliaAddress } from '@/smart-contracts-abi/StabilskiToken';
 import DepositsCard from './ethereum/DepositsCard';
+import YourVaults from './ethereum/YourVaults';
 
 
 function ChainDataWidget() {
@@ -75,7 +76,7 @@ const {chainId, address}=useAccount();
 
 
   return (
-<div className="w-full flex items-center flex-wrap gap-4">
+<div className="w-full flex items-center justify-center flex-wrap gap-4">
         <div className="flex flex-col gap-6 max-w-md bg-white border-red-500 border-1 shadow-md shadow-black p-4 rounded-lg h-64">
   <p>Ethereum Sepolia Onchain Info</p>
   {collateralTokenPriceData && 
@@ -128,6 +129,7 @@ flex items-center gap-2
 
 
 <DepositsCard/>
+<YourVaults/>
 
 
 </div>

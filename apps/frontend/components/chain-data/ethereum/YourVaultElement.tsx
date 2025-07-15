@@ -10,7 +10,9 @@ type Props = {
     tokenAddress:`0x${string}`
 }
 
-function VaultInformation({depostior, tokenAddress}: Props) {
+import {GiReceiveMoney, GiPayMoney} from 'react-icons/gi';
+
+function VaultElement({depostior, tokenAddress}: Props) {
   
     const {data:collateralValue}=useReadContract({
         abi: vaultManagerAbi,
@@ -50,26 +52,25 @@ function VaultInformation({depostior, tokenAddress}: Props) {
     <p className='block md:hidden'>{depostior.slice(0, 10)}...</p>
     <div className="flex items-center gap-2">
     <div className="flex items-center ">
+        <GiPayMoney className='mr-1' />
         <p className='text-sm'><span className='text-red-500'>
             {collateralValue as unknown as bigint && (Number((collateralValue as unknown as bigint))/1e18).toFixed(2)}
             </span> </p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-6 h-6'/>
+    </div>
+       <GiReceiveMoney className='mr-1' />
+        <div className="flex items-center ">
+        <p className='text-sm'><span>{Number((vaultInfo as unknown as any[])[1] as unknown as bigint)/1e18}</span></p>
+    <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-7 h-7'/>
     </div>
     <p className={` text-sm ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ? 'text-red-500' : 'text-green-500' }`}>{healthData as unknown as bigint && (Number((healthData as unknown as bigint))/1e16)}%</p>
     </div>
     </div>
     
     
-    <div className='flex flex-col items-end w-full'>
-    
-    <div className="flex items-center">
-        <p className='text-sm'><span>{Number((vaultInfo as unknown as any[])[1] as unknown as bigint)/1e18}</span></p>
-    <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-8 h-8'/>
-    </div>
-
-    <Button variant={'destructive'} className={`${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ?  'bg-red-500 cursor-pointer' : 'bg-red-800 cursor-not-allowed'}  hover:bg-red-800 hover:scale-95`} disabled={isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) === false ? true : false }>Liquidate</Button>
-    
-    
+    <div className='hidden md:flex gap-1 items-end '>
+    <Button  className={`bg-blue-500 cursor-pointer hover:bg-blue-800 hover:scale-95`} >Repay</Button>
+     <Button variant={'destructive'} className={`bg-red-500 cursor-pointer  hover:bg-red-800 hover:scale-95`} >Withdraw</Button>
     </div>
     
     
@@ -81,4 +82,4 @@ function VaultInformation({depostior, tokenAddress}: Props) {
   
 }
 
-export default VaultInformation
+export default VaultElement
