@@ -63,7 +63,7 @@ function VaultElement({depostior, tokenAddress}: Props) {
         <p className='text-sm'><span>{Number((vaultInfo as unknown as any[])[1] as unknown as bigint)/1e18}</span></p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-7 h-7'/>
     </div>
-    <p className={` text-sm ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ? 'text-red-500' : 'text-green-500' }`}>{healthData as unknown as bigint && (Number((healthData as unknown as bigint))/1e16)}%</p>
+    <p className={` text-sm ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ? 'text-red-500' : 'text-green-500' }`}>{healthData as unknown as bigint && (Number((healthData as unknown as bigint))/1e16).toFixed(2)}%</p>
     </div>
     </div>
     

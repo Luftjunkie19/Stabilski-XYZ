@@ -7,6 +7,7 @@ import stabilskiStableCoin from '@/public/Logox32.png';
 import { Button } from '@/components/ui/button';
 import { ARBITRUM_SEPOLIA_CHAINID } from '@/lib/CollateralContractAddresses';
 import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
+import { toast } from 'sonner';
 
 type Props = {
     depostior:`0x${string}`,
@@ -59,7 +60,7 @@ function VaultInformation({depostior, tokenAddress}: Props) {
             </span> </p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-6 h-6'/>
     </div>
-    <p className={`text-sm ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ? 'text-red-500' : 'text-green-500' }`}>{healthData as unknown as bigint && (Number((healthData as unknown as bigint))/1e16)}%</p>
+    <p className={`text-sm ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ? 'text-red-500' : 'text-green-500' }`}>{healthData as unknown as bigint && (Number((healthData as unknown as bigint))/1e16).toFixed(2)}%</p>
     </div>
     </div>
     
@@ -72,23 +73,27 @@ function VaultInformation({depostior, tokenAddress}: Props) {
     </div>
 
     <Button onClick={()=>{
-        console.log(isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean));
-writeContract({
-    chainId,
-    address: chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaVaultManagerAddress : ethSepoliaVaultManagerAddress,
-    abi:stabilskiTokenABI,
-    functionName:'approve',
-    args:[address, 111e18],
-})
-
-        writeContract({
-            chainId,
-            address: chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaVaultManagerAddress : ethSepoliaVaultManagerAddress,
-            abi:vaultManagerAbi,
-            functionName:'liquidateVault',
-            args:[depostior, tokenAddress],
-        });
-    }} variant={'destructive'} className={`${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ?  'bg-red-500 cursor-pointer' : 'bg-red-800 cursor-not-allowed'}  hover:bg-red-800 hover:scale-95`} disabled={isLiquidatable as unknown as boolean && Boolean(isLiquidatable as unknown as boolean) === false ? true : false }>Liquidate</Button>
+        if((isLiquidatable as unknown as boolean) && (isLiquidatable as unknown as boolean) === true){  
+            console.log(isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean));
+    writeContract({
+        chainId,
+        address: chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaVaultManagerAddress : ethSepoliaVaultManagerAddress,
+        abi:stabilskiTokenABI,
+        functionName:'approve',
+        args:[address, 111e18],
+    });
+    
+            writeContract({
+                chainId,
+                address: chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaVaultManagerAddress : ethSepoliaVaultManagerAddress,
+                abi:vaultManagerAbi,
+                functionName:'liquidateVault',
+                args:[depostior, tokenAddress],
+            });
+            return;
+        }
+        toast.error("Vault is not liquidatable");
+    }} variant={'destructive'} className={`${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ?  'bg-red-500 cursor-pointer' : 'bg-red-800 cursor-not-allowed'}  hover:bg-red-800 hover:scale-95`} disabled={isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) === false ? true : false}>Liquidate</Button>
     
     
     </div>
