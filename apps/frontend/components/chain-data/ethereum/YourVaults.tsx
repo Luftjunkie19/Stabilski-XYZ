@@ -1,9 +1,8 @@
 'use client';
 
 import React from 'react'
-import VaultInformation from './VaultInformation'
 import { useAccount, useReadContract } from 'wagmi';
-import { stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/smart-contracts-abi/CollateralManager';
+import { stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
 import VaultElement from './YourVaultElement';
 
 

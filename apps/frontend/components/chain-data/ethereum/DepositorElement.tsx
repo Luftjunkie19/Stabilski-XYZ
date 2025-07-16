@@ -1,4 +1,4 @@
-import { ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/smart-contracts-abi/VaultManager';
+import { ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import React from 'react'
 import { useReadContract } from 'wagmi';
 import VaultInformation from './VaultInformation';

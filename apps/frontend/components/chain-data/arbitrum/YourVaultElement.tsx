@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/smart-contracts-abi/VaultManager'
+import { arbitrumSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager'
 import Image from 'next/image'
 import React from 'react'
 import { useReadContract } from 'wagmi'
 import stabilskiStableCoin from '@/public/Logox32.png';
-import { Button } from '@/components/ui/button';
+
 type Props = {
     depostior:`0x${string}`,
     tokenAddress:`0x${string}`

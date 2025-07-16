@@ -12,19 +12,19 @@ import Image from 'next/image';
 import arbitrumLogo from "@/public/arbitrum-logo.png";
 import { FaEthereum } from 'react-icons/fa6';
 import { useAccount, useReadContract } from 'wagmi';
-import { stabilskiTokenABI, stabilskiTokenEthSepoliaAddress } from '@/smart-contracts-abi/StabilskiToken';
+import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { ARBITRUM_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
 
 function BridgeTab() {
 
 const {chainId, address}=useAccount();
 
-
 const {data}=useReadContract({
     abi:stabilskiTokenABI,
-    address: stabilskiTokenEthSepoliaAddress,
+    address: chainId === ARBITRUM_SEPOLIA_CHAINID ? stabilskiTokenArbitrumSepoliaAddress : stabilskiTokenEthSepoliaAddress,
     functionName: 'balanceOf',
     args: [address],
+    chainId: chainId
 });
 
   return (
@@ -69,9 +69,14 @@ const {data}=useReadContract({
     <SelectValue placeholder="Token" />
   </SelectTrigger>
   <SelectContent className="bg-white max-w-xl w-full shadow-sm shadow-black rounded-lg">
-    <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
-    <SelectItem value="SOL">Polygon (MATIC)</SelectItem>
-    <SelectItem value="TERRA">BaseCoin (COIN)</SelectItem>
+{chainId === ARBITRUM_SEPOLIA_CHAINID ? (
+  <SelectItem className='text-xs flex items-center gap-2' value={`${SEPOLIA_ETH_CHAINID}`}>
+<FaEthereum className='text-gray-500'/>
+    <span>
+        Ethereum Sepolia (ETH)
+    </span>
+</SelectItem>
+) : ( <SelectItem className='text-xs' value={`${SEPOLIA_ETH_CHAINID}`}><FaEthereum className="text-gray-500"/>  Ethereum Sepolia (ETH)</SelectItem>)}
   </SelectContent>
 </Select>
   </div>

@@ -289,21 +289,21 @@ function getMaxBorrowableStabilskiTokens(address owner, address token) external 
     uint256 collateralValue = _getCollateralValue(owner, token);
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
     uint256 maxBorrowable = (collateralValue / minCollateralRatio) * decimalPointsNormalizer;
-    return maxBorrowable;
+    return maxBorrowable - vaults[owner][token].debt;
 }
 
 function _getMaxBorrowableStabilskiTokens(address owner, address token) internal view returns (uint256 amount){
     uint256 collateralValue = _getCollateralValue(owner, token);
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
     uint256 maxBorrowable = (collateralValue / minCollateralRatio) * decimalPointsNormalizer;
-    return maxBorrowable;
+    return maxBorrowable - vaults[owner][token].debt;
 }
 
 function getVaultInfo(address owner, address token) external view returns (uint256 collateralAmount, uint256 debt, address collateralToken, uint256 healthFactor){
     return (vaults[owner][token].collateralAmount, vaults[owner][token].debt, vaults[owner][token].collateralTypeToken, getVaultHealthFactor(owner, token));
 }
 
-function getAllBorrowers() external returns (address[] memory){
+function getAllBorrowers() external view returns (address[] memory){
     return borrowers;
 }
 

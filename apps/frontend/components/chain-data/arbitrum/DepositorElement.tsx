@@ -1,4 +1,4 @@
-import { arbitrumSepoliaVaultManagerAddress, vaultManagerAbi } from '@/smart-contracts-abi/VaultManager';
+import { arbitrumSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import React from 'react'
 import { useReadContract } from 'wagmi';
 import VaultInformation from './VaultInformation';

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useState } from 'react'
 import { Button } from '../ui/button'
 import { DialogHeader,Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog'
@@ -7,7 +8,7 @@ import { useAccount, useReadContracts } from 'wagmi';
 import { SEPOLIA_ETH_WETH_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_LINK_ADDR, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, ARBITRUM_SEPOLIA_ABI, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_LINK_ABI } from '@/lib/CollateralContractAddresses';
 import { FaEthereum, FaBitcoin } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
-import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/smart-contracts-abi/VaultManager';
+import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 
 
 
@@ -99,6 +100,8 @@ const {address}=useAccount();
 
     const {chainId}=useAccount();
 
+
+
   return (
    <Dialog>
   <DialogTrigger>
@@ -114,7 +117,7 @@ const {address}=useAccount();
     </DialogHeader>
 
 <div className="flex items-center gap-4">
-  <Input onChange={(e) =>setAmount(Number(e.target.value))} type="number" min={0} max={maximumAmount} className="w-full"/>
+  <Input value={amount} onChange={(e) =>setAmount(Number(e.target.value))} type="number" min={0} max={maximumAmount} className="w-full"/>
  <Select onValueChange={(value)=>{
   setToken(value as `0x${string}`);
  if(value) setMaximumAmount(getTheMaxAmountOfTokensToBorrow)

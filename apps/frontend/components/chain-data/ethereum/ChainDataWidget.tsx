@@ -1,15 +1,16 @@
 import { SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_WETH_ADDR, SEPOLIA_ETH_LINK_ADDR } from '@/lib/CollateralContractAddresses';
-import { stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/smart-contracts-abi/CollateralManager';
-import { vaultManagerAbi, ethSepoliaVaultManagerAddress } from '@/smart-contracts-abi/VaultManager';
+import { stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
+import { vaultManagerAbi, ethSepoliaVaultManagerAddress } from '@/lib/smart-contracts-abi/VaultManager';
 import Image from 'next/image';
 import React from 'react'
 import { FaBitcoin, FaEthereum } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
 import { useAccount, useReadContract, useReadContracts } from 'wagmi';
 import StabilskiStableCoin from '@/public/Logox32.png';
-import { stabilskiTokenABI, stabilskiTokenEthSepoliaAddress } from '@/smart-contracts-abi/StabilskiToken';
+import { stabilskiTokenABI, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
 import DepositsCard from './DepositsCard';
 import YourVaults from './YourVaults';
+import { usdplnOracleABI, usdplnOracleEthSepoliaAddress } from '@/lib/smart-contracts-abi/USDPLNOracle';
 
 
 function ChainDataWidget() {
@@ -74,11 +75,18 @@ const {chainId, address}=useAccount();
             }
         );
 
+        const {data:oraclePrice}=useReadContract({
+          abi:usdplnOracleABI,
+          address: usdplnOracleEthSepoliaAddress,
+          functionName:'getPLNPrice',
+          args:[],
+          chainId:SEPOLIA_ETH_CHAINID
+        })
+
 
   return (
 <div className="w-full flex items-center justify-center flex-wrap gap-4">
         <div className="flex flex-col gap-6 max-w-md bg-white border-red-500 border-1 shadow-md shadow-black p-4 rounded-lg h-64">
-  <p>Ethereum Sepolia Onchain Info</p>
   {collateralTokenPriceData && 
 <div className="flex flex-col gap-2">
   <p>Crypto Prices (USD)</p>
@@ -89,6 +97,7 @@ const {chainId, address}=useAccount();
 <div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {(collateralTokenPriceData[1] && Number(collateralTokenPriceData[1].result)/ 1e18).toFixed(2)} $</div>
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {collateralTokenPriceData[2] && (Number(collateralTokenPriceData[2].result) / 1e18).toFixed(2)} $</div>
 </div>
+
 </div>
 }
 
@@ -121,6 +130,8 @@ flex items-center gap-2
     
    }
 </p>
+
+{oraclePrice as unknown as bigint && <p className="text-[10px] text-zinc-500 sm:text-base tracking">USD/PLN (Ethereum Sepolia): <span className='text-red-500 font-bold'>{(Number(oraclePrice) / 1e4).toFixed(4)} PLN</span></p>}
 </div>
 }
 

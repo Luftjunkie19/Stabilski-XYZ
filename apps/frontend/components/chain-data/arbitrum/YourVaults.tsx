@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useAccount, useReadContract } from 'wagmi';
-import { stabilskiTokenCollateralManagerAbi, stabilskiTokenArbitrumSepoliaCollateralManagerAddress } from '@/smart-contracts-abi/CollateralManager';
+import { stabilskiTokenCollateralManagerAbi, stabilskiTokenArbitrumSepoliaCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
 import VaultElement from './YourVaultElement';
 import { ARBITRUM_SEPOLIA_CHAINID } from '@/lib/CollateralContractAddresses';
 

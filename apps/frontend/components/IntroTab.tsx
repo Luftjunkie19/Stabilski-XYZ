@@ -3,9 +3,8 @@ import { TabsContent } from './ui/tabs'
 import Header from './ui/Header'
 import Image from 'next/image'
 import StabilskiStableCoin2 from '@/public/Logox512.png';
-type Props = {}
 
-function IntroTab({}: Props) {
+function IntroTab() {
   return (
   <TabsContent value="intro" className="flex flex-col gap-3 max-w-4xl w-full">
     <Header/>

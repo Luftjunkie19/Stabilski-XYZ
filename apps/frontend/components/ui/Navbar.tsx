@@ -22,7 +22,7 @@ justify-center
      Stabilski.xyz
    </p>
 </div>
-<ConnectKitButton  />
+<ConnectKitButton showBalance  />
 </div>
 
     </div>
