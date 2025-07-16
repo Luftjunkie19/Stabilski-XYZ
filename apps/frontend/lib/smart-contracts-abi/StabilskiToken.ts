@@ -1,6 +1,6 @@
-export const stabilskiTokenEthSepoliaAddress="0x3d0a36C04954827c16D1F8fC46E47D87ad452AA3";
+export const stabilskiTokenEthSepoliaAddress="0xF6Dd8254DA93B324430f703C482FBE5F9452A18c";
 
-export const stabilskiTokenArbitrumSepoliaAddress="0xA7F0Bd293401D0aA79eb0b0dAaFD7857d05289E2";
+export const stabilskiTokenArbitrumSepoliaAddress="0xf1A4091b750baACDe8cD9fffE6B61a221146a014";
 
 export const stabilskiTokenABI=[
     {"type":"constructor","inputs":[{"name":"name_","type":"string","internalType":"string"},

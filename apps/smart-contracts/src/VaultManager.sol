@@ -186,10 +186,10 @@ if(vaults[vaultOwner][token].collateralTypeToken == address(0)) {
         revert NotEnoughPLST();
     }
 
+    stabilskiToken.approve(address(this), debtAmount);
+    
     // Transfer stablecoin from msg.sender to protocol to repay the debt
     stabilskiToken.transferFrom(msg.sender, address(this), debtAmount);
-
-    stabilskiToken.approve(address(this), debtAmount);
 
     stabilskiToken.burn(address(this), debtAmount);
 
@@ -234,18 +234,13 @@ if (remainingCollateral > 0) {
 
 function getVaultHealthFactor(address vaultOwner, address token) public view returns (uint256) {
 
-    if(vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0)) {
-        return 0;
-    }
-    
-    uint256 collateralAmountInUSD = vaults[vaultOwner][token].collateralAmount * collateralManager.getTokenPrice(token) / decimalPointsNormalizer;
-    uint256 collateralAmountInPLN = collateralAmountInUSD * usdPlnOracle.getPLNPrice() / decimalPointsForUsdPlnRate;
+    uint256 collateralAmountInPLN = _getCollateralValue(vaultOwner, token);
 
     uint256 debtAmount = vaults[vaultOwner][token].debt;
 
-if (debtAmount == 0) return type(uint256).max;
+if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || debtAmount == 0) return type(uint256).max;
 
-    return  (collateralAmountInPLN / debtAmount) * decimalPointsNormalizer;
+    return  (collateralAmountInPLN * decimalPointsNormalizer / debtAmount);
 }
 
 
@@ -253,7 +248,7 @@ function getIsHealthyAfterWithdrawal(uint256 amount, address token) public view 
      uint256 collateralAmountAfterWithdrawal = vaults[msg.sender][token].collateralAmount - amount;
 
     (, uint256 minCollateralRatio,,,)=collateralManager.getCollateralInfo(vaults[msg.sender][token].collateralTypeToken);
-    uint256 collateralAmountInUSD = collateralAmountAfterWithdrawal * collateralManager.getTokenPrice(token) / decimalPointsNormalizer;
+    uint256 collateralAmountInUSD = (collateralAmountAfterWithdrawal * collateralManager.getTokenPrice(token)) / decimalPointsNormalizer;
     uint256 collateralAmountInPLN = collateralAmountInUSD * usdPlnOracle.getPLNPrice() / decimalPointsForUsdPlnRate;
 
     uint256 debtAmount = vaults[msg.sender][token].debt;

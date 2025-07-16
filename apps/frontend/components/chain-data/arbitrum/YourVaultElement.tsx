@@ -2,7 +2,7 @@
 import { arbitrumSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager'
 import Image from 'next/image'
 import React from 'react'
-import { useReadContract } from 'wagmi'
+import { useReadContract, useWriteContract } from 'wagmi'
 import stabilskiStableCoin from '@/public/Logox32.png';
 
 type Props = {
@@ -16,7 +16,14 @@ import WithdrawDialog from '@/components/dialogs/WithdrawDialog';
 import RepayDialog from '@/components/dialogs/RepayDialog';
 
 function VaultElement({depostior, tokenAddress}: Props) {
-  
+  const {}=useWriteContract({
+    abi: vaultManagerAbi,
+    address: arbitrumSepoliaVaultManagerAddress,
+    functionName:'withdraw',
+    args:[depostior, tokenAddress],
+      chainId:ARBITRUM_SEPOLIA_CHAINID
+  });
+
     const {data:collateralValue}=useReadContract({
         abi: vaultManagerAbi,
         address: arbitrumSepoliaVaultManagerAddress,
@@ -47,7 +54,9 @@ function VaultElement({depostior, tokenAddress}: Props) {
         functionName:'isLiquidatable',
         args:[depostior, tokenAddress],
           chainId:ARBITRUM_SEPOLIA_CHAINID
-    })
+    });
+
+  
 
     if(vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" ){
         return (

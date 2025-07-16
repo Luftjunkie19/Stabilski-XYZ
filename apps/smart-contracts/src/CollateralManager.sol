@@ -105,7 +105,7 @@ function getTokenPrice(address token) public view onlyActiveCollateral(token) re
             /*uint80 answeredInRound*/
         ) = priceFeed.latestRoundData();
 uint8 decimals = priceFeed.decimals();
-        return uint256(answer) * 1e18 / (10 ** decimals);
+        return (uint256(answer) * 1e18) / (10 ** decimals);
     }
 
 function getCollateralInfo(address token) public view onlyActiveCollateral(token) returns (address, uint256, bool, uint256, uint256) {

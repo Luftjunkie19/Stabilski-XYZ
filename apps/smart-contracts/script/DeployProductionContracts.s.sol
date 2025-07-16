@@ -30,9 +30,9 @@ tokens[2]=address(vm.envAddress("SEPOLIA_ETH_LINK_ADDR"));
 priceFeeds[0]=vm.envAddress("ETH_BTC_USD");
 priceFeeds[1]=vm.envAddress("ETH_ETH_USD");
 priceFeeds[2]=vm.envAddress("ETH_LINK_USD");
-minCollateralRatios[0]=135e16;
-minCollateralRatios[1]=125e16;
-minCollateralRatios[2]=12e17;
+minCollateralRatios[0]=15e17;
+minCollateralRatios[1]=135e16;
+minCollateralRatios[2]=145e16;
 
     stabilskiToken = new StabilskiToken("Stabilski", "PLST");
     usdPlnOracle =  USDPLNOracle(0x7D4429396f5C0C6489C8992759f12eF2ff9E7BfC);

@@ -136,38 +136,7 @@ const {chainId, address}=useAccount();
           chainId:ARBITRUM_SEPOLIA_CHAINID
         }
       ]
-    })
-
-    const {data}=useReadContracts({
-      contracts:[   {
-             'abi':SEPOLIA_ETH_WBTC_ABI,
-            'address':ethSepoliaVaultManagerAddress,
-            'functionName':'getCollateralValue',
-            'args':[address, SEPOLIA_ETH_WBTC_ADDR],
-            chainId:SEPOLIA_ETH_CHAINID
-        },
-            {
-             'abi':SEPOLIA_ETH_WETH_ABI,
-            'address':ethSepoliaVaultManagerAddress,
-            'functionName':'getCollateralValue',
-            'args':[address, SEPOLIA_ETH_WETH_ADDR],
-            chainId:SEPOLIA_ETH_CHAINID
-        },
-            {
-             'abi':SEPOLIA_ETH_LINK_ABI,
-            'address':ethSepoliaVaultManagerAddress,
-            'functionName':'getCollateralValue',
-            'args':[address, SEPOLIA_ETH_LINK_ADDR],
-            chainId:SEPOLIA_ETH_CHAINID
-        },
-         {
-             'abi':ARBITRUM_SEPOLIA_ABI,
-            'address':arbitrumSepoliaVaultManagerAddress,
-            'functionName':'getCollateralValue',
-            'args':[address, ARBITRUM_SEPOLIA_LINK_ADDR],
-            chainId:ARBITRUM_SEPOLIA_CHAINID
-        }],
-    })
+    });
 
 
 const borrowPolishStableCoin= ()=>{
@@ -222,12 +191,8 @@ return;
 </div>
   </div>
     <div className="h-1/2 py-1 px-3 items-center flex gap-3 flex-col">
- <p className="text-red-500 text-2xl tracking">Your position is</p>
-<p>{vaultContractInfo as unknown as any && token && arrayOfContracts.find((contract) => contract.address === token) || arrayOfContracts.findIndex((contract) => contract.address === token) !== -1   ?  Number((vaultContractInfo as unknown as any)[arrayOfContracts.findIndex((contract) => contract.address === token)].result) / (amount * 10 ** 18) * 100 : 0 }%</p>
-
-
-
-<p>Collaterized</p>
+ <p className="text-red-500 text-2xl tracking">Your can still borrow</p>
+<p>{maxBorrowableData as unknown as any && vaultContractInfo as unknown as any && token && arrayOfContracts.find((contract) => contract.address === token) || arrayOfContracts.findIndex((contract) => contract.address === token) !== -1   ?  (((Number((maxBorrowableData as unknown as any)[arrayOfContracts.findIndex((contract) => contract.address === token)].result)) - (amount * 10 ** 18))/ 1e18).toFixed(2) : 0 } <span className='text-red-500'>PLST</span></p>
 
   </div>
 </Card>
