@@ -11,11 +11,14 @@ import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { Input } from './ui/input'
 import { useAccount, useReadContract, useReadContracts, useWriteContract } from 'wagmi'
-import {  ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
+import {  ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 
 import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/smart-contracts-abi/VaultManager';
-import {  stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/smart-contracts-abi/CollateralManager';
+import {  stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi } from '@/smart-contracts-abi/CollateralManager';
 import { usdplnOracleABI, usdplnOracleArbitrumSepoliaAddress, usdplnOracleEthSepoliaAddress } from '@/smart-contracts-abi/USDPLNOracle';
+import { ARBITRUM_SEPOLIA_CHAINID } from '../lib/CollateralContractAddresses';
+import ChainDataWidget from './chain-data/ethereum/ChainDataWidget';
+import ArbitrumDataWidget from './chain-data/arbitrum/ArbitrumDataWidget';
 
 
 function BorrowTab() {
@@ -24,7 +27,6 @@ const {writeContract}=useWriteContract({
 
  const [amount, setAmount] = useState<number>(0);
   const [token, setToken] = useState<`0x${string}` | undefined>(undefined);
-  const [maximumAmount, setMaximumAmount] = useState<number>(0);
 const {chainId, address}=useAccount();
 
  // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -49,92 +51,29 @@ const {chainId, address}=useAccount();
         'functionName':'balanceOf',
         'args':[address],
         chainId:SEPOLIA_ETH_CHAINID
+    },
+    {
+         'abi':ARBITRUM_SEPOLIA_ABI,
+        'address':ARBITRUM_SEPOLIA_LINK_ADDR,
+        'functionName':'balanceOf',
+        'args':[address],
+        chainId:ARBITRUM_SEPOLIA_CHAINID
     }
     ]
 
-  //   const {data}=useReadContracts({contracts:[
-  //  {
-  //        'abi':SEPOLIA_ETH_WBTC_ABI,
-  //       'address':SEPOLIA_ETH_WBTC_ADDR,
-  //       'functionName':'balanceOf',
-  //       'args':[address],
-  //       chainId:SEPOLIA_ETH_CHAINID
-  //   },
-  //       {
-  //        'abi':SEPOLIA_ETH_WETH_ABI,
-  //       'address':SEPOLIA_ETH_WETH_ADDR,
-  //       'functionName':'balanceOf',
-  //       'args':[address],
-  //       chainId:SEPOLIA_ETH_CHAINID
-  //   },
-  //       {
-  //        'abi':SEPOLIA_ETH_LINK_ABI,
-  //       'address':SEPOLIA_ETH_LINK_ADDR,
-  //       'functionName':'balanceOf',
-  //       'args':[address],
-  //       chainId:SEPOLIA_ETH_CHAINID
-  //   }
-  //   ]});
-
-      const {data:collateralTokenPriceData}=useReadContracts({contracts:[
-   {
-         'abi':stabilskiTokenCollateralManagerAbi,
-        'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
-        'functionName':'getTokenPrice',
-        'args':[SEPOLIA_ETH_WBTC_ADDR],
-        chainId:SEPOLIA_ETH_CHAINID
-    },
-        {
-         'abi':stabilskiTokenCollateralManagerAbi,
-        'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
-        'functionName':'getTokenPrice',
-        'args':[SEPOLIA_ETH_WETH_ADDR],
-        chainId:SEPOLIA_ETH_CHAINID
-    },
-        {
-         'abi':stabilskiTokenCollateralManagerAbi,
-        'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
-        'functionName':'getTokenPrice',
-        'args':[SEPOLIA_ETH_LINK_ADDR],
-        chainId:SEPOLIA_ETH_CHAINID
-    }
-    ]});
-
-         const {data:collateralData}=useReadContracts({contracts:[
-   {
-         'abi':stabilskiTokenCollateralManagerAbi,
-        'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
-        'functionName':'getCollateralInfo',
-        'args':[SEPOLIA_ETH_WBTC_ADDR],
-        chainId:SEPOLIA_ETH_CHAINID
-    },
-        {
-         'abi':stabilskiTokenCollateralManagerAbi,
-        'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
-        'functionName':'getCollateralInfo',
-        'args':[SEPOLIA_ETH_WETH_ADDR],
-        chainId:SEPOLIA_ETH_CHAINID
-    },
-        {
-         'abi':stabilskiTokenCollateralManagerAbi,
-        'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
-        'functionName':'getCollateralInfo',
-        'args':[SEPOLIA_ETH_LINK_ADDR],
-        chainId:SEPOLIA_ETH_CHAINID
-    }
-    ]});
-
-    const {data:usdplnOraclePrice}=useReadContract({
-         'abi': usdplnOracleABI,
-        'address':usdplnOracleEthSepoliaAddress,
-        'functionName':'getPLNPrice',
-        'args':[],
-        chainId:SEPOLIA_ETH_CHAINID
-    })
 
 const {data:arbitrumOraclePrice}=useReadContract({
   'abi': usdplnOracleABI,
  'address':usdplnOracleArbitrumSepoliaAddress,
+ 'functionName':'getPLNPrice',
+ 'args':[],
+ chainId:ARBITRUM_SEPOLIA_CHAINID
+});
+
+
+const {data:oraclePrice}=useReadContract({
+  'abi': usdplnOracleABI,
+ 'address':usdplnOracleEthSepoliaAddress,
  'functionName':'getPLNPrice',
  'args':[],
  chainId:SEPOLIA_ETH_CHAINID
@@ -162,6 +101,13 @@ const {data:arbitrumOraclePrice}=useReadContract({
               functionName:'getCollateralValue',
               args:[address, SEPOLIA_ETH_LINK_ADDR],
               chainId:SEPOLIA_ETH_CHAINID
+            },
+              {
+              abi:vaultManagerAbi,
+              address:arbitrumSepoliaVaultManagerAddress,
+              functionName:'getCollateralValue',
+              args:[address, ARBITRUM_SEPOLIA_LINK_ADDR],
+              chainId:ARBITRUM_SEPOLIA_CHAINID
             }
             
         ]
@@ -195,12 +141,12 @@ const {data:arbitrumOraclePrice}=useReadContract({
           address:arbitrumSepoliaVaultManagerAddress,
           functionName:'getMaxBorrowableStabilskiTokens',
           args:[address, ARBITRUM_SEPOLIA_LINK_ADDR],
-          chainId:SEPOLIA_ETH_CHAINID
+          chainId:ARBITRUM_SEPOLIA_CHAINID
         }
       ]
     })
 
-    const getTheMaxAmountOfTokensToBorrow= useMemo(()=>{
+    const getTheMaxAmountOfTokensToBorrow= useCallback(()=>{
 
       if(!maxBorrowableData && !token) return 0
 
@@ -208,7 +154,7 @@ const {data:arbitrumOraclePrice}=useReadContract({
         return 0
       }
 
-      const collateralMaxBorrowable = (maxBorrowableData as unknown as any)[arrayOfContracts.findIndex((contract) => contract.address === token)].result ?? 0;
+      const collateralMaxBorrowable = (maxBorrowableData as unknown as any)[arrayOfContracts.findIndex((contract) => contract.address === token)]?.result ?? 0;
      
 
       return Number(collateralMaxBorrowable as unknown as bigint) / 10 ** 18;
@@ -217,9 +163,20 @@ const {data:arbitrumOraclePrice}=useReadContract({
 
 },[maxBorrowableData, arrayOfContracts, token]);
 
+const maxBorrowable= getTheMaxAmountOfTokensToBorrow();
 
 
 const borrowPolishStableCoin= ()=>{
+if(chainId === ARBITRUM_SEPOLIA_CHAINID){
+  writeContract({
+    abi:stabilskiTokenCollateralManagerAbi,
+    address:stabilskiTokenArbitrumSepoliaCollateralManagerAddress,
+    functionName:'mintPLST',
+    args:[token, amount * 10 ** 18],
+    chainId:ARBITRUM_SEPOLIA_CHAINID
+});
+return;
+}
   writeContract({
     abi:vaultManagerAbi,
     address:ethSepoliaVaultManagerAddress,
@@ -230,16 +187,15 @@ const borrowPolishStableCoin= ()=>{
 }
 
   return (
-      <TabsContent value="borrow" className="flex flex-col gap-4 max-w-xl w-full">
+      <TabsContent value="borrow" className="flex flex-col gap-4 max-w-7xl w-full">
       
-<Card className=" w-full shadow-sm border-red-500 border shadow-black h-96">
+<Card className=" w-full max-w-xl self-center shadow-sm border-red-500 border shadow-black h-96">
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
   <Label className="text-xl text-red-500">You Borrow</Label>
 <div className="flex items-center gap-4">
-  <Input onChange={(e) =>setAmount(Number(e.target.value))} type="number" min={0} max={maximumAmount} className="w-full"/>
+  <Input onChange={(e) =>setAmount(Number(e.target.value))} type="number" min={0} max={getTheMaxAmountOfTokensToBorrow()} className="w-full"/>
  <Select onValueChange={(value)=>{
   setToken(value as `0x${string}`);
- if(value) setMaximumAmount(getTheMaxAmountOfTokensToBorrow)
 
  }}>
   <SelectTrigger className="w-44">
@@ -266,9 +222,22 @@ const borrowPolishStableCoin= ()=>{
 
   </div>
 </Card>
-<p onClick={()=>console.log(arbitrumOraclePrice, usdplnOraclePrice)}>Click and check</p>
-{arbitrumOraclePrice as unknown as bigint && <p className="text-red-500 text-2xl tracking">Arbitrum Oracle Price: {Number(arbitrumOraclePrice)}</p>}
+{arbitrumOraclePrice as unknown as bigint && <p className="text-sm text-white sm:text-lg tracking text-shadow-xs text-shadow-black">USD/PLN (Arbitrum Sepolia): <span className='text-red-500 font-bold'>{(Number(arbitrumOraclePrice) / 1e4).toFixed(4)} PLN</span></p>}
+{oraclePrice as unknown as bigint && <p className="text-sm text-white sm:text-lg tracking text-shadow-xs text-shadow-black">USD/PLN (Ethereum Sepolia): <span className='text-red-500 font-bold'>{(Number(oraclePrice) / 1e4).toFixed(4)} PLN</span></p>}
 <Button onClick={borrowPolishStableCoin} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Borrow Stabilski (PLST)</Button>
+
+<div className="flex items-center w-full gap-6">
+
+{chainId === SEPOLIA_ETH_CHAINID && <>
+<ChainDataWidget/>
+</>}
+
+
+{chainId === ARBITRUM_SEPOLIA_CHAINID && <>
+<ArbitrumDataWidget/>
+</>}
+
+</div>
 
   </TabsContent>
   )

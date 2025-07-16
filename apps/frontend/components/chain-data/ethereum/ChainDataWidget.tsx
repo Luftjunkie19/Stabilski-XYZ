@@ -8,8 +8,8 @@ import { SiChainlink } from 'react-icons/si';
 import { useAccount, useReadContract, useReadContracts } from 'wagmi';
 import StabilskiStableCoin from '@/public/Logox32.png';
 import { stabilskiTokenABI, stabilskiTokenEthSepoliaAddress } from '@/smart-contracts-abi/StabilskiToken';
-import DepositsCard from './ethereum/DepositsCard';
-import YourVaults from './ethereum/YourVaults';
+import DepositsCard from './DepositsCard';
+import YourVaults from './YourVaults';
 
 
 function ChainDataWidget() {

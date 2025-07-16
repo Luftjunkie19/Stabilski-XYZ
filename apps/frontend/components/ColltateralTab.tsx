@@ -12,11 +12,11 @@ import { Card } from './ui/card'
 import { Input } from './ui/input'
 import { useAccount, useReadContract, useReadContracts, useWriteContract } from 'wagmi'
 import { usdplnOracleABI, usdplnOracleEthSepoliaAddress } from '@/smart-contracts-abi/USDPLNOracle';
-import ChainDataWidget from './chain-data/ChainDataWidget';
-import ArbitrumDataWidget from './chain-data/ArbitrumDataWidget';
+import ChainDataWidget from './chain-data/ethereum/ChainDataWidget';
+import ArbitrumDataWidget from './chain-data/arbitrum/ArbitrumDataWidget';
 import { ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
-import { ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/smart-contracts-abi/VaultManager';
-import { stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/smart-contracts-abi/CollateralManager';
+import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/smart-contracts-abi/VaultManager';
+import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/smart-contracts-abi/CollateralManager';
 
 
 
@@ -58,6 +58,7 @@ function ColltateralTab() {
                 address:ARBITRUM_SEPOLIA_LINK_ADDR,
                 functionName:'balanceOf',
                 args:[address],
+                chainId:ARBITRUM_SEPOLIA_CHAINID
      }
     ];
 
@@ -84,7 +85,15 @@ function ColltateralTab() {
         'functionName':'balanceOf',
         'args':[address],
         chainId:SEPOLIA_ETH_CHAINID
-    }
+    },
+     {
+         'abi':ARBITRUM_SEPOLIA_ABI,
+        'address':ARBITRUM_SEPOLIA_LINK_ADDR,
+        'functionName':'balanceOf',
+        'args':[address],
+        chainId:ARBITRUM_SEPOLIA_CHAINID
+    },
+    
     ]});
 
 
@@ -109,7 +118,14 @@ function ColltateralTab() {
         'functionName':'getTokenPrice',
         'args':[SEPOLIA_ETH_LINK_ADDR],
         chainId:SEPOLIA_ETH_CHAINID
-    }
+    },
+        {
+              abi:stabilskiTokenCollateralManagerAbi,
+              address:stabilskiTokenArbitrumSepoliaCollateralManagerAddress,
+              functionName:'getTokenPrice',
+              args:[ARBITRUM_SEPOLIA_LINK_ADDR],
+              chainId:ARBITRUM_SEPOLIA_CHAINID
+            }
     ]});
     
     const {data:collateralData}=useReadContracts({contracts:[
@@ -133,6 +149,13 @@ function ColltateralTab() {
         'functionName':'getCollateralInfo',
         'args':[SEPOLIA_ETH_LINK_ADDR],
         chainId:SEPOLIA_ETH_CHAINID
+    },
+    {
+              abi:stabilskiTokenCollateralManagerAbi,
+              address:stabilskiTokenArbitrumSepoliaCollateralManagerAddress,
+              functionName:'getCollateralInfo',
+              args:[address, ARBITRUM_SEPOLIA_LINK_ADDR],
+              chainId:ARBITRUM_SEPOLIA_CHAINID
     }
     ]});
 
@@ -189,7 +212,7 @@ if(data) setMaximumAmount(Number(data[arrayOfContracts.findIndex(contract => con
         <SelectItem value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> Wrapped Ethereum (WETH)</SelectItem>
     <SelectItem value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/> Wrapped Bitcoin (WBTC)</SelectItem>
     <SelectItem value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" /> Chainlink (LINK)</SelectItem>
-    </> : 
+    </>: 
     <>
      <SelectItem value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" /> Chainlink (LINK)</SelectItem>
     </>}
@@ -206,7 +229,7 @@ if(data) setMaximumAmount(Number(data[arrayOfContracts.findIndex(contract => con
 <p className='text-red-500'>PLST</p>
 </div>
   </div>
-  {chainId && data && 
+  {chainId && chainId === SEPOLIA_ETH_CHAINID && data && 
 <div className="flex flex-col gap-1 px-4">
 <p>Balances</p>
   <div className="w-full flex items-center gap-6">
@@ -218,6 +241,13 @@ if(data) setMaximumAmount(Number(data[arrayOfContracts.findIndex(contract => con
 </div>
 </div>
 }
+
+  {chainId && chainId === ARBITRUM_SEPOLIA_CHAINID && data && 
+<div className="flex flex-col gap-1 px-4">
+<p>Balance</p>
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {data[3] && (Number(data[3].result) / 1e18).toFixed(2)}</div>
+</div>
+}
 </Card>
 
 <div className="flex flex-wrap w-full gap-2 justify-center">
@@ -227,18 +257,29 @@ if(token){
     'abi':arrayOfContracts.find(contract => contract.address === token)!.abi,
     'address':arrayOfContracts.find(contract => contract.address === token)!.address as `0x${string}`,
     'functionName':'approve',
-    'args':[ethSepoliaVaultManagerAddress, amount * 1e18],
+    'args':[chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress, amount * 1e18],
   })
 }
 }} className="p-6 transition-all shadow-sm shadow-black hover:bg-blue-900 cursor-pointer hover:scale-95 text-lg max-w-52 self-center w-full bg-blue-500">Approve Collateral</Button>
   
 <Button onClick={()=>{
-  writeContract({
+if(chainId === SEPOLIA_ETH_CHAINID && token && amount){
+    writeContract({
     'abi':vaultManagerAbi,
     'address':ethSepoliaVaultManagerAddress,
     'functionName':'depositCollateral',
     'args':[token, amount * 1e18],
-  })
+  });
+  return;
+}
+writeContract({
+    'abi':vaultManagerAbi,
+    'address':arbitrumSepoliaVaultManagerAddress,
+    'functionName':'depositCollateral',
+    'args':[token, amount * 1e18],
+  });
+
+
 }} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-52 self-center w-full bg-red-500">Put Collateral</Button>
 </div>
 

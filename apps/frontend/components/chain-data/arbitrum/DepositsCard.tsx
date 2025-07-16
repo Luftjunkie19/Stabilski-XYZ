@@ -1,17 +1,17 @@
-import { stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/smart-contracts-abi/CollateralManager';
+import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/smart-contracts-abi/CollateralManager';
 import React from 'react'
 import { useReadContract } from 'wagmi'
 import DepositorElement from './DepositorElement';
-import { SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
+import { ARBITRUM_SEPOLIA_CHAINID } from '@/lib/CollateralContractAddresses';
 
 function DepositsCard() {;
 
     const {data:collateralTokens}=useReadContract({
         abi: stabilskiTokenCollateralManagerAbi,
-        address: stabilskiTokenSepoliaEthCollateralManagerAddress,
+        address: stabilskiTokenArbitrumSepoliaCollateralManagerAddress,
         functionName:'getCollateralTokens',
         args:[],
-        chainId: SEPOLIA_ETH_CHAINID
+        chainId: ARBITRUM_SEPOLIA_CHAINID
     });
 
      
