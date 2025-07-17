@@ -240,12 +240,12 @@ if(data) setMaximumAmount(Number(data[arrayOfContracts.findIndex(contract => con
   {chainId && chainId === SEPOLIA_ETH_CHAINID && data && 
 <div className="flex flex-col gap-1 px-4">
 <p>Balances</p>
-  <div className="w-full flex items-center gap-6">
+  <div className="w-full flex sm:items-center flex-row  gap-3">
 <div className='flex items-center gap-1'>
-  <FaBitcoin className='text-orange-500'/> {(data[0] && Number(data[0].result) / 1e8).toFixed(4)}
+  <FaBitcoin className='text-orange-500'/> {(data[0] && Number(data[0].result) / 1e8).toFixed(2)}
 </div>
-<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {(data[1] && Number(data[1].result) / 1e18).toFixed(6)}</div>
-<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {data[2] && (Number(data[2].result) / 1e18).toFixed(4)}</div>
+<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {(data[1] && Number(data[1].result) / 1e18).toFixed(2)}</div>
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {data[2] && (Number(data[2].result) / 1e18).toFixed(2)}</div>
 </div>
 </div>
 }

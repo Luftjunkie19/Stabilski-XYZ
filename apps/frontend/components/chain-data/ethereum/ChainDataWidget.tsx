@@ -91,11 +91,11 @@ const {chainId, address}=useAccount();
 <div className="flex flex-col gap-2">
   <p>Crypto Prices (USD)</p>
 <div onClick={() => console.log(collateralTokenPriceData)} className="w-full flex items-center gap-6">
-<div className='flex items-center gap-1'>
-  <FaBitcoin className='text-orange-500'/> {collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(2)} $
+<div className='flex text-sm items-center gap-1'>
+  <FaBitcoin className='text-orange-500 text-base'/> {collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(2)}
 </div>
-<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {(collateralTokenPriceData[1] && Number(collateralTokenPriceData[1].result)/ 1e18).toFixed(2)} $</div>
-<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {collateralTokenPriceData[2] && (Number(collateralTokenPriceData[2].result) / 1e18).toFixed(2)} $</div>
+<div className='flex text-sm items-center gap-1'><FaEthereum className='text-zinc-500 text-base'/> {(collateralTokenPriceData[1] && Number(collateralTokenPriceData[1].result)/ 1e18).toFixed(2)}</div>
+<div className='flex text-sm items-center gap-1'><SiChainlink className='text-blue-500 text-base'/> {collateralTokenPriceData[2] && (Number(collateralTokenPriceData[2].result) / 1e18).toFixed(2)}</div>
 </div>
 
 </div>
@@ -103,7 +103,7 @@ const {chainId, address}=useAccount();
 
 
 {chainId && vaultSepoliaEthereumManagerContract &&
-<div className="flex flex-col gap-1">
+<div className="flex flex-col overflow-y-auto gap-1">
 <p>Your Collateral</p>
 <div  className="w-full flex items-center gap-6">
 <div className='flex items-center gap-1'>
@@ -131,7 +131,7 @@ flex items-center gap-2
    }
 </p>
 
-{oraclePrice as unknown as bigint && <p className="text-[10px] text-zinc-500 sm:text-base tracking">USD/PLN (Ethereum Sepolia): <span className='text-red-500 font-bold'>{(Number(oraclePrice) / 1e4).toFixed(4)} PLN</span></p>}
+{oraclePrice as unknown as bigint && <p className="text-sm text-zinc-500 sm:text-base tracking">USD/PLN (Ethereum Sepolia): <span className='text-red-500 font-bold'>{(Number(oraclePrice) / 1e4).toFixed(4)} PLN</span></p>}
 </div>
 }
 

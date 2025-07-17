@@ -50,7 +50,7 @@ function VaultInformation({depostior, tokenAddress}: Props) {
             <>
             {vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" &&
         <div className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex items-center justify-between`}>
-    <div className="">
+    <div className="w-full">
         <p className='hidden md:block'>{depostior.slice(0, 21)}...</p>
     <p className='block md:hidden'>{depostior.slice(0, 10)}...</p>
     <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ function VaultInformation({depostior, tokenAddress}: Props) {
     <div className='flex flex-col items-end w-full'>
     
     <div className="flex items-center">
-        <p className='text-sm'><span>{Number((vaultInfo as unknown as any[])[1] as unknown as bigint)/1e18}</span></p>
+        <p className='text-sm'><span>{(Number((vaultInfo as unknown as any[])[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-8 h-8'/>
     </div>
 
@@ -82,7 +82,6 @@ function VaultInformation({depostior, tokenAddress}: Props) {
         functionName:'approve',
         args:[address, 111e18],
     });
-    
             writeContract({
                 chainId,
                 address: chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaVaultManagerAddress : ethSepoliaVaultManagerAddress,
