@@ -14,7 +14,6 @@ function DepositsCard() {;
         chainId: SEPOLIA_ETH_CHAINID
     });
 
-    
 
 
 

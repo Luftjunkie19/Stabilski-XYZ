@@ -93,7 +93,7 @@ constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralM
     collateralManager = CollateralManagerInterface(_collateralManager);
 }
 
-function isInTheArray(address soughtAddr) internal returns(bool) {
+function isInTheArray(address soughtAddr) internal view returns(bool) {
 
  for(uint256 index=0; index < borrowers.length; index++){
         if(borrowers[index] == soughtAddr) {
@@ -255,7 +255,7 @@ function getIsHealthyAfterWithdrawal(uint256 amount, address token) public view 
 
     if (debtAmount == 0) return true;
 
-   uint256 healthFactor = (collateralAmountInPLN / debtAmount) * decimalPointsNormalizer;
+   uint256 healthFactor = (collateralAmountInPLN * decimalPointsNormalizer / debtAmount);
 
     return healthFactor > minCollateralRatio;
 }

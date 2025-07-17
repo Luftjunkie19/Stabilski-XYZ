@@ -4,13 +4,15 @@ import Image from 'next/image'
 import React from 'react'
 import { useReadContract } from 'wagmi'
 import stabilskiStableCoin from '@/public/Logox32.png';
-import { Button } from '@/components/ui/button';
 type Props = {
     depostior:`0x${string}`,
     tokenAddress:`0x${string}`
 }
 
 import {GiReceiveMoney, GiPayMoney} from 'react-icons/gi';
+import RepayDialog from '@/components/dialogs/RepayDialog';
+import WithdrawDialog from '@/components/dialogs/WithdrawDialog';
+
 
 function VaultElement({depostior, tokenAddress}: Props) {
   
@@ -46,8 +48,8 @@ function VaultElement({depostior, tokenAddress}: Props) {
         return (
             <>
             {vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" &&
-        <div className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex items-center justify-between`}>
-    <div className="">
+        <div className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row px-2 gap-1 flex sm:items-center justify-between`}>
+    <div className="w-full">
         <p className='hidden md:block'>{depostior.slice(0, 21)}...</p>
     <p className='block md:hidden'>{depostior.slice(0, 10)}...</p>
     <div className="flex items-center gap-2">
@@ -60,7 +62,7 @@ function VaultElement({depostior, tokenAddress}: Props) {
     </div>
        <GiReceiveMoney className='mr-1' />
         <div className="flex items-center ">
-        <p className='text-sm'><span>{Number((vaultInfo as unknown as any[])[1] as unknown as bigint)/1e18}</span></p>
+        <p className='text-sm'><span>{(Number((vaultInfo as unknown as any[])[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-7 h-7'/>
     </div>
     <p className={` text-sm ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ? 'text-red-500' : 'text-green-500' }`}>{healthData as unknown as bigint && (Number((healthData as unknown as bigint))/1e16).toFixed(2)}%</p>
@@ -68,10 +70,12 @@ function VaultElement({depostior, tokenAddress}: Props) {
     </div>
     
     
-    <div className='hidden md:flex gap-1 items-end '>
-    <Button  className={`bg-blue-500 cursor-pointer hover:bg-blue-800 hover:scale-95`} >Repay</Button>
-     <Button variant={'destructive'} className={`bg-red-500 cursor-pointer  hover:bg-red-800 hover:scale-95`} >Withdraw</Button>
+    <div className='flex gap-1 items-end '>
+   <RepayDialog/>
+     <WithdrawDialog/>
     </div>
+
+    
     
     
         </div>
