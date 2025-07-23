@@ -2,7 +2,7 @@
 import { arbitrumSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager'
 import Image from 'next/image'
 import React from 'react'
-import { useReadContract, useWriteContract } from 'wagmi'
+import { useReadContract } from 'wagmi'
 import stabilskiStableCoin from '@/public/Logox32.png';
 
 type Props = {
@@ -16,13 +16,7 @@ import WithdrawDialog from '@/components/dialogs/WithdrawDialog';
 import RepayDialog from '@/components/dialogs/RepayDialog';
 
 function VaultElement({depostior, tokenAddress}: Props) {
-  const {}=useWriteContract({
-    abi: vaultManagerAbi,
-    address: arbitrumSepoliaVaultManagerAddress,
-    functionName:'withdraw',
-    args:[depostior, tokenAddress],
-      chainId:ARBITRUM_SEPOLIA_CHAINID
-  });
+
 
     const {data:collateralValue}=useReadContract({
         abi: vaultManagerAbi,
