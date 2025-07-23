@@ -196,12 +196,12 @@ console.log(vaultInfoContracts.findIndex((info)=>info.args[1] === value));
 }} className={`bg-blue-500 max-w-4/5 w-full cursor-pointer hover:bg-blue-800 hover:scale-95`}>Approve PLST</Button>
 
 <Button onClick={()=>{
+  console.log(token);
   writeContract({
     'abi':vaultManagerAbi,
     'address':chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
     'functionName':'repayPLST',
-    'args':[SEPOLIA_ETH_WETH_ADDR
-      , amount * 1e18],
+    'args':[SEPOLIA_ETH_WETH_ADDR, amount * 1e18],
     chainId
   });
 }} className={`bg-green-500 max-w-4/5 w-full cursor-pointer hover:bg-green-800 hover:scale-95`}>Repay</Button>
