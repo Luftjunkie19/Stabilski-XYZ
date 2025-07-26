@@ -1,6 +1,6 @@
-export const ethSepoliaVaultManagerAddress="0x7A50248A5bcd52395A8BEBC067Eb4007131C37c5";
+export const ethSepoliaVaultManagerAddress="0x2B92b2E0C9d23af2f438E356836cdb99B0aaD509";
 
-export const arbitrumSepoliaVaultManagerAddress="0x399fAfE05Dc04e92f76D09125cba03090Bcf9cFc";
+export const arbitrumSepoliaVaultManagerAddress="0x18584204aE38002e1369922e6B82d711aa38ae98";
 
 export const vaultManagerAbi=[
 {"type":"constructor","inputs":[{"name":"_usdPlnOracle","type":"address","internalType":"address"},

@@ -60,7 +60,13 @@ function VaultInformation({depostior, tokenAddress}: Props) {
             </span> </p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-6 h-6'/>
     </div>
-    <p className={`text-sm ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ? 'text-red-500' : 'text-green-500' }`}>{healthData as unknown as bigint && (Number((healthData as unknown as bigint))/1e16).toFixed(2)}%</p>
+    <p className={`text-sm ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ? 'text-red-500' : 'text-green-500' }`}>
+     {healthData as unknown as bigint &&  Number((healthData as unknown as bigint)) &&
+        Number((healthData as unknown as bigint))/1e16 < 1e3 ?
+     `${(Number((healthData as unknown as bigint))/1e16).toFixed(2)}%`
+        : "Overcollatirized"
+        }
+    </p>
     </div>
     </div>
     

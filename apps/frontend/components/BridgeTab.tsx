@@ -76,7 +76,9 @@ const {data}=useReadContract({
         Ethereum Sepolia (ETH)
     </span>
 </SelectItem>
-) : ( <SelectItem className='text-xs' value={`${SEPOLIA_ETH_CHAINID}`}><FaEthereum className="text-gray-500"/>  Ethereum Sepolia (ETH)</SelectItem>)}
+) : ( <SelectItem className='text-xs' value={`${ARBITRUM_SEPOLIA_CHAINID}`}>
+<Image src={arbitrumLogo} className='w-5 h-5' width={20} height={20} alt='logo'/> Arbitrum Sepolia (ARB)
+  </SelectItem>)}
   </SelectContent>
 </Select>
   </div>
