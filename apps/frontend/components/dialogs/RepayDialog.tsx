@@ -11,6 +11,7 @@ import { SiChainlink } from 'react-icons/si';
 import { Label } from '../ui/label';
 import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
+import { toast } from 'sonner';
 
 
 
@@ -124,6 +125,7 @@ const {writeContract}=useWriteContract({
   'mutation':{
     'onSuccess':(data)=>{
       console.log(data);
+      toast.success('Successfully Repaid');
     }
   }
 });
@@ -189,8 +191,7 @@ console.log(vaultInfoContracts.findIndex((info)=>info.args[1] === value));
     'abi':stabilskiTokenABI,
     'address':chainId === SEPOLIA_ETH_CHAINID ? stabilskiTokenEthSepoliaAddress : stabilskiTokenArbitrumSepoliaAddress,
     'functionName':'approve',
-    'args':[chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress
-       , amount * 1e18],
+    'args':[chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress, amount * 1e18],
     chainId
   });
 }} className={`bg-blue-500 max-w-4/5 w-full cursor-pointer hover:bg-blue-800 hover:scale-95`}>Approve PLST</Button>
@@ -201,7 +202,7 @@ console.log(vaultInfoContracts.findIndex((info)=>info.args[1] === value));
     'abi':vaultManagerAbi,
     'address':chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
     'functionName':'repayPLST',
-    'args':[SEPOLIA_ETH_WETH_ADDR, amount * 1e18],
+    'args':[token, amount * 1e18],
     chainId
   });
 }} className={`bg-green-500 max-w-4/5 w-full cursor-pointer hover:bg-green-800 hover:scale-95`}>Repay</Button>

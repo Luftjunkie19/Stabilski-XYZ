@@ -4,6 +4,7 @@ import {  Audiowide
 import "./globals.css";
 import { Web3Provider } from "@/lib/Web3Provider";
 import Navbar from "@/components/ui/Navbar";
+import { Toaster } from "sonner";
 
 // const poppins = Lexend({
 //   variable: "--font-lexend",
@@ -39,7 +40,8 @@ export default function RootLayout({
         className={`${audiowide.variable} antialiased`}
         >
         <Navbar/>
-        {/* <HackerBackground className="bg-transparent" color="#ff3f3f"/> */}
+        <Toaster/>
+       
         {children}
       </body>
       </Web3Provider>
