@@ -69,7 +69,7 @@ function VaultElement({depostior, tokenAddress}: Props) {
         {healthData as unknown as bigint &&  Number((healthData as unknown as bigint)) &&
         Number((healthData as unknown as bigint))/1e16 < 1e3 ?
      `${(Number((healthData as unknown as bigint))/1e16).toFixed(2)}%`
-        : "Overcollatirized"
+        : ">1000%"
         }
         </p>
     </div>

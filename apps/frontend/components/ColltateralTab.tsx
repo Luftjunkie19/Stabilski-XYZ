@@ -10,13 +10,14 @@ import { SiChainlink } from 'react-icons/si'
 import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { Input } from './ui/input'
-import { useAccount, useReadContract, useReadContracts, useSwitchChain, useWriteContract } from 'wagmi'
+import { useAccount, useReadContract, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
 import { usdplnOracleABI, usdplnOracleEthSepoliaAddress } from '@/lib/smart-contracts-abi/USDPLNOracle';
 import ChainDataWidget from './chain-data/ethereum/ChainDataWidget';
 import ArbitrumDataWidget from './chain-data/arbitrum/ArbitrumDataWidget';
 import { ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
+import { toast } from 'sonner';
 
 
 
@@ -29,14 +30,56 @@ function ColltateralTab() {
         
       }
     }});
+
   const [amount, setAmount] = useState<number>(0);
   const [token, setToken] = useState<`0x${string}` | undefined>(undefined);
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
+  const [approved, setApproved] = useState<boolean>(false);
     const {chainId, address}=useAccount();
 
-    const {writeContract}=useWriteContract({
+    const {writeContract}=useWriteContract({});
 
-    });
+     useWatchContractEvent({
+    address: token,
+    abi: token === SEPOLIA_ETH_WETH_ADDR ? SEPOLIA_ETH_WETH_ABI : token === SEPOLIA_ETH_WBTC_ADDR ? SEPOLIA_ETH_WBTC_ABI : token === SEPOLIA_ETH_LINK_ADDR ? SEPOLIA_ETH_LINK_ABI : ARBITRUM_SEPOLIA_ABI,
+    eventName: 'Approval',
+    'onError':(error)=>{
+      console.error('Error watching contract event:', error);
+    
+    },
+  'onLogs':(logs)=>{
+    console.log('New logs!', logs);
+    setApproved(true);
+    toast.success('Collateral approved successfully');
+  },
+  args:{
+    owner: address,
+  }
+  });
+
+  useWatchContractEvent({
+    address: chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
+    abi: vaultManagerAbi,
+    eventName: 'CollateralDeposited',
+    'onError':(error)=>{
+      console.error('Error watching contract event:', error);
+    
+    },
+  'onLogs':(logs)=>{
+    setApproved(true);
+    toast.success(`Collateral successfully deposited ${
+  Number(
+  (logs[0] as any)
+    .args
+    .amount
+  )} ${token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : 'LINK'}`);
+  },
+  args:{
+    vaultOwner: address,
+    token: token,
+  },
+  'enabled': amount > 0 && token !== undefined && address !== undefined && chainId !== undefined,
+  });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const arrayOfContracts=[
@@ -266,17 +309,27 @@ if(token){
     'address':arrayOfContracts.find(contract => contract.address === token)!.address as `0x${string}`,
     'functionName':'approve',
     'args':[chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress, amount * 1e18],
+  }, {
+    onSettled(data, error) {
+      if (error) {
+        console.error('Error approving collateral:', error);
+        toast.error('Error approving collateral');
+      } else {
+        console.log('Collateral approved successfully:', data);
+        toast.loading('Approving collateral.....',{ 'duration': 2.5, dismissible:true });
+      }
+    },
   })
 }
 }} className="p-6 transition-all shadow-sm shadow-black hover:bg-blue-900 cursor-pointer hover:scale-95 text-lg max-w-52 self-center w-full bg-blue-500">Approve Collateral</Button>
   
-<Button onClick={()=>{
+<Button disabled={!approved} onClick={()=>{
 if(chainId === SEPOLIA_ETH_CHAINID && token && amount){
     writeContract({
     'abi':vaultManagerAbi,
     'address':ethSepoliaVaultManagerAddress,
     'functionName':'depositCollateral',
-    'args':[token, amount * 1e18],
+    'args':[token, amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)],
   });
   return;
 }
