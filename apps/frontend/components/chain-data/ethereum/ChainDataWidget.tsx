@@ -107,10 +107,10 @@ const {chainId, address}=useAccount();
 <p>Your Collateral</p>
 <div  className="w-full flex items-center gap-6">
 <div className='flex items-center gap-1'>
-  <FaBitcoin className='text-orange-500'/> {vaultSepoliaEthereumManagerContract[0] && (Number(vaultSepoliaEthereumManagerContract[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} />
+  <FaBitcoin className='text-orange-500'/> {vaultSepoliaEthereumManagerContract[0] && vaultSepoliaEthereumManagerContract[0].result as unknown as bigint && Number(vaultSepoliaEthereumManagerContract[0].result)  && (Number(vaultSepoliaEthereumManagerContract[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} />
 </div>
-<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {(vaultSepoliaEthereumManagerContract[1] && Number(vaultSepoliaEthereumManagerContract[1].result)/ 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
-<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultSepoliaEthereumManagerContract[2] && (Number(vaultSepoliaEthereumManagerContract[2].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
+<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {vaultSepoliaEthereumManagerContract[1] && vaultSepoliaEthereumManagerContract[1].result as unknown as bigint   && Number(vaultSepoliaEthereumManagerContract[1].result)  && (Number(vaultSepoliaEthereumManagerContract[1].result)/ 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultSepoliaEthereumManagerContract[2] && vaultSepoliaEthereumManagerContract[2].result as unknown as bigint && Number(vaultSepoliaEthereumManagerContract[2].result)  && (Number(vaultSepoliaEthereumManagerContract[2].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>
 
 <p

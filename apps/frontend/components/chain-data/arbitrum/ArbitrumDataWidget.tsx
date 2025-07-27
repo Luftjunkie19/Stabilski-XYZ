@@ -74,7 +74,8 @@ const {data:arbitrumSepoliaCollateralData}=useReadContract({
 <div className="flex flex-col gap-2">
 <div  className="w-full flex flex-col gap-2">
   <p>Crypto Prices (USD)</p>
-<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {collateralTokenPriceData as unknown as bigint && (Number((collateralTokenPriceData as unknown as bigint)) / 1e18).toFixed(2)} $</div>
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> 
+{collateralTokenPriceData as unknown as bigint && Number((collateralTokenPriceData as unknown as bigint)) && (Number((collateralTokenPriceData as unknown as bigint)) / 1e18).toFixed(2)} $</div>
 </div>
 
 <div className="flex flex-col gap-1">

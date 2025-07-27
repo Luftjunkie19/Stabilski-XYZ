@@ -1,10 +1,12 @@
+'use client';
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, {  useState } from 'react'
 import { Button } from '../ui/button'
 import { DialogHeader,Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Input } from '../ui/input';
-import { useAccount,  useReadContracts, useWriteContract } from 'wagmi';
+import { useAccount,  useReadContracts, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { SEPOLIA_ETH_WETH_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_LINK_ADDR, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
 import { FaEthereum, FaBitcoin } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
@@ -121,14 +123,26 @@ const { address, chainId }=useAccount();
   }
   );
 
-const {writeContract}=useWriteContract({
-  'mutation':{
-    'onSuccess':(data)=>{
-      console.log(data);
-      toast.success('Successfully Repaid');
-    }
-  }
+const {writeContract}=useWriteContract();
+
+
+useWatchContractEvent({
+  address: chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
+  abi: vaultManagerAbi,
+  eventName: 'DebtRepaid',
+  onLogs: (logs) => {
+    console.log('New logs!', logs);
+    toast.success(`
+Debt repaid successfully for ${amount} PLST on ${token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : 'LINK'} vault!
+    `);
+  },
+  args:{
+    vaultOwner: address,
+    token: token,
+  },
+
 });
+
 
   return (
    <Dialog>
@@ -191,7 +205,9 @@ console.log(vaultInfoContracts.findIndex((info)=>info.args[1] === value));
     'abi':stabilskiTokenABI,
     'address':chainId === SEPOLIA_ETH_CHAINID ? stabilskiTokenEthSepoliaAddress : stabilskiTokenArbitrumSepoliaAddress,
     'functionName':'approve',
-    'args':[chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress, amount * 1e18],
+    'args':[chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress, amount * 
+      (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)
+    ],
     chainId
   });
 }} className={`bg-blue-500 max-w-4/5 w-full cursor-pointer hover:bg-blue-800 hover:scale-95`}>Approve PLST</Button>
@@ -202,7 +218,7 @@ console.log(vaultInfoContracts.findIndex((info)=>info.args[1] === value));
     'abi':vaultManagerAbi,
     'address':chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
     'functionName':'repayPLST',
-    'args':[token, amount * 1e18],
+    'args':[token, amount *  (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)],
     chainId
   });
 }} className={`bg-green-500 max-w-4/5 w-full cursor-pointer hover:bg-green-800 hover:scale-95`}>Repay</Button>
