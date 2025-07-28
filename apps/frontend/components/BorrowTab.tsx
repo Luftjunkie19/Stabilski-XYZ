@@ -10,13 +10,14 @@ import { SiChainlink } from 'react-icons/si'
 import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { Input } from './ui/input'
-import { useAccount, useReadContracts, useSwitchChain, useWriteContract } from 'wagmi'
+import { useAccount, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
 import {  ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 
 import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import {  stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi } from '@/lib/smart-contracts-abi/CollateralManager';
 import ChainDataWidget from './chain-data/ethereum/ChainDataWidget';
 import ArbitrumDataWidget from './chain-data/arbitrum/ArbitrumDataWidget';
+import { toast } from 'sonner';
 
 
 function BorrowTab() {
@@ -38,7 +39,7 @@ const {writeContract}=useWriteContract({
 const {chainId, address}=useAccount();
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
 
- // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
     const arrayOfContracts=[
        {
              'abi':SEPOLIA_ETH_WBTC_ABI,
@@ -157,8 +158,24 @@ return;
     args:[token, amount * 10 ** 18],
     chainId:SEPOLIA_ETH_CHAINID
   });
+
+  toast.loading('Borrowing PLST...', {'dismissible':true, 'duration':5000, 'id':'borrow-plst'});
 }
 
+
+useWatchContractEvent({
+  address: chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaVaultManagerAddress : ethSepoliaVaultManagerAddress,
+  abi:vaultManagerAbi,
+  eventName:'StabilskiTokenMinted',
+  chainId:chainId,
+onLogs:(logs)=>{
+  toast.success(`You successfully borrowed ${Number((logs[0] as any).args.amount) / 1e18} PLST`);
+},
+args:{
+  vaultOwner: address,
+  amount: amount * 10 ** 18,
+}
+});
 
 
   return (
@@ -171,7 +188,14 @@ return;
   <Input onChange={(e) =>setAmount(Number(e.target.value))} type="number" step={0.01} min={0} max={maximumAmount} className="w-full"/>
  <Select onValueChange={(value)=>{
  setToken(value as `0x${string}`);
- if(maxBorrowableData) setMaximumAmount(Number(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)].result) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 :1e18));
+ if(maxBorrowableData){
+  console.log(maxBorrowableData, 'maxBorrowableData');
+   const selectedContractNumber=Number(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)].result);
+   console.log(selectedContractNumber)
+const maxAmount = selectedContractNumber / 1e18;
+console.log(maxAmount, 'maxAmount');
+   setMaximumAmount(maxAmount);
+ }
 
  }}>
   <SelectTrigger className="w-44">
@@ -192,7 +216,7 @@ return;
   </div>
     <div className="h-1/2 py-1 px-3 items-center flex gap-3 flex-col">
  <p className="text-red-500 text-2xl tracking">Your can still borrow</p>
-<p>{maxBorrowableData as unknown as any && vaultContractInfo as unknown as any && token && arrayOfContracts.find((contract) => contract.address === token) || arrayOfContracts.findIndex((contract) => contract.address === token) !== -1   ?  (((Number((maxBorrowableData as unknown as any)[arrayOfContracts.findIndex((contract) => contract.address === token)].result)) - (amount * 10 ** 18))/ 1e18).toFixed(2) : 0 } <span className='text-red-500'>PLST</span></p>
+<p>{maxBorrowableData as unknown as any && vaultContractInfo as unknown as any && token && arrayOfContracts.find((contract) => contract.address === token) || arrayOfContracts.findIndex((contract) => contract.address === token) !== -1   ?  (((Number((maxBorrowableData as unknown as any)[arrayOfContracts.findIndex((contract) => contract.address === token)].result)) - (amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18))) /  1e18).toFixed(2) : 0 } <span className='text-red-500'>PLST</span></p>
 
   </div>
 </Card>

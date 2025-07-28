@@ -14,6 +14,7 @@ import { SiChainlink } from 'react-icons/si';
 import { FaBitcoin, FaEthereum } from 'react-icons/fa6';
 import { stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
 
+
 function WithdrawDialog() {
   const {chainId, address}=useAccount();
   const [amount, setAmount] = useState<number>(0);
@@ -127,6 +128,7 @@ function WithdrawDialog() {
     }
   });
 
+
 return (
 <Dialog>
   <DialogTrigger>
@@ -142,7 +144,6 @@ return (
 
 
 <div className="flex items-center gap-2 w-full">
-  
   <div className="w-full flex flex-col gap-1">
     <Label>Amount</Label>
     <Input value={amount} onChange={(e) =>setAmount(Number(e.target.value))} type="number" min={0} 
@@ -154,15 +155,12 @@ return (
   <Label>Vault</Label>
    <Select onValueChange={(value)=>{
   setToken(value as `0x${string}`);
-console.log(vaultInfoContracts.findIndex((info)=>info.args[1] === value));
-  
-
   const collaterizationRatio =collateralInfos as unknown as any[] && Number((collateralInfos as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[1]) / 1e18;
-  const collateralValue =collateralInfos as unknown as any[] && Number((vaultInfo as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[0]) / 1e18;
+  const collateralValue =collateralInfos as unknown as any[] && Number((vaultInfo as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[0]) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18);
 
 console.log(collateralValue, 'collateralValue');
 console.log(collaterizationRatio, 'collaterizationRatio');
-  const maxWithdrawAmount =( Number(collateralValue) -  (Number(collateralValue)  / Number(collaterizationRatio)));
+  const maxWithdrawAmount = (Number(collateralValue) -  (Number(collateralValue)  / Number(collaterizationRatio)));
 
 console.log(maxWithdrawAmount, 'maxWithdrawAmount');
 
@@ -192,10 +190,10 @@ console.log(maxWithdrawAmount, 'maxWithdrawAmount');
 
 </div>
 <Button onClick={()=>{
-  console.log("token", token, "amount", amount * 1e18);
+
 writeContract({
   abi:vaultManagerAbi,
-  args:[token, amount * 1e18],
+  args:[token, amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)],
   functionName:'withdrawCollateral',
   address: chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
   chainId

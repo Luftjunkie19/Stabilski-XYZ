@@ -66,13 +66,12 @@ function ColltateralTab() {
     
     },
   'onLogs':(logs)=>{
-    setApproved(true);
     toast.success(`Collateral successfully deposited ${
-  Number(
+ ( Number(
   (logs[0] as any)
     .args
     .amount
-  )} ${token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : 'LINK'}`);
+  ) / (token !== SEPOLIA_ETH_WBTC_ADDR ? 1e18 : 1e8)).toFixed(4)} ${token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : 'LINK'}`);
   },
   args:{
     vaultOwner: address,
@@ -219,16 +218,21 @@ function ColltateralTab() {
     });
 
 
-    const getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken= useCallback(()=>{
+    const getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken= useCallback(
+   ()=>{
       if(!collateralTokenPriceData && !usdplnOraclePrice && !token && !collateralData) return 0;
 
       if(collateralData && collateralTokenPriceData && usdplnOraclePrice && token
 && chainId === SEPOLIA_ETH_CHAINID
       ){
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
- return (
-  ((amount * Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === token)]!.result) * Number(usdplnOraclePrice) * 1e18)/1e22)
-  / Number((collateralData as unknown as any)[arrayOfContracts.findIndex(c => c.address === token)]!.result[arrayOfContracts.findIndex(c => c.address === token)][1])
+        
+        const main =((amount * Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === token)].result) * Number(usdplnOraclePrice) * 1e18)/1e22);
+        const divider = Number((collateralData as unknown as any)[arrayOfContracts.findIndex(c => c.address === token)].result[1]) / 1e18 ;
+
+const maxToBorrow = (main / (divider * 1e18)); ;
+
+        return (
+ (maxToBorrow).toFixed(6)
 );
 
 }
@@ -236,6 +240,8 @@ function ColltateralTab() {
 return 0;
 
 },[collateralTokenPriceData, usdplnOraclePrice, token, collateralData, chainId, amount, arrayOfContracts])
+
+
 
 
 
@@ -250,10 +256,13 @@ return 0;
   <Input step={0.01} onChange={(e)=>setAmount(Number(e.target.value))} type="number" min={0} max={maximumAmount}  className="w-full"/>
  <Select value={token} onValueChange={(value) => {
 setToken(value as `0x${string}`);
-if(data) setMaximumAmount(Number(data[arrayOfContracts.findIndex(contract => contract.address === value)].result) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 :1e18));
 
 
-
+if(data){
+  const maxToBorrow=Number(data[arrayOfContracts.findIndex(contract => contract.address === value)].result) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18);
+  console.log(maxToBorrow, 'maxToBorrow');
+  setMaximumAmount(maxToBorrow);
+}
 }}>
   <SelectTrigger className="w-44">
     <SelectValue  placeholder="Token" />
@@ -275,14 +284,14 @@ if(data) setMaximumAmount(Number(data[arrayOfContracts.findIndex(contract => con
   <Label className="text-lg text-zinc-700">You Will Be Able To Borrow (Max.)</Label>
 <div className="flex w-full items-center gap-2">
   <div className="p-2 w-full rounded-lg border-gray-300 border">
-  <p className='text-red-500'>{getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken() ?? 0}</p>
+  <p className='text-red-500'>{getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken()}</p>
 </div>
 <p className='text-red-500'>PLST</p>
 </div>
   </div>
   {chainId && chainId === SEPOLIA_ETH_CHAINID && data && 
 <div className="flex flex-col gap-1 px-4">
-<p>Balances</p>
+
   <div className="w-full flex sm:items-center flex-row  gap-3">
 <div className='flex items-center gap-1'>
   <FaBitcoin className='text-orange-500'/> {(data[0] && Number(data[0].result) / 1e8).toFixed(2)}
@@ -295,7 +304,6 @@ if(data) setMaximumAmount(Number(data[arrayOfContracts.findIndex(contract => con
 
   {chainId && chainId === ARBITRUM_SEPOLIA_CHAINID && data && 
 <div className="flex flex-col gap-1 px-4">
-<p>Balance</p>
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {data[3] && (Number(data[3].result) / 1e18).toFixed(2)}</div>
 </div>
 }
@@ -325,11 +333,12 @@ if(token){
   
 <Button disabled={!approved} onClick={()=>{
 if(chainId === SEPOLIA_ETH_CHAINID && token && amount){
+  const multiplier = token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18;
     writeContract({
     'abi':vaultManagerAbi,
     'address':ethSepoliaVaultManagerAddress,
     'functionName':'depositCollateral',
-    'args':[token, amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)],
+    'args':[token, amount * multiplier],
   });
   return;
 }

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager'
+import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager'
 import Image from 'next/image'
 import React from 'react'
-import { useReadContract } from 'wagmi'
+import { useAccount, useReadContract, useWatchContractEvent } from 'wagmi'
 import stabilskiStableCoin from '@/public/Logox32.png';
 type Props = {
     depostior:`0x${string}`,
@@ -12,10 +12,12 @@ type Props = {
 import {GiReceiveMoney, GiPayMoney} from 'react-icons/gi';
 import RepayDialog from '@/components/dialogs/RepayDialog';
 import WithdrawDialog from '@/components/dialogs/WithdrawDialog';
+import { toast } from 'sonner';
+import { SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 
 
 function VaultElement({depostior, tokenAddress}: Props) {
-  
+  const {chainId}=useAccount();
     const {data:collateralValue}=useReadContract({
         abi: vaultManagerAbi,
         address: ethSepoliaVaultManagerAddress,
@@ -43,6 +45,28 @@ function VaultElement({depostior, tokenAddress}: Props) {
         functionName:'isLiquidatable',
         args:[depostior, tokenAddress],
     })
+
+
+
+    useWatchContractEvent({
+  address: chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
+  abi: vaultManagerAbi,
+  eventName: 'DebtRepaid',
+  onLogs: (logs) => {
+    console.log('New logs!', logs);
+    toast.success(`
+Debt repaid successfully for ${(logs[0] as any).args.vaultOwner} PLST on ${tokenAddress === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : tokenAddress === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : tokenAddress === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : 'LINK'} vault!
+    `);
+  },
+  args:{
+    vaultOwner: depostior,
+    token: tokenAddress,
+  },
+
+});
+
+
+
 
     if(vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" ){
         return (

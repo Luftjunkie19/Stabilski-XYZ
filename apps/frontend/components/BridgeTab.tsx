@@ -14,11 +14,14 @@ import { FaEthereum } from 'react-icons/fa6';
 import { useAccount, useReadContract } from 'wagmi';
 import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { ARBITRUM_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
+import { readContract } from '@wagmi/core'
+import { config } from '@/lib/Web3Provider';
+import { chainSelectorArbitrumSepolia, chainSelectorSepoliaEth, stabilskiTokenArbSender, stabilskiTokenSenderABI, stabilskiTokenSepoliaSender } from '@/lib/smart-contracts-abi/StabilskiTokenReveiverAndSender';
 
 function BridgeTab() {
 
 const {chainId, address}=useAccount();
-
+const [tokenAmountToSend, setTokenAmountToSend] = React.useState<number>(0);
 const {data}=useReadContract({
     abi:stabilskiTokenABI,
     address: chainId === ARBITRUM_SEPOLIA_CHAINID ? stabilskiTokenArbitrumSepoliaAddress : stabilskiTokenEthSepoliaAddress,
@@ -26,6 +29,23 @@ const {data}=useReadContract({
     args: [address],
     chainId: chainId
 });
+
+const handleTokenChange = async () => {
+const result = await readContract(config, {
+  abi: stabilskiTokenSenderABI,
+  address: chainId === ARBITRUM_SEPOLIA_CHAINID ? stabilskiTokenArbSender : stabilskiTokenSepoliaSender,
+  functionName: 'getFee',
+  args: [
+    tokenAmountToSend, 
+    chainId === ARBITRUM_SEPOLIA_CHAINID ? chainSelectorArbitrumSepolia : chainSelectorSepoliaEth,
+     chainId === ARBITRUM_SEPOLIA_CHAINID ? stabilskiTokenArbitrumSepoliaAddress : stabilskiTokenEthSepoliaAddress,
+     address],
+  chainId: chainId
+});
+
+console.log("Fee for bridging tokens:", result);
+
+}
 
   return (
   <TabsContent value="bridge" className="flex flex-col gap-4 max-w-xl w-full">
@@ -35,7 +55,7 @@ const {data}=useReadContract({
 <div className="flex items-center gap-4">
 <div className="w-full flex-col gap-1">
   <Label>Amount</Label>
-    <Input type="number" min={0} max={Number(data)/1e18} className="w-full"/>
+    <Input onChange={(e) => setTokenAmountToSend(Number(e.target.value))} type="number" min={0} max={Number(data)/1e18} className="w-full"/>
 </div>
 <div className="flex-col gap-1">
   <Label>Chain</Label>
@@ -85,7 +105,7 @@ const {data}=useReadContract({
 
     </Card>
 
-    <Button className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Bridge Tokens</Button>
+    <Button onClick={handleTokenChange} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Bridge Tokens</Button>
   </TabsContent>
   )
 }
