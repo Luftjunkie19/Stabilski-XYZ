@@ -1,4 +1,4 @@
-export const ethSepoliaVaultManagerAddress="0x2B92b2E0C9d23af2f438E356836cdb99B0aaD509";
+export const ethSepoliaVaultManagerAddress="0x934213A3C381cc1Bfd0c9abb42049DE7B8FECFF4";
 
 export const arbitrumSepoliaVaultManagerAddress="0x18584204aE38002e1369922e6B82d711aa38ae98";
 

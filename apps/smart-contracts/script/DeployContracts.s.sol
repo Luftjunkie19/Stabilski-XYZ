@@ -18,7 +18,7 @@ function run(address[] memory tokens, address[] memory whitelist, address[] memo
 
 if(block.chainid == vm.envUint("ETH_SEPOLIA_CHAINID")) {
     stabilskiToken = new StabilskiToken("Stabilski", "PLST");
-    usdPlnOracle =  USDPLNOracle(0x7D4429396f5C0C6489C8992759f12eF2ff9E7BfC);
+    usdPlnOracle =  USDPLNOracle(0x9e2D878784751AC7D8660AaCC3cE536c5cac795d);
     collateralManager = new CollateralManager(tokens, priceFeeds, minCollateralRatios);
     vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager));
     stabilskiTokenPool = new StabilskiTokenPool(
@@ -39,7 +39,7 @@ stabilskiToken.transferOwnership(address(vaultManager));
 
 if(block.chainid == vm.envUint("ARBITRUM_TESTNET_CHAINID")) {
     stabilskiToken = new StabilskiToken("Stabilski", "PLST");
-    usdPlnOracle =  USDPLNOracle(0xcd4357dA774aDDD3a3Ef4defA3FA6209607F61F5);
+    usdPlnOracle =  USDPLNOracle(0x68D9e90C1e985Bd8277602Bf333FFB8AFBb690D4);
     collateralManager = new CollateralManager(tokens, priceFeeds, minCollateralRatios);
     vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager));
     stabilskiTokenPool = new StabilskiTokenPool(
