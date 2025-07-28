@@ -5,9 +5,10 @@ import React from 'react'
 import { useAccount, useReadContract, useWriteContract } from 'wagmi'
 import stabilskiStableCoin from '@/public/Logox32.png';
 import { Button } from '@/components/ui/button';
-import { ARBITRUM_SEPOLIA_CHAINID } from '@/lib/CollateralContractAddresses';
+import { ARBITRUM_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
 import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { toast } from 'sonner';
+import { stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '../../../lib/smart-contracts-abi/CollateralManager';
 
 type Props = {
     depostior:`0x${string}`,
@@ -38,6 +39,21 @@ function VaultInformation({depostior, tokenAddress}: Props) {
         args:[depostior, tokenAddress],
     });
 
+    const {data:maxBorrowable}=useReadContract({
+        abi: vaultManagerAbi,
+        address: ethSepoliaVaultManagerAddress,
+        functionName:'getMaxBorrowableStabilskiTokens',
+        args:[depostior, tokenAddress],
+        chainId:SEPOLIA_ETH_CHAINID
+    });
+
+    const {data:tokenPrice}=useReadContract({
+        abi: stabilskiTokenCollateralManagerAbi,
+        address: stabilskiTokenSepoliaEthCollateralManagerAddress,
+        functionName:'getTokenPrice',
+        args:[tokenAddress],
+    });
+
     const {data:isLiquidatable}=useReadContract({
         abi: vaultManagerAbi,
         address: ethSepoliaVaultManagerAddress,
@@ -49,7 +65,11 @@ function VaultInformation({depostior, tokenAddress}: Props) {
         return (
             <>
             {vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" &&
-        <div className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex items-center justify-between`}>
+        <div
+        onClick={()=>{
+            console.log(vaultInfo, maxBorrowable, tokenPrice);
+        }}
+        className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex items-center justify-between`}>
     <div className="w-full">
         <p className='hidden md:block'>{depostior.slice(0, 21)}...</p>
     <p className='block md:hidden'>{depostior.slice(0, 10)}...</p>
