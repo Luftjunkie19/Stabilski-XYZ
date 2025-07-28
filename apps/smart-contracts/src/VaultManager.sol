@@ -251,8 +251,13 @@ function getIsHealthyAfterWithdrawal(uint256 amount, address token) public view 
 
     (, uint256 minCollateralRatio,,,)=collateralManager.getCollateralInfo(vaults[msg.sender][token].collateralTypeToken);
  
-uint256 decimalPoints = token != 0x29f2D40B0605204364af54EC677bD022dA425d03 ? decimalPointsNormalizer : bitcoinDecimalPoints;
+uint256 decimalPoints;
 
+if(token != 0x29f2D40B0605204364af54EC677bD022dA425d03){
+    decimalPoints = decimalPointsNormalizer;
+}else{
+    decimalPoints = bitcoinDecimalPoints;
+}
 
     uint256 collateralAmount = (collateralAmountAfterWithdrawal * collateralManager.getTokenPrice(token)) / decimalPoints;
     uint256 collateralAmountUSDtoPLN = collateralAmount * usdPlnOracle.getPLNPrice() / decimalPointsForUsdPlnRate;
@@ -296,21 +301,16 @@ function _getCollateralValue(address owner, address token) private view returns 
 }
 
 function getMaxBorrowableStabilskiTokens(address owner, address token) external view returns (uint256 amount){
-
- uint256 decimalPoints = token != 0x29f2D40B0605204364af54EC677bD022dA425d03 ? decimalPointsNormalizer : bitcoinDecimalPoints;
-
     uint256 collateralValue = _getCollateralValue(owner, token);
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
-    uint256 maxBorrowable = (collateralValue / minCollateralRatio) * decimalPoints;
+    uint256 maxBorrowable = (collateralValue / minCollateralRatio) * decimalPointsNormalizer;
     return maxBorrowable - vaults[owner][token].debt;
 }
 
 function _getMaxBorrowableStabilskiTokens(address owner, address token) internal view returns (uint256 amount){
-uint256 decimalPoints = token != 0x29f2D40B0605204364af54EC677bD022dA425d03 ? decimalPointsNormalizer : bitcoinDecimalPoints;
-
     uint256 collateralValue = _getCollateralValue(owner, token);
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
-    uint256 maxBorrowable = (collateralValue / minCollateralRatio) * decimalPoints;
+    uint256 maxBorrowable = (collateralValue / minCollateralRatio) * decimalPointsNormalizer;
     return maxBorrowable - vaults[owner][token].debt;
 }
 

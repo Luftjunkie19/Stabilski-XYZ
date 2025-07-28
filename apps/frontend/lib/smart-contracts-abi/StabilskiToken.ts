@@ -1,4 +1,4 @@
-export const stabilskiTokenEthSepoliaAddress="0xF5Fe162142A9345D0E73d1009e7a8b2214917A13";
+export const stabilskiTokenEthSepoliaAddress="0x7A42f36305A889991E2D31B3BD47F5AA2aCB3Fd6";
 
 export const stabilskiTokenArbitrumSepoliaAddress="0x33E871013d7589d7f818822E90bc88308c5aEb4F";
 

@@ -1,4 +1,4 @@
-export const ethSepoliaVaultManagerAddress="0x934213A3C381cc1Bfd0c9abb42049DE7B8FECFF4";
+export const ethSepoliaVaultManagerAddress="0xF9a77D2E4266FbEa28dB3832ec47CA893aF6C6fE";
 
 export const arbitrumSepoliaVaultManagerAddress="0x18584204aE38002e1369922e6B82d711aa38ae98";
 
@@ -48,7 +48,10 @@ export const vaultManagerAbi=[
         {"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},
         {"name":"token","type":"address","indexed":false,"internalType":"address"}],
         "anonymous":false},
-{"type":"event","name":"StabilskiTokenMinted","inputs":[{"name":"vaultOwner","type":"address","indexed":false,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
+{"type":"event","name":"StabilskiTokenMinted",
+    "inputs":
+    [{"name":"vaultOwner","type":"address","indexed":false,"internalType":"address"},
+        {"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
 {"type":"event","name":"VaultLiquidated","inputs":[{"name":"vaultOwner","type":"address","indexed":false,"internalType":"address"},{"name":"liquidator","type":"address","indexed":false,"internalType":"address"},{"name":"debtAmount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"collateralAmount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
 {"type":"error","name":"AddressEmptyCode","inputs":[{"name":"target","type":"address","internalType":"address"}]},
 {"type":"error","name":"AddressInsufficientBalance","inputs":[{"name":"account","type":"address","internalType":"address"}]},

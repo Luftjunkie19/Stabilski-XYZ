@@ -6,14 +6,14 @@ import { Button } from '../ui/button'
 import { DialogHeader,Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Input } from '../ui/input';
-import { useAccount,  useReadContracts, useWatchContractEvent, useWriteContract } from 'wagmi';
+import { useAccount,  useReadContracts, useWriteContract } from 'wagmi';
 import { SEPOLIA_ETH_WETH_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_LINK_ADDR, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
 import { FaEthereum, FaBitcoin } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
 import { Label } from '../ui/label';
 import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import { toast } from 'sonner';
+
 
 
 
@@ -126,22 +126,6 @@ const { address, chainId }=useAccount();
 const {writeContract}=useWriteContract();
 
 
-useWatchContractEvent({
-  address: chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
-  abi: vaultManagerAbi,
-  eventName: 'DebtRepaid',
-  onLogs: (logs) => {
-    console.log('New logs!', logs);
-    toast.success(`
-Debt repaid successfully for ${amount} PLST on ${token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : 'LINK'} vault!
-    `);
-  },
-  args:{
-    vaultOwner: address,
-    token: token,
-  },
-
-});
 
 
   return (
