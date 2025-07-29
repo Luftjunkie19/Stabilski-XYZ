@@ -50,6 +50,18 @@ contract VaultManager is ReentrancyGuard {
     uint256 constant decimalPointsNormalizer= 1e18;
     uint256 constant bitcoinDecimalPoints = 1e8;
     uint8 constant liquidationBuffer= 85;
+    address immutable bitcoinAddress;
+
+
+constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralManager, address _bitcoinAddress) {
+    usdPlnOracle = USDPLNOracleInterface(_usdPlnOracle);
+    stabilskiToken = StabilskiTokenInterface(_stabilskiToken);
+    collateralManager = CollateralManagerInterface(_collateralManager);
+    if(block.chainid == 11155111) {
+       bitcoinAddress= _bitcoinAddress;
+    }
+}
+
 
 modifier onlyWhitelistedCollateral(address tokenAddress) {
     (address priceFeed, uint256 minCollateralRatio, bool enabled,,) = collateralManager.getCollateralInfo(tokenAddress);
@@ -88,11 +100,6 @@ _;
 }
 
 
-constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralManager) {
-    usdPlnOracle = USDPLNOracleInterface(_usdPlnOracle);
-    stabilskiToken = StabilskiTokenInterface(_stabilskiToken);
-    collateralManager = CollateralManagerInterface(_collateralManager);
-}
 
 function isInTheArray(address soughtAddr) internal view returns(bool) {
 

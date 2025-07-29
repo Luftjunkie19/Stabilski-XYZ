@@ -70,10 +70,11 @@ function transferOwnership(address newOwner) public override(ConfirmedOwnerWithP
 
 function releaseOrMint(Pool.ReleaseOrMintInV1 calldata releaseOrMintIn) external override
  returns (Pool.ReleaseOrMintOutV1 memory){
+  address senderAddress = abi.decode(releaseOrMintIn.originalSender, (address));
   _validateReleaseOrMint(releaseOrMintIn);
 StabilskiTokenInterface(address(i_token)).mint(releaseOrMintIn.receiver, releaseOrMintIn.amount);
 
-  emit Minted(address(0), releaseOrMintIn.receiver, releaseOrMintIn.amount);
+  emit Minted(senderAddress, releaseOrMintIn.receiver, releaseOrMintIn.amount);
 
   return Pool.ReleaseOrMintOutV1({
     destinationAmount: releaseOrMintIn.amount
