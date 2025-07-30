@@ -9,19 +9,17 @@ import {StabilskiTokenPool} from "../src/pools/StabilskiTokenPool.sol";
 import {Test} from "../lib/forge-std/src/Test.sol";
 import {DeployContracts} from "../script/DeployContracts.s.sol";
 import {ERC20Mock} from "../src/interfaces/ERC20Mock.sol";
-import {CCIPLocalSimulator} from "../lib/chainlink-local/src/ccip/CCIPLocalSimulator.sol";
-
+import {CCIPLocalSimulator, BurnMintERC677Helper,IERC20
+} from "../lib/chainlink-local/src/ccip/CCIPLocalSimulator.sol";
 import {RateLimiter} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/RateLimiter.sol";
 import { TokenPool} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/pools/BurnMintTokenPool.sol";
 
 import {TokenAdminRegistry} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/tokenAdminRegistry/TokenAdminRegistry.sol";
-import {Register} from "../lib/chainlink-local/src/ccip/Register.sol";
+import {CCIPLocalSimulatorFork, Register} from "@chainlink/local/src/ccip/CCIPLocalSimulatorFork.sol";
 import {RegistryModuleOwnerCustom} from
     "../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/tokenAdminRegistry/RegistryModuleOwnerCustom.sol";
 import {
-    CCIPLocalSimulator,
-    IRouterClient,
-    LinkToken
+    IRouterClient
 } from "@chainlink/local/src/ccip/CCIPLocalSimulator.sol";
 import {Pool}  from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/Pool.sol";
 
@@ -37,7 +35,7 @@ uint256 arbitrumSepoliaFork;
 CCIPLocalSimulator ccipLocalSimulator;
 
 
-
+// Ethereum Sepolia contracts
 VaultManager vaultManager;
 StabilskiToken stabilskiToken;
 USDPLNOracle usdPlnOracle;
@@ -47,6 +45,7 @@ ERC20Mock sepoliaWETHMockToken;
 ERC20Mock sepoliaWBTCMockToken;
 ERC20Mock sepoliaWLINKMockToken;
 
+// Arbitrum Sepolia contracts
 VaultManager ArbitrumvaultManager;
 StabilskiToken ArbitrumstabilskiToken;
 USDPLNOracle ArbitrumusdPlnOracle;
@@ -54,9 +53,16 @@ CollateralManager ArbitrumcollateralManager;
 StabilskiTokenPool ArbitrumstabilskiTokenPool;
 ERC20Mock arbitrumLINKMockToken;
 
-   IRouterClient router;
-    uint64 destinationChainSelector;
-    LinkToken linkToken;
+// Cross-chain management contracts (Ethereum Sepolia)
+IRouterClient router;
+uint64 sepoliaDestinationChainSelector;
+
+// Cross-chain management contracts (Arbitrum Sepolia)
+IRouterClient arbitrumRouter;
+uint64 arbitrumChainSelector;
+
+
+CCIPLocalSimulatorFork ccipLocalSimulatorFork;
 
 DeployReceiverAndSender deployReceiverAndSenderSepoliaEth;
 DeployReceiverAndSender deployReceiverAndSenderSepoliaArbitrum;
@@ -75,25 +81,34 @@ address wethInvalidAddress;
 Register.NetworkDetails ethSepoliaNetworkDetails;
 Register.NetworkDetails arbSepoliaNetworkDetails;
 
-CCIPLocalSimulatorFork ccipLocalSimulatorFork;
+
 
 
 function setUp() public {
+// Estabilish 2 forks and select eth sepolia as the intial one.
 sepoliaEthFork=vm.createSelectFork("ETH_SEPOLIA_RPC_URL");
-ccipLocalSimulator = new CCIPLocalSimulator();
-
-(uint64 chainSelector, IRouterClient sourceRouter,,, LinkToken link,,) = ccipLocalSimulator.configuration();
-
- router = sourceRouter;
-        destinationChainSelector = chainSelector;
-        linkToken = link;
-
-
-        ccipLocalSimulatorFork = new CCIPLocalSimulatorFork();
-        vm.makePersistent(address(ccipLocalSimulatorFork));
-
 arbitrumSepoliaFork=vm.createFork("ARB_SEPOLIA_RPC_URL");
 
+// Make the local simulator persistent
+ccipLocalSimulator = new CCIPLocalSimulator();
+vm.makePersistent(address(ccipLocalSimulator));
+
+// Make the local simulator fork persistent
+ccipLocalSimulatorFork = new CCIPLocalSimulatorFork();
+vm.makePersistent(address(ccipLocalSimulatorFork));
+
+// get the network details for the sepolia fork
+   Register.NetworkDetails
+            memory sourceNetworkDetails = ccipLocalSimulatorFork
+                .getNetworkDetails(block.chainid);
+        // Store the network details for the sepolia fork
+               ethSepoliaNetworkDetails = sourceNetworkDetails;
+
+// Set the router and link token for the sepolia fork
+router = IRouterClient(sourceNetworkDetails.routerAddress);
+sepoliaDestinationChainSelector = sourceNetworkDetails.chainSelector;
+
+// set the invalid address to test the collateral.
 wethInvalidAddress = vm.envAddress("SEPOLIA_ETH_WETH_ADDR");
 
 
@@ -102,13 +117,12 @@ address[] memory whitelist;
 address[] memory priceFeeds;
 uint256[] memory minCollateralRatios;
 
-vm.makePersistent(address(ccipLocalSimulator));
+// Create the tokens
+sepoliaWETHMockToken = new ERC20Mock("WETH", "WETH", borrower,liquidator, 1000e18, 18);
+sepoliaWBTCMockToken = new ERC20Mock("WBTC", "WBTC", borrower,liquidator, 1000e8, 8);
+sepoliaWLINKMockToken = new ERC20Mock("LINK", "LINK", borrower,liquidator, 1000e18, 18);
 
-sepoliaWETHMockToken = new ERC20Mock("WETH", "WETH", borrower,liquidator, 1000 ether, 18);
-sepoliaWBTCMockToken = new ERC20Mock("WBTC", "WBTC", borrower,liquidator, 1000 ether, 8);
-sepoliaWLINKMockToken = new ERC20Mock("LINK", "LINK", borrower,liquidator, 1000 ether, 18);
-
-
+// Deploy the contracts on the sepolia eth fork.
 tokens = new address[](3);
 priceFeeds = new address[](3) ;
 minCollateralRatios = new uint256[](3) ;
@@ -124,48 +138,64 @@ minCollateralRatios[2]=12e17;
 
 
 DeployContracts deployContracts = new DeployContracts();
-(vaultManager, stabilskiToken, usdPlnOracle, collateralManager, stabilskiTokenPool) = deployContracts.run(tokens, whitelist, priceFeeds, minCollateralRatios);
+(vaultManager, stabilskiToken, usdPlnOracle, collateralManager, stabilskiTokenPool) = deployContracts.run(tokens, whitelist, priceFeeds, minCollateralRatios, sourceNetworkDetails.rmnProxyAddress, sourceNetworkDetails.routerAddress);
 
 vm.makePersistent(address(usdPlnOracle));
 
 vm.deal(borrower, 1000 ether);
 
-
+// Switch to arbitrum fork
 vm.selectFork(arbitrumSepoliaFork);
+
+// Get the network details for the arbitrum fork
+Register.NetworkDetails
+            memory 
+            arbitrumNetworkDetails
+             = ccipLocalSimulatorFork
+                .getNetworkDetails(block.chainid);
+        arbitrumRouter = IRouterClient(arbitrumNetworkDetails.routerAddress);
+        arbitrumChainSelector= arbitrumNetworkDetails.chainSelector;
+
+// Create the tokens
 arbitrumLINKMockToken=new ERC20Mock("LINK", "LINK", borrower,liquidator, 1000 ether, 18);
 tokens = new address[](1);
 priceFeeds = new address[](1) ;
 minCollateralRatios = new uint256[](1) ;
 
+// deploy the contracts on the arbitrum fork
 tokens[0]=address(arbitrumLINKMockToken);
 priceFeeds[0]=vm.envAddress("ARBITRUM_LINK_USD_RATE");
 minCollateralRatios[0]=12e17;
 
 
 DeployContracts deployContractsArbitrum = new DeployContracts();
-(ArbitrumvaultManager, ArbitrumstabilskiToken, ArbitrumusdPlnOracle, ArbitrumcollateralManager, ArbitrumstabilskiTokenPool) = deployContractsArbitrum.run(tokens, whitelist, priceFeeds, minCollateralRatios);
-
+(ArbitrumvaultManager, ArbitrumstabilskiToken, ArbitrumusdPlnOracle, ArbitrumcollateralManager, ArbitrumstabilskiTokenPool) = deployContractsArbitrum.run(tokens, whitelist, priceFeeds, minCollateralRatios, arbitrumNetworkDetails.rmnProxyAddress, arbitrumNetworkDetails.routerAddress);
 
 DeployReceiverAndSender deployReceiverAndSenderArbitrum = new DeployReceiverAndSender();
 
 (stabilskiTokenReceiverSepoliaArbitrum, stabilskiTokenSenderSepoliaArbitrum) = deployReceiverAndSenderArbitrum.run(
-vm.envAddress("ARBITRUM_CCIP_ROUTER"),
+address(arbitrumRouter),
 address(ArbitrumstabilskiTokenPool),
 address(stabilskiTokenPool),
 address(stabilskiToken)
 );
 
+
+
 vm.selectFork(sepoliaEthFork);
+
+
 DeployReceiverAndSender deployReceiverAndSender = new DeployReceiverAndSender();
 
 (stabilskiTokenReceiverSepoliaEth, stabilskiTokenSenderSepoliaEth) = deployReceiverAndSender.run(
-vm.envAddress("ETH_CCIP_ROUTER"),
+address(router),
 address(stabilskiTokenPool),
 address(ArbitrumstabilskiTokenPool),
 address(ArbitrumstabilskiToken)
 );
 
 }
+
 
 
 // function testCheckBalanceOfBorrower() public  {
@@ -489,31 +519,25 @@ address(ArbitrumstabilskiToken)
 // }
 
 
-
-
-
-
-
-
-
-
 function testFunctioningOfTokenPools() public {
 // Grant the role of burner and minter on sepolia ethereum testnet
+console.log("Owner of stabilskiToken", stabilskiToken.owner());
+console.log("VaultManager address", address(vaultManager));
+
 vm.startPrank(address(vaultManager));
 stabilskiToken.grantControllerRole(borrower);
 stabilskiToken.grantControllerRole(address(stabilskiTokenPool));
 stabilskiToken.grantControllerRole(address(ArbitrumstabilskiTokenPool));
 stabilskiToken.grantControllerRole(address(ArbitrumvaultManager));
+stabilskiToken.setNewCCIPAdmin(borrower);
 stabilskiToken.transferOwnership(borrower);
 vm.stopPrank();
 
-          ethSepoliaNetworkDetails   = ccipLocalSimulatorFork.getNetworkDetails(block.chainid);
+assert(stabilskiToken.getCCIPAdmin() == address(borrower));
+
 
 RegistryModuleOwnerCustom registryModuleOwnerCustomEthSepolia =
             RegistryModuleOwnerCustom(ethSepoliaNetworkDetails.registryModuleOwnerCustomAddress);
-
-vm.prank(borrower);
-stabilskiToken.setNewCCIPAdmin(address(borrower));
 
 vm.prank(borrower);
         registryModuleOwnerCustomEthSepolia.registerAdminViaGetCCIPAdmin(address(stabilskiToken));
@@ -523,15 +547,15 @@ vm.prank(borrower);
 vm.selectFork(arbitrumSepoliaFork);
 vm.startPrank(address(ArbitrumvaultManager));
 ArbitrumstabilskiToken.grantControllerRole(borrower);
+ArbitrumstabilskiToken.setNewCCIPAdmin(address(borrower));
 ArbitrumstabilskiToken.transferOwnership(borrower);
 vm.stopPrank();
 
-          arbSepoliaNetworkDetails   = ccipLocalSimulatorFork.getNetworkDetails(block.chainid);
+assert(ArbitrumstabilskiToken.getCCIPAdmin() == address(borrower));
+
 RegistryModuleOwnerCustom registryModuleOwnerCustomArbSepolia =
             RegistryModuleOwnerCustom(arbSepoliaNetworkDetails.registryModuleOwnerCustomAddress);
 
-vm.prank(borrower);
-ArbitrumstabilskiToken.setNewCCIPAdmin(address(borrower));
 
 vm.prank(borrower);
         registryModuleOwnerCustomArbSepolia.registerAdminViaGetCCIPAdmin(address(ArbitrumstabilskiToken));
@@ -605,8 +629,8 @@ vm.selectFork(arbitrumSepoliaFork);
 
 vm.selectFork(arbitrumSepoliaFork);
         vm.startPrank(borrower);
-    arbitrumLINKMockToken.approveInternal(address(ArbitrumvaultManager), 1 ether);
-    ArbitrumvaultManager.depositCollateral(address(arbitrumLINKMockToken), 1 ether);
+    arbitrumLINKMockToken.approveInternal(address(ArbitrumvaultManager), 1e19);
+    ArbitrumvaultManager.depositCollateral(address(arbitrumLINKMockToken),1e19);
     ArbitrumvaultManager.mintPLST(address(arbitrumLINKMockToken),
         ArbitrumvaultManager.getMaxBorrowableStabilskiTokens(borrower, address(arbitrumLINKMockToken)));
 vm.stopPrank();
@@ -614,8 +638,8 @@ vm.stopPrank();
 
 vm.selectFork(sepoliaEthFork);
         vm.startPrank(borrower);
-    sepoliaWLINKMockToken.approveInternal(address(vaultManager), 1 ether);
-    vaultManager.depositCollateral(address(sepoliaWLINKMockToken), 1 ether);
+    sepoliaWLINKMockToken.approveInternal(address(vaultManager), 1e19);
+    vaultManager.depositCollateral(address(sepoliaWLINKMockToken), 1e19);
     vaultManager.mintPLST(address(sepoliaWLINKMockToken),
         vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWLINKMockToken)));
 vm.stopPrank();
@@ -624,21 +648,46 @@ vm.stopPrank();
 vm.selectFork(arbitrumSepoliaFork);
 
 vm.startPrank(borrower);
-ArbitrumstabilskiToken.grantControllerRole(address(liquidator));
-ArbitrumstabilskiToken.grantControllerRole(address(stabilskiTokenSenderSepoliaArbitrum));
-ArbitrumstabilskiToken.grantControllerRole(address(stabilskiTokenPool));
-vm.stopPrank();
 
-assertGt(ArbitrumstabilskiToken.balanceOf(borrower), 0);
+uint256 amountToBridge = (ArbitrumstabilskiToken.balanceOf(borrower) * 5) /100;
 
-vm.prank(borrower);
-uint256 amountToBridge = ArbitrumstabilskiToken.balanceOf(borrower) / 2;
-stabilskiTokenSenderSepoliaArbitrum.bridgeTokens{value:1000 ether}(
+assertGt(ArbitrumstabilskiToken.balanceOf(borrower), amountToBridge);
+
+ArbitrumstabilskiToken.approve(address(router), amountToBridge);
+
+console.log("Amount to bridge: ", amountToBridge);
+console.log(ArbitrumstabilskiToken.balanceOf(borrower), "balance of borrower before bridging");
+console.log(ArbitrumstabilskiToken.allowance(borrower, address(router)), "allowance before bridging");
+
+
+ArbitrumstabilskiToken.transferFrom(borrower, address(router), amountToBridge);
+
+stabilskiTokenSenderSepoliaArbitrum.bridgeTokens{value:1e21
+}(
     uint64(vm.envUint("ETH_CCIP_CHAIN_SELECTOR")),
     address(ArbitrumstabilskiToken),
     liquidator,
     amountToBridge
 );
+
+vm.stopPrank();
+
+
+
+
+vm.selectFork(sepoliaEthFork);
+vm.startPrank(borrower);
+uint256 amountToBridgeETH = stabilskiToken.balanceOf(borrower) / 2;
+
+stabilskiTokenSenderSepoliaArbitrum.bridgeTokens{value:1e20}(
+    uint64(vm.envUint("ETH_CCIP_CHAIN_SELECTOR")),
+    address(stabilskiToken),
+    liquidator,
+    amountToBridgeETH
+);
+vm.stopPrank();
+
+
 
 }
 

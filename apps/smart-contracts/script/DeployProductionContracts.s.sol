@@ -37,7 +37,7 @@ minCollateralRatios[2]=145e16;
     stabilskiToken = new StabilskiToken("Stabilski", "PLST");
     usdPlnOracle =  USDPLNOracle(0x9e2D878784751AC7D8660AaCC3cE536c5cac795d);
     collateralManager = new CollateralManager(tokens, priceFeeds, minCollateralRatios);
-    vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager));
+    vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager), address(vm.envAddress("SEPOLIA_ETH_WBTC_ADDR")));
     stabilskiTokenPool = new StabilskiTokenPool(
         address(stabilskiToken),
         18,
@@ -63,7 +63,7 @@ minCollateralRatios[0]=12e17;
     stabilskiToken = new StabilskiToken("Stabilski", "PLST");
     usdPlnOracle =  USDPLNOracle(0x68D9e90C1e985Bd8277602Bf333FFB8AFBb690D4);
     collateralManager = new CollateralManager(tokens, priceFeeds, minCollateralRatios);
-    vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager));
+    vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager), address(0));
     stabilskiTokenPool = new StabilskiTokenPool(
         address(stabilskiToken),
         18,
