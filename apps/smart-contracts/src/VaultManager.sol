@@ -57,7 +57,7 @@ constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralM
     usdPlnOracle = USDPLNOracleInterface(_usdPlnOracle);
     stabilskiToken = StabilskiTokenInterface(_stabilskiToken);
     collateralManager = CollateralManagerInterface(_collateralManager);
-    if(block.chainid == 11155111) {
+    if(block.chainid == 11155111 && _bitcoinAddress != address(0)) {
        bitcoinAddress= _bitcoinAddress;
     }
 }

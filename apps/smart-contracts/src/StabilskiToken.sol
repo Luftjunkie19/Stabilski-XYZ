@@ -14,13 +14,13 @@ import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/Ree
 import {OpenZeppelinContext} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/utils/Context.sol";
 import {AccessControl} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/access/AccessControl.sol";
 import {IBurnMintERC20} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/token/ERC20/IBurnMintERC20.sol";
-contract StabilskiToken is 
+contract StabilskiToken is
 OpenZeppelinContext,
-    ERC20, 
-    IBurnMintERC20, 
-    ERC20Burnable, 
-    AccessControl, 
-    ReentrancyGuard 
+    ERC20,
+    IBurnMintERC20,
+    ERC20Burnable,
+    AccessControl,
+    ReentrancyGuard
 {
 
     using SafeERC20 for ERC20;
@@ -104,8 +104,8 @@ error OwnableUnauthorizedAccount(address account);
         return super.approve(spender, value);
     }
 
-    function allowance(address owner, address spender) public view override(ERC20, IERC20) returns (uint256) {
-        return super.allowance(owner, spender);
+    function allowance(address ownerAddress, address spender) public view override(ERC20, IERC20) returns (uint256) {
+        return super.allowance(ownerAddress, spender);
     }
 
 function setNewCCIPAdmin(address newAdmin) public onlyOwner {
@@ -118,8 +118,8 @@ function setNewCCIPAdmin(address newAdmin) public onlyOwner {
 
     // -------- Required Overrides due to multiple inheritance --------
 
-    function _approve(address owner, address spender, uint256 amount) internal override(ERC20) {
-        super._approve(owner, spender, amount);
+    function _approve(address ownerAddress, address spender, uint256 amount) internal override(ERC20) {
+        super._approve(ownerAddress, spender, amount);
     }
 
     function _burn(address account, uint256 amount) internal override(ERC20) {
@@ -138,8 +138,8 @@ function setNewCCIPAdmin(address newAdmin) public onlyOwner {
         return super._msgSender();
     }
 
-    function _spendAllowance(address owner, address spender, uint256 amount) internal override(ERC20) {
-        super._spendAllowance(owner, spender, amount);
+    function _spendAllowance(address ownerAddress, address spender, uint256 amount) internal override(ERC20) {
+        super._spendAllowance(ownerAddress, spender, amount);
     }
 
     function _transfer(address from, address to, uint256 amount) internal override(ERC20) {
