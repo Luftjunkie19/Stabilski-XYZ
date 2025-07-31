@@ -2,11 +2,15 @@
 
 pragma solidity ^0.8.24;
 
-import {Client} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/Client.sol";
-import {IRouterClient} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/interfaces/IRouterClient.sol";
+import {Client} from "@chainlink/contracts-ccip/contracts/libraries/Client.sol";
+import {
+    IRouterClient
+} from "@chainlink/local/src/ccip/CCIPLocalSimulator.sol";
 import {StabilskiTokenInterface} from "../interfaces/StabilskiTokenInterface.sol";
 import {StabilskiTokenPool} from "../pools/StabilskiTokenPool.sol";
+import {StabilskiToken} from "../StabilskiToken.sol";
 import {Pool}  from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/Pool.sol";
+import {IERC20} from "../../lib/chainlink-local/src/ccip/CCIPLocalSimulator.sol";
 contract StabilskiTokenSender {
   error InsufficientFunds();
     error NotEnoughArrayMemoryAllocated();
@@ -21,14 +25,18 @@ contract StabilskiTokenSender {
         pool = StabilskiTokenPool(_pool);
     }
 function bridgeTokens(
+    address sourceToken,
     uint64 destinationChainSelector,
     address destinationToken,
         address destReceiver, // address on destination chain
-        uint256 amount) external payable {
+        uint256 amount,
+        address linkSepoliaToken
+        ) external payable {
+            StabilskiToken(sourceToken).approve(address(this), amount);
 
 // Create LockOrBurnInV1 struct
         Pool.LockOrBurnInV1 memory burnParams = Pool.LockOrBurnInV1({
-            originalSender: msg.sender,
+            originalSender: address(this),
             receiver: abi.encode(destReceiver),
             amount: amount,
             localToken: destinationToken,
@@ -45,12 +53,10 @@ function bridgeTokens(
   // Construct CCIP message
         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
             receiver: abi.encode(destReceiver),
-            data: abi.encode(burnParams), // this is the encoded LockOrBurnInV1
+            data: abi.encode(burnParams), 
             tokenAmounts: tokenAmounts,
-            extraArgs: Client._argsToBytes(
-                Client.EVMExtraArgsV1({gasLimit: 200_000}) // adjust as needed
-            ),
-            feeToken: address(0) // native gas token
+            extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 0})),
+            feeToken: linkSepoliaToken
         });
 
 
@@ -62,9 +68,18 @@ function bridgeTokens(
         router.ccipSend{value: fees}(destinationChainSelector, message);
 }
 
-function getFee(uint256 amount, uint64 destinationChainSelector, address destinationToken, address destReceiver) public view returns (uint256){
+function getFee(
+    address sourceToken,
+     uint64 destinationChainSelector, address destinationToken, address destReceiver,
+     uint256 amount,
+address linkSepoliaToken
+)
+      public  returns (uint256){
+    
+    StabilskiToken(sourceToken).approve(address(this), amount);
+    
     Pool.LockOrBurnInV1 memory burnParams = Pool.LockOrBurnInV1({
-            originalSender: msg.sender,
+            originalSender: address(this),
             receiver: abi.encode(destReceiver),
             amount: amount,
             localToken: destinationToken,
@@ -82,10 +97,8 @@ function getFee(uint256 amount, uint64 destinationChainSelector, address destina
             receiver: abi.encode(destReceiver),
             data: abi.encode(burnParams), // this is the encoded LockOrBurnInV1
             tokenAmounts: tokenAmounts,
-            extraArgs: Client._argsToBytes(
-                Client.EVMExtraArgsV1({gasLimit: 200_000}) // adjust as needed
-            ),
-            feeToken: address(0) // native gas token
+                 extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 0})),
+            feeToken: linkSepoliaToken
         });
 
  // Calculate fee

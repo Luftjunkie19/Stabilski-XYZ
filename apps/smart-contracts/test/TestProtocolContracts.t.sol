@@ -634,44 +634,69 @@ vm.selectFork(arbitrumSepoliaFork);
 vm.selectFork(sepoliaEthFork);
 
     address linkSepolia = ethSepoliaNetworkDetails.linkAddress;
-    ccipLocalSimulatorFork.requestLinkFromFaucet(address(borrower), 20 ether);
+    ccipLocalSimulatorFork.requestLinkFromFaucet(address(borrower), 
+    20e18);
 
     uint256 amountToSend = 1e2;
-    Client.EVMTokenAmount[] memory tokenToSendDetails = new Client.EVMTokenAmount[](1);
-    Client.EVMTokenAmount memory tokenAmount = Client.EVMTokenAmount({
-      token: address(stabilskiToken),
-      amount: amountToSend
-    });
-    tokenToSendDetails[0] = tokenAmount;
+   
+    
 
     vm.startPrank(borrower);
     stabilskiToken.mint(borrower, amountToSend * 5);
-
-    stabilskiToken.approve(ethSepoliaNetworkDetails.routerAddress, amountToSend);
-    IERC20(linkSepolia).approve(ethSepoliaNetworkDetails.routerAddress, 20 ether);
+      IERC20(linkSepolia).approve(
+        address(ethSepoliaNetworkDetails.routerAddress)
+        , 
+        20e18);
+     
+  
 
     uint256 balanceOfAliceBeforeEthSepolia = stabilskiToken.balanceOf(borrower);
 
+
     console.log("Balance of Alice before Eth Sepolia: ", balanceOfAliceBeforeEthSepolia);
+   stabilskiToken.approve(address(stabilskiTokenSenderSepoliaEth), amountToSend);
+         console.log("Allowance for stabilskiToken: ", stabilskiToken.allowance(borrower, address(stabilskiTokenSenderSepoliaEth)));
+         
 
-    IRouterClient routerEthSepolia = IRouterClient(ethSepoliaNetworkDetails.routerAddress);
 
-Client.EVM2AnyMessage memory messageToSend = Client.EVM2AnyMessage({
-        receiver: abi.encode(address(borrower)),
-        data: "",
-        tokenAmounts: tokenToSendDetails,
-        extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({ gasLimit: 0 })),
-        feeToken: linkSepolia
-      });
-
-   stabilskiToken.approve(address(stabilskiTokenPool), amountToSend);
-
-    routerEthSepolia.ccipSend(
-      arbSepoliaNetworkDetails.chainSelector,
-      messageToSend
-    );
     vm.stopPrank();
 
+vm.prank(address(stabilskiTokenSenderSepoliaEth));
+stabilskiToken.transferFrom(borrower, address(stabilskiTokenSenderSepoliaEth), amountToSend);
+console.log("Balance of stabilskiTokenSenderEthSepolia: ", stabilskiToken.balanceOf(address(stabilskiTokenSenderSepoliaEth)));
+
+vm.startPrank(address(stabilskiTokenSenderSepoliaEth));
+stabilskiToken.approve(address(ethSepoliaNetworkDetails.routerAddress), amountToSend / 2);
+stabilskiToken.approve(address(stabilskiTokenPool), amountToSend / 2);
+console.log("Allowance for stabilskiToken: ", stabilskiToken.allowance(address(stabilskiTokenSenderSepoliaEth), address(ethSepoliaNetworkDetails.routerAddress)));
+vm.stopPrank();
+
+
+vm.startPrank(borrower);
+   console.log(stabilskiToken.balanceOf(address(stabilskiTokenSenderSepoliaEth)), "Stabilski Balance of sender Eth Sepolia !");
+
+uint256 feeToPay= stabilskiTokenSenderSepoliaEth.getFee(
+         address(stabilskiToken),
+        arbSepoliaNetworkDetails.chainSelector,
+        address(ArbitrumstabilskiToken),
+        borrower,
+        amountToSend / 2,
+        address(0)
+);
+console.log("Fee to pay: ", feeToPay);
+
+    stabilskiTokenSenderSepoliaEth.bridgeTokens
+    {value: feeToPay}
+    (
+        address(stabilskiToken),
+        arbSepoliaNetworkDetails.chainSelector,
+        address(ArbitrumstabilskiToken),
+        borrower,
+        amountToSend / 2,
+        address(0)
+    );
+
+vm.stopPrank();
 
     uint256 balanceOfAliceAfterEthSepolia = stabilskiToken.balanceOf(borrower);
     assertEq(balanceOfAliceAfterEthSepolia, balanceOfAliceBeforeEthSepolia - amountToSend);
