@@ -69,7 +69,7 @@ function VaultInformation({depostior, tokenAddress}: Props) {
         onClick={()=>{
             console.log(vaultInfo, maxBorrowable, tokenPrice);
         }}
-        className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex items-center justify-between`}>
+        className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row items-center sm:justify-between`}>
     <div className="w-full">
         <p className='hidden md:block'>{depostior.slice(0, 21)}...</p>
     <p className='block md:hidden'>{depostior.slice(0, 10)}...</p>
@@ -91,7 +91,7 @@ function VaultInformation({depostior, tokenAddress}: Props) {
     </div>
     
     
-    <div className='flex flex-col items-end w-full'>
+    <div className='flex justify-between sm:flex-col items-end w-full'>
     
     <div className="flex items-center">
         <p className='text-sm'><span>{(Number((vaultInfo as unknown as any[])[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>

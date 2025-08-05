@@ -329,7 +329,7 @@ if(token){
     },
   })
 }
-}} className="p-6 transition-all shadow-sm shadow-black hover:bg-blue-900 cursor-pointer hover:scale-95 text-lg max-w-52 self-center w-full bg-blue-500">Approve Collateral</Button>
+}} className="p-6 transition-all shadow-sm shadow-black hover:bg-blue-900 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-blue-500">Approve Collateral</Button>
   
 <Button disabled={!approved} onClick={()=>{
 if(chainId === SEPOLIA_ETH_CHAINID && token && amount){
@@ -350,7 +350,7 @@ writeContract({
   });
 
 
-}} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-52 self-center w-full bg-red-500">Put Collateral</Button>
+}} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-red-500">Put Collateral</Button>
 </div>
 
 

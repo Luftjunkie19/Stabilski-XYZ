@@ -25,15 +25,15 @@ function IntroTab() {
     </div>
 
     <div className="flex flex-col gap-2">
-<p className='text-white text-2xl text-shadow-sm text-shadow-black'>How does it work ?</p>
+<p className='text-black text-2xl text-shadow-sm text-shadow-white'>How does it work ?</p>
 
-<p className='text-white text-lg text-shadow-sm text-shadow-black'>The Stabilski Polish Stablecoin Lending protocol works in the following way:</p>
+<p className='text-black text-lg text-shadow-sm text-shadow-white'>The Stabilski Polish Stablecoin Lending protocol works in the following way:</p>
 
 <div className="flex flex-col gap-2 w-full">
  
  <div className="bg-white border border-black shadow-sm  flex mx-auto flex-col gap-3 shadow-black rounded-lg p-2 max-w-lg w-full">
   <p>
-1. You exchange your native Sepolia ETH for one of the tokens listed below on <Link className='text-red-500' href={`https://app.uniswap.org/`}>Uniswap</Link> or any other Dex that enables testnets.
+1. You exchange your native Sepolia ETH for one of the tokens listed below on <Link className='text-pink-500' href={`https://app.uniswap.org/`}>Uniswap</Link> or any other Dex that enables testnets.
   </p>
 
 <p>

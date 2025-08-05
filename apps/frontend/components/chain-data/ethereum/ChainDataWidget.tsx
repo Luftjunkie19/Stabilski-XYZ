@@ -89,7 +89,7 @@ const {chainId, address}=useAccount();
         <div className="flex flex-col gap-6 max-w-md bg-white border-red-500 border-1 shadow-md shadow-black p-4 rounded-lg h-64">
   {collateralTokenPriceData && 
 <div className="flex flex-col gap-2">
-  <p>Crypto Prices (USD)</p>
+  <p className='text-red-500'>Crypto Prices (USD)</p>
 <div onClick={() => console.log(collateralTokenPriceData)} className="w-full flex items-center gap-6">
 <div className='flex text-sm items-center gap-1'>
   <FaBitcoin className='text-orange-500 text-base'/> {collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(2)}
@@ -104,7 +104,7 @@ const {chainId, address}=useAccount();
 
 {chainId && vaultSepoliaEthereumManagerContract &&
 <div className="flex flex-col overflow-y-auto gap-1">
-<p>Your Collateral</p>
+<p className='text-red-500'>Your Collateral</p>
 <div  className="w-full flex items-center gap-6">
 <div className='flex items-center gap-1'>
   <FaBitcoin className='text-orange-500'/> {vaultSepoliaEthereumManagerContract[0] && vaultSepoliaEthereumManagerContract[0].result as unknown as bigint && Number(vaultSepoliaEthereumManagerContract[0].result)  && (Number(vaultSepoliaEthereumManagerContract[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} />
@@ -113,11 +113,7 @@ const {chainId, address}=useAccount();
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultSepoliaEthereumManagerContract[2] && vaultSepoliaEthereumManagerContract[2].result as unknown as bigint && Number(vaultSepoliaEthereumManagerContract[2].result)  && (Number(vaultSepoliaEthereumManagerContract[2].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>
 
-<p
-className='py-2
-flex items-center gap-2
-'
->
+<p className='py-2 flex md:items-center flex-col md:flex-row items-start gap-2'>
   Your PLST Balance: {balancePLST as unknown as bigint
    && <span
    className='text-red-500

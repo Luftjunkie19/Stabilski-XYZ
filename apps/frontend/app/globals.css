@@ -427,3 +427,7 @@ body::before {
 
   }
 }
+
+div::-webkit-scrollbar {
+  display: none;
+}

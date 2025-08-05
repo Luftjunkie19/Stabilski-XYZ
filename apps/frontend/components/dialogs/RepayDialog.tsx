@@ -22,6 +22,7 @@ function RepayDialog() {
   const [token, setToken] = useState<`0x${string}` | undefined>(undefined);
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
 const { address, chainId }=useAccount();
+
  // eslint-disable-next-line react-hooks/exhaustive-deps
  const arrayOfContracts=[
    {
