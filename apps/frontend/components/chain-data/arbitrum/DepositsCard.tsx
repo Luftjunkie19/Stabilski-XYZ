@@ -19,10 +19,10 @@ function DepositsCard() {;
 
     return (
    <div className="flex flex-col gap-6 max-w-lg w-full bg-white border-red-500 border-1 shadow-md shadow-black overflow-y-auto overflow-x-hidden p-4 rounded-lg h-64">
+<p className='text-lg text-red-500'>Positions in the Protocol</p>
 {collateralTokens as unknown as string[] && (collateralTokens as unknown as string[]).map((tokenAddr:string)=>(
     <DepositorElement key={tokenAddr} tokenAddress={tokenAddr} />
 ))}
-
 </div>
   )
 }

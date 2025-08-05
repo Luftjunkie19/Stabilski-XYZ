@@ -76,16 +76,17 @@ Debt repaid successfully for ${(logs[0] as any).args.vaultOwner} PLST on ${token
     <div className="w-full">
         <p className='hidden md:block'>{depostior.slice(0, 21)}...</p>
     <p className='block md:hidden'>{depostior.slice(0, 10)}...</p>
-    <div className="flex items-center gap-2">
-    <div className="flex items-center ">
+    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center">
         <GiPayMoney className='mr-1' />
         <p className='text-sm'><span className='text-red-500'>
             {collateralValue as unknown as bigint && (Number((collateralValue as unknown as bigint))/1e18).toFixed(2)}
             </span> </p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-6 h-6'/>
     </div>
+
+        <div className="flex items-center gap-1">
        <GiReceiveMoney className='mr-1' />
-        <div className="flex items-center ">
         <p className='text-sm'><span>{(Number((vaultInfo as unknown as any[])[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-7 h-7'/>
     </div>
