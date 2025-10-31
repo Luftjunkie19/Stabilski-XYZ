@@ -405,7 +405,6 @@ body::before {
   height: 40%;
   z-index: -1;
   background-color: #ff3f3f;
-  backdrop-filter: blur(100px);
   animation: magicBlur 15s infinite 0s alternate;
 }
 

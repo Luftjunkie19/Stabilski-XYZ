@@ -18,7 +18,7 @@ function TabsContainer() {
     <TabsTrigger value="intro">Introduction</TabsTrigger>
     <TabsTrigger value="collateral">Supply Tokens</TabsTrigger>
     <TabsTrigger value="borrow">Borrow PLST</TabsTrigger>
-    {/* <TabsTrigger value="bridge">Bridge Tokens</TabsTrigger> */}
+    <TabsTrigger value="bridge">Bridge Tokens</TabsTrigger>
   </TabsList>
 
 
