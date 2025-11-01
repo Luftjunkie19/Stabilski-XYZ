@@ -6,16 +6,15 @@ import {
     ERC20Burnable,
     IERC20
 } from
-    "@chainlink/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+    "../lib/ccip/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
-import {SafeERC20} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20} from "../lib/ccip/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
-import {OpenZeppelinContext} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/utils/Context.sol";
-import {AccessControl} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/access/AccessControl.sol";
-import {IBurnMintERC20} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/token/ERC20/IBurnMintERC20.sol";
+import {AccessControl} from
+    "../lib/ccip/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/access/AccessControl.sol";
+import {IBurnMintERC20} from "../lib/ccip/contracts/src/v0.8/shared/token/ERC20/IBurnMintERC20.sol";
 contract StabilskiToken is
-OpenZeppelinContext,
     ERC20,
     IBurnMintERC20,
     ERC20Burnable,
@@ -24,10 +23,8 @@ OpenZeppelinContext,
 {
 
     using SafeERC20 for ERC20;
-
-error OwnableUnauthorizedAccount(address account);
-    error NotEnoughPLST();
-    error NotEnoughUSD();
+    
+    error OwnableUnauthorizedAccount(address account);
     error NotController();
 
     address internal i_CCIPAdmin;
@@ -48,9 +45,8 @@ error OwnableUnauthorizedAccount(address account);
         _;
     }
 
-    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) 
-        {
-            contractOwner = msg.sender;
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {
+        contractOwner = msg.sender;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(CONTROLLER_ROLE, msg.sender);
         i_CCIPAdmin = msg.sender;
@@ -107,10 +103,10 @@ error OwnableUnauthorizedAccount(address account);
     function allowance(address ownerAddress, address spender) public view override(ERC20, IERC20) returns (uint256) {
         return super.allowance(ownerAddress, spender);
     }
-
-function setNewCCIPAdmin(address newAdmin) public onlyOwner {
+    
+    function setNewCCIPAdmin(address newAdmin) public onlyOwner {
     i_CCIPAdmin = newAdmin;
-}
+    }
 
     function getCCIPAdmin() public view returns (address) {
         return i_CCIPAdmin;
@@ -130,13 +126,7 @@ function setNewCCIPAdmin(address newAdmin) public onlyOwner {
         super._mint(account, amount);
     }
 
-    function _msgData() internal view override(OpenZeppelinContext) returns (bytes calldata) {
-        return super._msgData();
-    }
-
-    function _msgSender() internal view override(OpenZeppelinContext) returns (address) {
-        return super._msgSender();
-    }
+ 
 
     function _spendAllowance(address ownerAddress, address spender, uint256 amount) internal override(ERC20) {
         super._spendAllowance(ownerAddress, spender, amount);

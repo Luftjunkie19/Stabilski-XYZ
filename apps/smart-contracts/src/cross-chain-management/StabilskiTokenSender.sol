@@ -2,18 +2,17 @@
 
 pragma solidity ^0.8.24;
 
-import {Client} from "@chainlink/contracts-ccip/contracts/libraries/Client.sol";
+import {Client} from "../../lib/ccip/contracts/src/v0.8/ccip/libraries/Client.sol";
 import {
     IRouterClient
-} from "@chainlink/local/src/ccip/CCIPLocalSimulator.sol";
+} from "../../lib/ccip/contracts/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import {StabilskiTokenInterface} from "../interfaces/StabilskiTokenInterface.sol";
 import {StabilskiTokenPool} from "../pools/StabilskiTokenPool.sol";
 import {StabilskiToken} from "../StabilskiToken.sol";
-import {Pool}  from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/Pool.sol";
-import {IERC20} from "../../lib/chainlink-local/src/ccip/CCIPLocalSimulator.sol";
+import {Pool}  from "../../lib/ccip/contracts/src/v0.8/ccip/libraries/Pool.sol";
+import { IERC20 } from "../../lib/ccip/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 contract StabilskiTokenSender {
   error InsufficientFunds();
-    error NotEnoughArrayMemoryAllocated();
 
     StabilskiTokenPool public pool;
     address public owner;
@@ -32,8 +31,9 @@ function bridgeTokens(
         uint256 amount,
         address linkSepoliaToken
         ) external payable {
-            StabilskiToken(sourceToken).approve(address(this), amount);
+           (bool approved) = StabilskiToken(sourceToken).approve(address(this), amount);
 
+        if (!approved) revert InsufficientFunds();
 // Create LockOrBurnInV1 struct
         Pool.LockOrBurnInV1 memory burnParams = Pool.LockOrBurnInV1({
             originalSender: address(this),
@@ -65,7 +65,8 @@ function bridgeTokens(
         if (msg.value < fees) revert InsufficientFunds();
 
         // Send via CCIP
-        router.ccipSend{value: fees}(destinationChainSelector, message);
+      (bytes32 ccipSentMessageReturn) = router.ccipSend{value: fees}(destinationChainSelector, message);
+
 }
 
 function getFee(

@@ -27,7 +27,7 @@ error InvalidUSDPLNRate();
     bytes32 donID;
     uint256 public plnUsdRate;
     uint256 public lastTimeStamp;
-    uint256 public constant interval = 1 hours; // 1 hour in seconds
+    uint256 public constant interval = 1 days; // 1 day in seconds
 
 
     string private source = string(
