@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
-import {AggregatorV3Interface} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import {AggregatorV3Interface} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 contract CollateralManager {
 error InvalidCollateralToken();
@@ -71,8 +71,8 @@ function addCollateralType(
         priceFeed: priceFeed,
         minCollateralRatio: minCollateralRatio,
         isActive: true,
-         liquidationBonus: liquidationBonus,
-            punishment: punishment
+        liquidationBonus: liquidationBonus,
+        punishment: punishment
     });
     }
 
@@ -81,17 +81,11 @@ function updateCollateral(
     address priceFeed,
     uint256 minCollateralRatio
 ) external onlyExistingCollateral(collateralToken) {
-   
-
     collateralTypes[collateralToken].minCollateralRatio = minCollateralRatio;
     collateralTypes[collateralToken].priceFeed = priceFeed;
 }
 
-function toggleCollateral(address token) external{
-    
-    if (collateralTypes[token].priceFeed == address(0)) {
-        revert InvalidCollateralToken();
-    }
+function toggleCollateral(address token) external onlyExistingCollateral(token) {
    collateralTypes[token].isActive = !collateralTypes[token].isActive;
 }
 

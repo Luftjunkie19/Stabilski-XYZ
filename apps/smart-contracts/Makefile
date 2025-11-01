@@ -21,7 +21,20 @@ deploy-arbitrum:
 		--etherscan-api-key $(ETHER_SCAN_API_KEY) \
 		--via-ir
 
-deploy-sepolia-oracle:
+
+deploy-base:
+	forge script script/DeployProductionContracts.s.sol \
+		--fork-url $(BASE_SEPOLIA_RPC_URL) \
+		--sender 0x9F724ab3520f6dD4Be3A093FdA9Ad8F45997291F \
+		--account primaryWallet \
+		--broadcast \
+		-vvvvv \
+		--verify \
+		--etherscan-api-key $(ETHER_SCAN_API_KEY) \
+		--via-ir
+
+
+deploy-eth-oracle:
 	forge script script/DeployOracle.s.sol \
 		--fork-url $(ETH_SEPOLIA_RPC_URL) \
 		--sender 0x9F724ab3520f6dD4Be3A093FdA9Ad8F45997291F \
@@ -42,6 +55,18 @@ deploy-arb-oracle:
 		--verify \
 		--etherscan-api-key $(ETHER_SCAN_API_KEY) \
 		--via-ir
+
+deploy-base-oracle:
+	forge script script/DeployOracle.s.sol \
+		--fork-url $(BASE_SEPOLIA_RPC_URL) \
+		--sender 0x9F724ab3520f6dD4Be3A093FdA9Ad8F45997291F \
+		--account primaryWallet \
+		--broadcast \
+		-vvvvv \
+		--verify \
+		--etherscan-api-key $(ETHER_SCAN_API_KEY) \
+		--via-ir
+
 
 
 deploy-arb-receiver-sender:
@@ -66,3 +91,15 @@ deploy-eth-receiver-sender:
 		--verify \
 		--etherscan-api-key $(ETHER_SCAN_API_KEY) \
 		--via-ir
+
+deploy-base-receiver-sender:
+	forge script script/DeployReceiverAndSender.s.sol \
+		--fork-url $(BASE_SEPOLIA_RPC_URL) \
+		--sender 0x9F724ab3520f6dD4Be3A093FdA9Ad8F45997291F \
+		--account primaryWallet \
+		--broadcast \
+		-vvvvv \
+		--verify \
+		--etherscan-api-key $(ETHER_SCAN_API_KEY) \
+		--via-ir
+

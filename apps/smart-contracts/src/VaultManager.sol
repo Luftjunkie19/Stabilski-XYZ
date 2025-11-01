@@ -1,29 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
-
-import {ERC20Mock} from "../src/interfaces/ERC20Mock.sol";
 import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
 import {StabilskiTokenInterface} from "./interfaces/StabilskiTokenInterface.sol";
 import {USDPLNOracleInterface} from "./interfaces/USDPLNOracleInterface.sol";
 
 import {CollateralManagerInterface} from "./interfaces/CollateralManagerInterface.sol";
-import {SafeERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {AggregatorV3Interface} from "../../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import {SafeERC20} from "../lib/ccip/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "../lib/ccip/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+
+import { AggregatorV3Interface } from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 contract VaultManager is ReentrancyGuard {
     using SafeERC20 for IERC20;
     error InvalidVault();
     error NotEnoughCollateral();
     error NotEnoughDebt();
-    error InvalidCollateralToken();
-    error VaultAlreadyExists();
     error UnderCollateralized();
     error OverCollateralized();
     error NotEnoughPLST();
-    error InvalidAllowance();
     error LiquidatorCannotBeVaultOwner();
+    error TransferFailed();
 
     event VaultLiquidated(address vaultOwner, address liquidator, uint256 debtAmount, uint256 collateralAmount);
 
@@ -113,7 +110,10 @@ function isInTheArray(address soughtAddr) internal view returns(bool) {
 }
 
 function depositCollateral(address token, uint256 amount) external nonReentrant onlyWhitelistedCollateral(token) {
-    IERC20(token).transferFrom(msg.sender, address(this), amount);
+   (bool hasSuccess) = IERC20(token).transferFrom(msg.sender, address(this), amount);
+   if (!hasSuccess) {
+       revert TransferFailed();
+   }
     vaults[msg.sender][token].collateralAmount += amount;
     vaults[msg.sender][token].collateralTypeToken = token;
     
@@ -157,12 +157,12 @@ function repayPLST(address collateralToken, uint256 amount) external nonReentran
 }
 
 function withdrawCollateral(address token, uint256 amount) external nonReentrant onlyWhitelistedCollateral(token) CannotWithdrawCollateral(msg.sender, token) {
-
-if(amount == 0 || amount > vaults[msg.sender][token].collateralAmount) {
+    
+    if(amount == 0 || amount > vaults[msg.sender][token].collateralAmount) {
         revert NotEnoughCollateral();
     }
     
-  if(!getIsHealthyAfterWithdrawal(amount, token)) {
+    if(!getIsHealthyAfterWithdrawal(amount, token)) {
         revert UnderCollateralized();
     }
 
@@ -183,8 +183,8 @@ function liquidateVault(address vaultOwner, address token) external nonReentrant
     if(vaults[vaultOwner][token].collateralAmount == 0) {
         revert InvalidVault();
     }
-
-if(vaults[vaultOwner][token].collateralTypeToken == address(0)) {
+    
+    if(vaults[vaultOwner][token].collateralTypeToken == address(0)) {
         revert InvalidVault();
     }
 
