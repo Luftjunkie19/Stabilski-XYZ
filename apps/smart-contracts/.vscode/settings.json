@@ -14,7 +14,7 @@
         "chainlink-local/=lib/chainlink-local/src/",
         "ds-test/=lib/foundry-chainlink-toolkit/lib/forge-std/lib/ds-test/src/",
         "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
-        "forge-std/=lib/foundry-chainlink-toolkit/lib/forge-std/src/",
+        "forge-std/=lib/forge-std/src/",
         "foundry-chainlink-toolkit/=lib/foundry-chainlink-toolkit/",
         "openzeppelin-contracts/=lib/openzeppelin-contracts/"
     ]

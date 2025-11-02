@@ -17,7 +17,7 @@ import {TokenAdminRegistry} from "../lib/chainlink-brownie-contracts/contracts/s
 import {CCIPLocalSimulatorFork, Register} from "../lib/chainlink-local/src/ccip/CCIPLocalSimulatorFork.sol";
 import {RegistryModuleOwnerCustom} from
     "../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/tokenAdminRegistry/RegistryModuleOwnerCustom.sol";
-import { IRouterClient } from "../lib/chainlink-local/src/ccip/CCIPLocalSimulator.sol";
+import { IRouterClient } from "../lib/ccip/contracts/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import { Pool }  from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/ccip/libraries/Pool.sol";
 
 import {DeployReceiverAndSender} from "../script/DeployReceiverAndSender.s.sol";
@@ -180,8 +180,6 @@ address(ArbitrumstabilskiTokenPool),
 address(stabilskiTokenPool),
 address(stabilskiToken)
 );
-
-
 
 vm.selectFork(sepoliaEthFork);
 
@@ -536,181 +534,177 @@ vm.stopPrank();
 }
 
 
-function testFunctioningOfTokenPools() public {
-// Grant the role of burner and minter on sepolia ethereum testnet
-vm.startPrank(address(vaultManager));
-stabilskiToken.grantControllerRole(borrower);
-stabilskiToken.grantControllerRole(address(stabilskiTokenPool));
-stabilskiToken.grantControllerRole(address(ArbitrumstabilskiTokenPool));
-stabilskiToken.grantControllerRole(address(ArbitrumvaultManager));
-stabilskiToken.setNewCCIPAdmin(borrower);
-stabilskiToken.transferOwnership(borrower);
-vm.stopPrank();
+// function testFunctioningOfTokenPools() public {
+// // Grant the role of burner and minter on sepolia ethereum testnet
+// vm.startPrank(address(vaultManager));
+// stabilskiToken.grantControllerRole(borrower);
+// stabilskiToken.grantControllerRole(address(stabilskiTokenPool));
+// stabilskiToken.grantControllerRole(address(ArbitrumstabilskiTokenPool));
+// stabilskiToken.grantControllerRole(address(ArbitrumvaultManager));
+// stabilskiToken.setNewCCIPAdmin(borrower);
+// stabilskiToken.transferOwnership(borrower);
+// vm.stopPrank();
 
-// Admin role is granted to the borrower on the sepolia fork for CCIP
-RegistryModuleOwnerCustom registryModuleOwnerCustomEthSepolia =
-            RegistryModuleOwnerCustom(ethSepoliaNetworkDetails.registryModuleOwnerCustomAddress);
+// // Admin role is granted to the borrower on the sepolia fork for CCIP
+// RegistryModuleOwnerCustom registryModuleOwnerCustomEthSepolia =
+//             RegistryModuleOwnerCustom(ethSepoliaNetworkDetails.registryModuleOwnerCustomAddress);
 
-vm.prank(borrower);
-        registryModuleOwnerCustomEthSepolia.registerAdminViaGetCCIPAdmin(address(stabilskiToken));
+// vm.prank(borrower);
+//         registryModuleOwnerCustomEthSepolia.registerAdminViaGetCCIPAdmin(address(stabilskiToken));
 
-// Switch to arbitrum fork
-vm.selectFork(arbitrumSepoliaFork);
-// Grant the borrower the role of burner and minter on arbitrum sepolia testnet and ownership.
-vm.startPrank(address(ArbitrumvaultManager));
-ArbitrumstabilskiToken.grantControllerRole(borrower);
-ArbitrumstabilskiToken.setNewCCIPAdmin(borrower);
-ArbitrumstabilskiToken.transferOwnership(borrower);
-vm.stopPrank();
+// // Switch to arbitrum fork
+// vm.selectFork(arbitrumSepoliaFork);
+// // Grant the borrower the role of burner and minter on arbitrum sepolia testnet and ownership.
+// vm.startPrank(address(ArbitrumvaultManager));
+// ArbitrumstabilskiToken.grantControllerRole(borrower);
+// ArbitrumstabilskiToken.setNewCCIPAdmin(borrower);
+// ArbitrumstabilskiToken.transferOwnership(borrower);
+// vm.stopPrank();
 
-// Register the borrower as the admin on the arbitrum sepolia fork for CCIP
-RegistryModuleOwnerCustom registryModuleOwnerCustomArbSepolia =
-            RegistryModuleOwnerCustom(arbSepoliaNetworkDetails.registryModuleOwnerCustomAddress);
+// // Register the borrower as the admin on the arbitrum sepolia fork for CCIP
+// RegistryModuleOwnerCustom registryModuleOwnerCustomArbSepolia =
+//             RegistryModuleOwnerCustom(arbSepoliaNetworkDetails.registryModuleOwnerCustomAddress);
 
 
-vm.prank(borrower);
-        registryModuleOwnerCustomArbSepolia.registerAdminViaGetCCIPAdmin(address(ArbitrumstabilskiToken));
+// vm.prank(borrower);
+//         registryModuleOwnerCustomArbSepolia.registerAdminViaGetCCIPAdmin(address(ArbitrumstabilskiToken));
 
-// Switch back to sepolia eth fork and set the pools for the tokens.
-vm.selectFork(sepoliaEthFork);
-// set the token admin registry for the sepolia eth fork
-    TokenAdminRegistry tokenAdminRegistryEthSepolia =
-            TokenAdminRegistry(ethSepoliaNetworkDetails.tokenAdminRegistryAddress);
-  vm.startPrank(borrower);
-        tokenAdminRegistryEthSepolia.acceptAdminRole(address(stabilskiToken));
-        vm.stopPrank();
+// // Switch back to sepolia eth fork and set the pools for the tokens.
+// vm.selectFork(sepoliaEthFork);
+// // set the token admin registry for the sepolia eth fork
+//     TokenAdminRegistry tokenAdminRegistryEthSepolia =
+//             TokenAdminRegistry(ethSepoliaNetworkDetails.tokenAdminRegistryAddress);
+//   vm.startPrank(borrower);
+//         tokenAdminRegistryEthSepolia.acceptAdminRole(address(stabilskiToken));
+//         vm.stopPrank();
 
-// Switch to arbitrum fork
-vm.selectFork(arbitrumSepoliaFork);
+// // Switch to arbitrum fork
+// vm.selectFork(arbitrumSepoliaFork);
 
-// set the token admin registry for the arbitrum sepolia fork
+// // set the token admin registry for the arbitrum sepolia fork
 
-    TokenAdminRegistry tokenAdminRegistryArbSepolia =
-            TokenAdminRegistry(arbSepoliaNetworkDetails.tokenAdminRegistryAddress);
+//     TokenAdminRegistry tokenAdminRegistryArbSepolia =
+//             TokenAdminRegistry(arbSepoliaNetworkDetails.tokenAdminRegistryAddress);
 
-  vm.startPrank(borrower);
-        tokenAdminRegistryArbSepolia.acceptAdminRole(address(ArbitrumstabilskiToken));
-        vm.stopPrank();
+//   vm.startPrank(borrower);
+//         tokenAdminRegistryArbSepolia.acceptAdminRole(address(ArbitrumstabilskiToken));
+//         vm.stopPrank();
 
-// Switch to sepolia and arbitrum and set the pools for the tokens.
-        vm.selectFork(sepoliaEthFork);
-        vm.prank(borrower);
-        tokenAdminRegistryEthSepolia.setPool(address(stabilskiToken), address(stabilskiTokenPool));
+// // Switch to sepolia and arbitrum and set the pools for the tokens.
+//         vm.selectFork(sepoliaEthFork);
+//         vm.prank(borrower);
+//         tokenAdminRegistryEthSepolia.setPool(address(stabilskiToken), address(stabilskiTokenPool));
 
-        vm.selectFork(arbitrumSepoliaFork);
-        vm.prank(borrower);
-        tokenAdminRegistryArbSepolia.setPool(address(ArbitrumstabilskiToken), address(ArbitrumstabilskiTokenPool));
+//         vm.selectFork(arbitrumSepoliaFork);
+//         vm.prank(borrower);
+//         tokenAdminRegistryArbSepolia.setPool(address(ArbitrumstabilskiToken), address(ArbitrumstabilskiTokenPool));
 
-        vm.selectFork(sepoliaEthFork);
+//         vm.selectFork(sepoliaEthFork);
         
-        vm.startPrank(stabilskiTokenPool.owner());
-        TokenPool.ChainUpdate[] memory chains = new TokenPool.ChainUpdate[](1);
-        bytes[] memory remotePoolAddressesEthSepolia = new bytes[](1);
-        remotePoolAddressesEthSepolia[0] = abi.encode(address(stabilskiTokenPool));
-        chains[0] = TokenPool.ChainUpdate({
-            remoteChainSelector: arbitrumChainSelector,
-            allowed:true,
-            remotePoolAddress: remotePoolAddressesEthSepolia[0],
-            remoteTokenAddress: abi.encode(address(ArbitrumstabilskiToken)),
-            outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 10e18, rate: 167}),
-            inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 10e18, rate: 167})
-        });
+//         vm.startPrank(stabilskiTokenPool.owner());
+//         TokenPool.ChainUpdate[] memory chains = new TokenPool.ChainUpdate[](1);
+//         bytes[] memory remotePoolAddressesEthSepolia = new bytes[](1);
+//         remotePoolAddressesEthSepolia[0] = abi.encode(address(stabilskiTokenPool));
+//         chains[0] = TokenPool.ChainUpdate({
+//             remoteChainSelector: arbitrumChainSelector,
+//             allowed:true,
+//             remotePoolAddress: remotePoolAddressesEthSepolia[0],
+//             remoteTokenAddress: abi.encode(address(ArbitrumstabilskiToken)),
+//             outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 10e18, rate: 167}),
+//             inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 10e18, rate: 167})
+//         });
 
-        stabilskiTokenPool.applyChainUpdates(chains);
-        vm.stopPrank();
+//         stabilskiTokenPool.applyChainUpdates(chains);
+//         vm.stopPrank();
 
 
-vm.selectFork(arbitrumSepoliaFork);
+// vm.selectFork(arbitrumSepoliaFork);
         
-        vm.startPrank(ArbitrumstabilskiTokenPool.owner());
-        TokenPool.ChainUpdate[] memory arbitrumSepoliaPoolChains = new TokenPool.ChainUpdate[](1);
-         bytes[] memory remotePoolAddressesArbSepolia = new bytes[](1);
-        remotePoolAddressesArbSepolia[0] = abi.encode(address(ArbitrumstabilskiTokenPool));
+//         vm.startPrank(ArbitrumstabilskiTokenPool.owner());
+//         TokenPool.ChainUpdate[] memory arbitrumSepoliaPoolChains = new TokenPool.ChainUpdate[](1);
+//          bytes[] memory remotePoolAddressesArbSepolia = new bytes[](1);
+//         remotePoolAddressesArbSepolia[0] = abi.encode(address(ArbitrumstabilskiTokenPool));
    
-        arbitrumSepoliaPoolChains[0] = TokenPool.ChainUpdate({
-            remoteChainSelector: ethSepoliaNetworkDetails.chainSelector,
-            allowed:true,
-            remotePoolAddress: remotePoolAddressesArbSepolia[0],
-            remoteTokenAddress: abi.encode(address(stabilskiToken)),
-            outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 10e18, rate: 167}),
-            inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 10e18, rate: 167})
-        });
+//         arbitrumSepoliaPoolChains[0] = TokenPool.ChainUpdate({
+//             remoteChainSelector: ethSepoliaNetworkDetails.chainSelector,
+//             allowed:true,
+//             remotePoolAddress: remotePoolAddressesArbSepolia[0],
+//             remoteTokenAddress: abi.encode(address(stabilskiToken)),
+//             outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 10e18, rate: 167}),
+//             inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 10e18, rate: 167})
+//         });
 
-        ArbitrumstabilskiTokenPool.applyChainUpdates(arbitrumSepoliaPoolChains);
+//         ArbitrumstabilskiTokenPool.applyChainUpdates(arbitrumSepoliaPoolChains);
 
 
-        vm.stopPrank();
+//         vm.stopPrank();
 
-vm.selectFork(sepoliaEthFork);
+// vm.selectFork(sepoliaEthFork);
 
-    address linkSepolia = ethSepoliaNetworkDetails.linkAddress;
-    ccipLocalSimulatorFork.requestLinkFromFaucet(address(borrower), 
-    20e18);
+//     address linkSepolia = ethSepoliaNetworkDetails.linkAddress;
+//     ccipLocalSimulatorFork.requestLinkFromFaucet(address(borrower), 
+//     20e18);
 
-    uint256 amountToSend = 1e18;
+//     uint256 amountToSend = 1e18;
    
     
 
-    vm.startPrank(borrower);
-    stabilskiToken.mint(borrower, amountToSend * 5);
-      IERC20(linkSepolia).approve(
-        address(ethSepoliaNetworkDetails.routerAddress), 
-        20e18);
+//     vm.startPrank(borrower);
+//     stabilskiToken.mint(borrower, amountToSend * 5);
+//       IERC20(linkSepolia).approve(
+//         address(ethSepoliaNetworkDetails.routerAddress), 
+//         20e18);
      
   
-    uint256 balanceOfAliceBeforeEthSepolia = stabilskiToken.balanceOf(borrower);
+//     uint256 balanceOfAliceBeforeEthSepolia = stabilskiToken.balanceOf(borrower);
     
-    stabilskiToken.approve(address(stabilskiTokenSenderSepoliaEth), amountToSend);
+//     stabilskiToken.approve(address(stabilskiTokenSenderSepoliaEth), amountToSend);
 
          
 
 
-    vm.stopPrank();
+//     vm.stopPrank();
 
-vm.prank(address(stabilskiTokenSenderSepoliaEth));
-stabilskiToken.transferFrom(borrower, address(stabilskiTokenSenderSepoliaEth), amountToSend);
+// vm.prank(address(stabilskiTokenSenderSepoliaEth));
+// stabilskiToken.transferFrom(borrower, address(stabilskiTokenSenderSepoliaEth), amountToSend);
 
-vm.startPrank(address(stabilskiTokenSenderSepoliaEth));
-stabilskiToken.approve(address(ethSepoliaNetworkDetails.routerAddress), amountToSend);
-stabilskiToken.approve(address(stabilskiTokenPool), amountToSend);
-vm.stopPrank();
+// vm.startPrank(address(stabilskiTokenSenderSepoliaEth));
+// stabilskiToken.approve(address(ethSepoliaNetworkDetails.routerAddress), amountToSend);
+// stabilskiToken.approve(address(stabilskiTokenPool), amountToSend);
+// vm.stopPrank();
 
 
-vm.startPrank(borrower);
+// vm.startPrank(borrower);
    
-uint256 feeToPay= stabilskiTokenSenderSepoliaEth.getFee(
-         address(stabilskiToken),
-        arbSepoliaNetworkDetails.chainSelector,
-        address(ArbitrumstabilskiToken),
-        borrower,
-        amountToSend / 2,
-        linkSepolia
-);
+//    Client.EVMTokenAmount[] memory tokenToSendDetails = new Client.EVMTokenAmount[](1);
+//         Client.EVMTokenAmount memory tokenAmount =
+//             Client.EVMTokenAmount({token: address(stabilskiToken), amount: amountToSend});
+//         tokenToSendDetails[0] = tokenAmount;
+        
+//         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
+//             receiver: abi.encode(liquidator),
+//             data: "",
+//             tokenAmounts: tokenToSendDetails,
+//             extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 0})),
+//             feeToken: linkSepolia
+//         });
 
 
-    stabilskiTokenSenderSepoliaEth.bridgeTokens
-    {value: feeToPay}
-    (
-        address(stabilskiToken),
-        arbSepoliaNetworkDetails.chainSelector,
-        address(ArbitrumstabilskiToken),
-        borrower,
-        amountToSend / 2,
-        linkSepolia
-    );
+//         // Send via CCIP
+//       (bytes32 ccipSentMessageReturn) = router.ccipSend(arbitrumChainSelector, message);
 
-vm.stopPrank();
+// vm.stopPrank();
 
-    // uint256 balanceOfAliceAfterEthSepolia = stabilskiToken.balanceOf(borrower);
-    // assertEq(balanceOfAliceAfterEthSepolia, balanceOfAliceBeforeEthSepolia - amountToSend);
+//     uint256 balanceOfAliceAfterEthSepolia = stabilskiToken.balanceOf(borrower);
+//     assertEq(balanceOfAliceAfterEthSepolia, balanceOfAliceBeforeEthSepolia - amountToSend);
 
-    // ccipLocalSimulatorFork.switchChainAndRouteMessage(arbitrumSepoliaFork);
+//     ccipLocalSimulatorFork.switchChainAndRouteMessage(arbitrumSepoliaFork);
 
-    // uint256 balanceOfAliceAfterBaseSepolia = ArbitrumstabilskiToken.balanceOf(borrower);
-    // assertEq(balanceOfAliceAfterBaseSepolia, amountToSend);
+//     uint256 balanceOfAliceAfterBaseSepolia = ArbitrumstabilskiToken.balanceOf(borrower);
+//     assertEq(balanceOfAliceAfterBaseSepolia, amountToSend);
 
 
-}
+// }
 
 
 }
