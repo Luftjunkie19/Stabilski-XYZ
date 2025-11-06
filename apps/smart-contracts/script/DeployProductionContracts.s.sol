@@ -7,12 +7,8 @@ import {VaultManager} from "../src/VaultManager.sol";
 import {StabilskiToken} from "../src/StabilskiToken.sol";
 import {USDPLNOracle} from "../src/USDPLNOracle.sol";
 import {CollateralManager} from "../src/CollateralManager.sol";
-import {StabilskiTokenPool} from "../src/pools/StabilskiTokenPool.sol";
-import {StabilskiTokenReceiver} from "../src/cross-chain-management/StabilskiTokenReceiver.sol";
-import {StabilskiTokenSender} from "../src/cross-chain-management/StabilskiTokenSender.sol";
-
 contract DeployProductionContracts is Script {
-function run() public returns (VaultManager vaultManager, StabilskiToken stabilskiToken, USDPLNOracle usdPlnOracle, CollateralManager collateralManager, StabilskiTokenPool stabilskiTokenPool) {
+function run() public returns (VaultManager vaultManager, StabilskiToken stabilskiToken, USDPLNOracle usdPlnOracle, CollateralManager collateralManager) {
 address[] memory tokens;
 address[] memory whitelist;
 address[] memory priceFeeds;
@@ -35,18 +31,10 @@ minCollateralRatios[1]=135e16;
 minCollateralRatios[2]=145e16;
 
     stabilskiToken = new StabilskiToken("Stabilski", "PLST");
-    usdPlnOracle =  USDPLNOracle(0x9e2D878784751AC7D8660AaCC3cE536c5cac795d);
+    usdPlnOracle =  USDPLNOracle(0x19F783380a8b3c28d78Ed8367120A130f168258D);
     collateralManager = new CollateralManager(tokens, priceFeeds, minCollateralRatios);
     vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager), address(vm.envAddress("SEPOLIA_ETH_WBTC_ADDR")));
-    stabilskiTokenPool = new StabilskiTokenPool(
-        address(stabilskiToken),
-        18,
-        whitelist,
-        vm.envAddress("ETH_CCIP_ROUTER"),
-        vm.envAddress("ETH_CCIP_RMN")
-    );
 
-stabilskiToken.grantControllerRole(address(stabilskiTokenPool));
 stabilskiToken.grantControllerRole(address(vaultManager));
 stabilskiToken.transferOwnership(address(vaultManager));
 }
@@ -61,23 +49,43 @@ minCollateralRatios[0]=12e17;
 
     
     stabilskiToken = new StabilskiToken("Stabilski", "PLST");
-    usdPlnOracle =  USDPLNOracle(0x68D9e90C1e985Bd8277602Bf333FFB8AFBb690D4);
+    usdPlnOracle =  USDPLNOracle(0xC7B39D90DAe640b76d53C794bB043bC10f659Afe);
     collateralManager = new CollateralManager(tokens, priceFeeds, minCollateralRatios);
     vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager), address(0));
-    stabilskiTokenPool = new StabilskiTokenPool(
-        address(stabilskiToken),
-        18,
-        whitelist,
-        vm.envAddress("ARBITRUM_CCIP_ROUTER"),
-        vm.envAddress("ARBITRUM_CCIP_CHAIN_RMN")
-    );
-stabilskiToken.grantControllerRole(address(stabilskiTokenPool));
+
 stabilskiToken.grantControllerRole(address(vaultManager));
 stabilskiToken.transferOwnership(address(vaultManager));
 }
+
+
+
+  if(block.chainid == vm.envUint("BASE_TESTNET_CHAINID")) {
+    tokens = new address[](2);
+priceFeeds = new address[](2) ;
+minCollateralRatios = new uint256[](2);
+tokens[0]=address(vm.envAddress("BASE_LINK_CONTRACT"));
+tokens[1]=address(vm.envAddress("BASE_WETH_CONTRACT"));
+
+priceFeeds[0]=vm.envAddress("BASE_LINK_USD_RATE");
+priceFeeds[1]=vm.envAddress("BASE_ETH_USD_RATE");
+
+minCollateralRatios[0]=135e16;
+minCollateralRatios[1]=14e17;
+
+    
+    stabilskiToken = new StabilskiToken("Stabilski", "PLST");
+    usdPlnOracle =  USDPLNOracle(0xD118005D99908Ee4aE5fbCD387D0Fcedc8d499B0);
+    collateralManager = new CollateralManager(tokens, priceFeeds, minCollateralRatios);
+    vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager), address(0));
+
+stabilskiToken.grantControllerRole(address(vaultManager));
+stabilskiToken.transferOwnership(address(vaultManager));
+}
+
+
     vm.stopBroadcast();
 
-return (vaultManager, stabilskiToken, usdPlnOracle, collateralManager, stabilskiTokenPool);
+return (vaultManager, stabilskiToken, usdPlnOracle, collateralManager);
 }
 
 }
