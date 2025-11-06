@@ -7,61 +7,55 @@ import {VaultManager} from "../src/VaultManager.sol";
 import {StabilskiToken} from "../src/StabilskiToken.sol";
 import {USDPLNOracle} from "../src/USDPLNOracle.sol";
 import {CollateralManager} from "../src/CollateralManager.sol";
-import {StabilskiTokenPool} from "../src/pools/StabilskiTokenPool.sol";
-import {StabilskiTokenReceiver} from "../src/cross-chain-management/StabilskiTokenReceiver.sol";
-import {StabilskiTokenSender} from "../src/cross-chain-management/StabilskiTokenSender.sol";
 
 contract DeployContracts is Script {
-function run(address[] memory tokens, address[] memory whitelist, address[] memory priceFeeds, uint256[] memory minCollateralRatios, address rmnProxy, address routerAddress) public returns (VaultManager vaultManager, StabilskiToken stabilskiToken, USDPLNOracle usdPlnOracle, CollateralManager collateralManager, StabilskiTokenPool stabilskiTokenPool) {
+function run(address[] memory tokens, address[] memory whitelist, address[] memory priceFeeds, uint256[] memory minCollateralRatios) public returns (VaultManager vaultManager, StabilskiToken stabilskiToken, USDPLNOracle usdPlnOracle, CollateralManager collateralManager) {
     // Deploy contracts
     vm.startBroadcast();
 
 if(block.chainid == vm.envUint("ETH_SEPOLIA_CHAINID")) {
     stabilskiToken = new StabilskiToken("Stabilski", "PLST");
-    usdPlnOracle =  USDPLNOracle(0x9e2D878784751AC7D8660AaCC3cE536c5cac795d);
+    usdPlnOracle =  USDPLNOracle(0x19F783380a8b3c28d78Ed8367120A130f168258D);
     collateralManager = new CollateralManager(tokens, priceFeeds, minCollateralRatios);
     vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager), tokens[0]);
-    stabilskiTokenPool = new StabilskiTokenPool(
-        address(stabilskiToken),
-        18,
-        whitelist,
-        rmnProxy,
-       routerAddress
-    );
-
+    
 stabilskiToken.grantControllerRole(address(vaultManager));
 stabilskiToken.grantControllerRole(msg.sender);
-stabilskiToken.grantControllerRole(address(stabilskiTokenPool));
-stabilskiToken.transferOwnership(address(vaultManager));
+
 
 }
 
 
 if(block.chainid == vm.envUint("ARBITRUM_TESTNET_CHAINID")) {
     stabilskiToken = new StabilskiToken("Stabilski", "PLST");
-    usdPlnOracle =  USDPLNOracle(0x68D9e90C1e985Bd8277602Bf333FFB8AFBb690D4);
+    usdPlnOracle =  USDPLNOracle(0xC7B39D90DAe640b76d53C794bB043bC10f659Afe);
     collateralManager = new CollateralManager(tokens, priceFeeds, minCollateralRatios);
     vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager), address(0));
-    stabilskiTokenPool = new StabilskiTokenPool(
-        address(stabilskiToken),
-        18,
-        whitelist,
-         rmnProxy,
-       routerAddress
-    );
 
 stabilskiToken.grantControllerRole(address(vaultManager));
 stabilskiToken.grantControllerRole(msg.sender);
-stabilskiToken.grantControllerRole(address(stabilskiTokenPool));
-stabilskiToken.transferOwnership(address(vaultManager));
+
+
 
 }
 
 
+if(block.chainid == vm.envUint("BASE_TESTNET_CHAINID")) {
+    stabilskiToken = new StabilskiToken("Stabilski", "PLST");
+    usdPlnOracle =  USDPLNOracle(0xD118005D99908Ee4aE5fbCD387D0Fcedc8d499B0);
+    collateralManager = new CollateralManager(tokens, priceFeeds, minCollateralRatios);
+    vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager), address(0));
 
-    vm.stopBroadcast();
+stabilskiToken.grantControllerRole(address(vaultManager));
+stabilskiToken.grantControllerRole(msg.sender);
 
-return (vaultManager, stabilskiToken, usdPlnOracle, collateralManager, stabilskiTokenPool);
+
+}
+
+
+vm.stopBroadcast();
+
+return (vaultManager, stabilskiToken, usdPlnOracle, collateralManager);
 }
 
 }

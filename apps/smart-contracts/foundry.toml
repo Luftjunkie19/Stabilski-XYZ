@@ -13,3 +13,5 @@ remappings = [
 ETH_SEPOLIA_RPC_URL="https://eth-sepolia.g.alchemy.com/v2/bwlhh2eGj0MA1bXE6h31Z"
 
 ARB_SEPOLIA_RPC_URL="https://arb-sepolia.g.alchemy.com/v2/bwlhh2eGj0MA1bXE6h31Z"
+
+BASE_SEPOLIA_RPC_URL="https://base-sepolia.infura.io/v3/ea2422e0e27a48ee82964d0dea2be9e8"
