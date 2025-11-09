@@ -110,10 +110,8 @@ function isInTheArray(address soughtAddr) internal view returns(bool) {
 }
 
 function depositCollateral(address token, uint256 amount) external nonReentrant onlyWhitelistedCollateral(token) {
-   (bool hasSuccess) = IERC20(token).transferFrom(msg.sender, address(this), amount);
-   if (!hasSuccess) {
-       revert TransferFailed();
-   }
+   IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+
     vaults[msg.sender][token].collateralAmount += amount;
     vaults[msg.sender][token].collateralTypeToken = token;
     
@@ -194,8 +192,12 @@ function liquidateVault(address vaultOwner, address token) external nonReentrant
         revert NotEnoughPLST();
     }
 
-    stabilskiToken.approve(address(this), debtAmount);
-    
+   (bool approved) =  stabilskiToken.approve(address(this), debtAmount);
+
+if(!approved){
+    revert TransferFailed();
+}
+
     // Transfer stablecoin from msg.sender to protocol to repay the debt
     stabilskiToken.transferFrom(msg.sender, address(this), debtAmount);
 
@@ -242,18 +244,18 @@ if (remainingCollateral > 0) {
 }
 
 // Commented out if goes to prodution
-function getVaultFlawedHealthFactor(address vaultOwner, address token) public view returns (uint256) {
+// function getVaultFlawedHealthFactor(address vaultOwner, address token) public view returns (uint256) {
 
-    uint256 collateralAmountInPLN = _getCollateralValue(vaultOwner, token);
+//     uint256 collateralAmountInPLN = _getCollateralValue(vaultOwner, token);
 
-    (, uint256 minCollateralRatio,,,)= collateralManager.getCollateralInfo(token);
+//     (, uint256 minCollateralRatio,,,)= collateralManager.getCollateralInfo(token);
 
-    uint256 debtAmount = vaults[vaultOwner][token].debt;
+//     uint256 debtAmount = vaults[vaultOwner][token].debt;
 
-if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || debtAmount == 0) return type(uint256).max;
+// if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || debtAmount == 0) return type(uint256).max;
 
-    return  ((collateralAmountInPLN * decimalPointsNormalizer / debtAmount) * 1e18 / (minCollateralRatio)) - 1e18; 
-}
+//     return  ((collateralAmountInPLN * decimalPointsNormalizer / debtAmount) * 1e18 / (minCollateralRatio)) - 1e18; 
+// }
 
 
 
@@ -297,7 +299,7 @@ if(token != bitcoinAddress && block.chainid == 11155111){
 
 
 function isLiquidatable(address vaultOwner, address token) public view returns (bool) {
-    uint256 healthFactor = getVaultFlawedHealthFactor(vaultOwner, token);
+    uint256 healthFactor = getVaultHealthFactor(vaultOwner, token);
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
 
     // Apply a 15% liquidation threshold buffer
