@@ -1,0 +1,15 @@
+export const chainSelectorArbitrumSepolia = 3478487238524512106;
+export const chainSelectorSepoliaEth = 16015286601757825753;
+export const chainSelectorBaseSepolia= 10344971235874465080;
+
+export const stabilskiTokenPoolSepoliaEthArbSepolia = "0xa2055e0Af688e680B48F68179606059c6bd20c3e";
+
+export const stabilskiTokenPoolEthSepoliaBaseSepolia = "0xD3a8314432D0Cc6c56EB08cBEb107261474cA113";
+
+export const stabilskiTokenPoolArbSepoliaEthSepolia = "0xE26a8493bD1c415c9a879D520501F4aB988230Cc";
+
+export const stabilskiTokenPoolArbSepoliaBaseSepolia= "0xc5c22099F9b9b04ee2092486Bc95112016D0894f";
+
+export const stabilskiTokenPoolBaseSepoliaEthSepolia = "0x07d22EdDa6691dfBfB58211E78e6C06dB6583C52";
+
+export const stabilskiTokenPoolBaseSepoliaArbSepolia = "0xdda74BCe1818c12Beb43cE6624B54887728a48b5";

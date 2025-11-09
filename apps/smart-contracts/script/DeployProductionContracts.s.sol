@@ -10,7 +10,6 @@ import {CollateralManager} from "../src/CollateralManager.sol";
 contract DeployProductionContracts is Script {
 function run() public returns (VaultManager vaultManager, StabilskiToken stabilskiToken, USDPLNOracle usdPlnOracle, CollateralManager collateralManager) {
 address[] memory tokens;
-address[] memory whitelist;
 address[] memory priceFeeds;
 uint256[] memory minCollateralRatios;
     // Deploy contracts
@@ -36,7 +35,6 @@ minCollateralRatios[2]=145e16;
     vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager), address(vm.envAddress("SEPOLIA_ETH_WBTC_ADDR")));
 
 stabilskiToken.grantControllerRole(address(vaultManager));
-stabilskiToken.transferOwnership(address(vaultManager));
 }
 
   if(block.chainid == vm.envUint("ARBITRUM_TESTNET_CHAINID")) {
@@ -54,7 +52,6 @@ minCollateralRatios[0]=12e17;
     vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager), address(0));
 
 stabilskiToken.grantControllerRole(address(vaultManager));
-stabilskiToken.transferOwnership(address(vaultManager));
 }
 
 
@@ -79,7 +76,7 @@ minCollateralRatios[1]=14e17;
     vaultManager = new VaultManager(address(usdPlnOracle), address(stabilskiToken), address(collateralManager), address(0));
 
 stabilskiToken.grantControllerRole(address(vaultManager));
-stabilskiToken.transferOwnership(address(vaultManager));
+
 }
 
 

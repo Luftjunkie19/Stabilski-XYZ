@@ -1,13 +1,13 @@
 'use client';
 import { WagmiProvider, createConfig, http } from "wagmi";
-import {  arbitrumSepolia, sepolia } from "wagmi/chains";
+import {  arbitrumSepolia, baseSepolia, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConnectKitProvider, getDefaultConfig } from "connectkit";
 
 export const config = createConfig(
   getDefaultConfig({
     // Your dApps chains
-    chains: [sepolia, arbitrumSepolia],
+    chains: [sepolia, arbitrumSepolia, baseSepolia],
     transports: {
       // RPC URL for each chain
       [sepolia.id]: http(
@@ -15,6 +15,9 @@ export const config = createConfig(
       ),
       [arbitrumSepolia.id]: http(
         `https://arb-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`,
+      ),
+      [baseSepolia.id]: http(
+        `https://base-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`,
       ),
     
     },
