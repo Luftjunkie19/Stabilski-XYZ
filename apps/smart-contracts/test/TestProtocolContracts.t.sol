@@ -15,7 +15,6 @@ import { IRouterClient } from "../lib/ccip/contracts/src/v0.8/ccip/interfaces/IR
 import{CCIPLocalSimulatorFork, Register} from "../lib/chainlink-local/src/ccip/CCIPLocalSimulatorFork.sol";
 import { console } from "../lib/forge-std/src/console.sol";
 import { Client } from "../lib/ccip/contracts/src/v0.8/ccip/libraries/Client.sol";
-import {TokenAdminRegistry} from "../../lib/ccip/contracts/src/v0.8/ccip/tokenAdminRegistry/TokenAdminRegistry.sol";
 import {DeployStabilskiTokenPool} from '../script/ccip-contracts/DeployStabilskiTokenPoolProduction.s.sol';
 import {RateLimiter} from "../lib/ccip/contracts/src/v0.8/ccip/libraries/RateLimiter.sol";
 
@@ -83,29 +82,6 @@ uint256 constant borrowWBTCAmount = 10e8;
 TokenPool ethSepoliaStabilskiTokenPool;
 TokenPool arbSepoliaStabilskiTokenPool;
 TokenPool baseSepoliaStabilskiTokenPool;
-
-function applyChains(address tokenPoolAddress, address remoteTokenPoolAddress, uint64 remoteChainSelector, address remoteTokenAddress) internal{
-
-TokenPool tokenPool = TokenPool(tokenPoolAddress);
-
-
-    // ChainUpdates + chain configurations etc.
-        TokenPool.ChainUpdate[] memory chains = new TokenPool.ChainUpdate[](1);
-      
-        
-        chains[0] = TokenPool.ChainUpdate({
-            remoteChainSelector: remoteChainSelector,
-            remotePoolAddress: abi.encode(address(remoteTokenPoolAddress)),
-            allowed:true,
-            remoteTokenAddress: abi.encode(remoteTokenAddress),
-            outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 167}),
-            inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 167})
-        });
-
-        
-
-tokenPool.applyChainUpdates(chains);
-}
 
 
 
@@ -230,47 +206,39 @@ DeployContracts deployBaseSepoliaContracts = new DeployContracts();
 
 vm.selectFork(sepoliaEthFork);
 DeployStabilskiTokenPool deploySepoliaEthTokenPool = new DeployStabilskiTokenPool();
-(ethSepoliaStabilskiTokenPool) = deploySepoliaEthTokenPool.run(address(stabilskiToken), address(arbitrumstabilskiToken), address(baseSepoliaStabilskiToken), msg.sender);
+(ethSepoliaStabilskiTokenPool) = deploySepoliaEthTokenPool.run(
+    address(stabilskiToken), msg.sender, 
+    address(arbitrumstabilskiToken), address(baseSepoliaStabilskiToken), 
+    ethSepoliaNetworkDetails.rmnProxyAddress,
+    ethSepoliaNetworkDetails.routerAddress, arbitrumChainSelector, baseChainSelector,
+    ethSepoliaNetworkDetails.tokenAdminRegistryAddress, ethSepoliaNetworkDetails.registryModuleOwnerCustomAddress
+    );
 
 
 vm.selectFork(baseSepoliaFork);
 DeployStabilskiTokenPool deployBaseSepoliaTokenPool = new DeployStabilskiTokenPool();
 (baseSepoliaStabilskiTokenPool)=deployBaseSepoliaTokenPool.run(
-    address(stabilskiToken), address(arbitrumstabilskiToken), 
-    address(baseSepoliaStabilskiToken), msg.sender
+    address(baseSepoliaStabilskiToken), msg.sender, address(stabilskiToken), 
+    address(arbitrumstabilskiToken), baseSepoliaNetworkDetails.rmnProxyAddress, 
+    baseSepoliaNetworkDetails.routerAddress, ethSepoliaNetworkDetails.chainSelector, arbitrumChainSelector,
+    baseSepoliaNetworkDetails.tokenAdminRegistryAddress, baseSepoliaNetworkDetails.registryModuleOwnerCustomAddress
     );
 
 
 vm.selectFork(arbitrumSepoliaFork);
 DeployStabilskiTokenPool deployArbitrumSepoliaTokenPool = new DeployStabilskiTokenPool();
-(arbSepoliaStabilskiTokenPool)= deployArbitrumSepoliaTokenPool.run(address(stabilskiToken), address(arbitrumstabilskiToken), address(baseSepoliaStabilskiToken), msg.sender);
-
-
-
-vm.selectFork(sepoliaEthFork);
-vm.startPrank(msg.sender);
-applyChains(address(ethSepoliaStabilskiTokenPool),address(baseSepoliaStabilskiTokenPool),
-    baseSepoliaNetworkDetails.chainSelector, address(baseSepoliaStabilskiToken)
+(arbSepoliaStabilskiTokenPool)= deployArbitrumSepoliaTokenPool.run(
+    address(arbitrumstabilskiToken), 
+    msg.sender,
+    address(stabilskiToken), 
+    address(baseSepoliaStabilskiToken),
+    arbSepoliaNetworkDetails.rmnProxyAddress,
+    arbSepoliaNetworkDetails.routerAddress,
+    ethSepoliaNetworkDetails.chainSelector,
+    baseChainSelector,
+    arbSepoliaNetworkDetails.tokenAdminRegistryAddress,
+    arbSepoliaNetworkDetails.registryModuleOwnerCustomAddress
     );
-vm.stopPrank();
-
-vm.selectFork(arbitrumSepoliaFork);
-vm.startPrank(msg.sender);
-applyChains(address(arbSepoliaStabilskiTokenPool), address(baseSepoliaStabilskiTokenPool),
-    baseSepoliaNetworkDetails.chainSelector, address(baseSepoliaStabilskiToken)
-    );
-
-vm.stopPrank();
-
-vm.selectFork(baseSepoliaFork);
-vm.startPrank(msg.sender);
-applyChains(
-    address(baseSepoliaStabilskiTokenPool), address(ethSepoliaStabilskiTokenPool),
-    ethSepoliaNetworkDetails.chainSelector, address(stabilskiToken)
-    );
-
-vm.stopPrank();
-
 
 vm.selectFork(sepoliaEthFork);
 }
