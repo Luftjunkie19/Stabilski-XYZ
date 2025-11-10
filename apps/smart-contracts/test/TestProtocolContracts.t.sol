@@ -207,10 +207,9 @@ DeployContracts deployBaseSepoliaContracts = new DeployContracts();
 vm.selectFork(sepoliaEthFork);
 DeployStabilskiTokenPool deploySepoliaEthTokenPool = new DeployStabilskiTokenPool();
 (ethSepoliaStabilskiTokenPool) = deploySepoliaEthTokenPool.run(
-    address(stabilskiToken), msg.sender, 
-    address(arbitrumstabilskiToken), address(baseSepoliaStabilskiToken), 
+    address(stabilskiToken), msg.sender, address(baseSepoliaStabilskiToken), 
     ethSepoliaNetworkDetails.rmnProxyAddress,
-    ethSepoliaNetworkDetails.routerAddress, arbitrumChainSelector, baseChainSelector,
+    ethSepoliaNetworkDetails.routerAddress, baseChainSelector,
     ethSepoliaNetworkDetails.tokenAdminRegistryAddress, ethSepoliaNetworkDetails.registryModuleOwnerCustomAddress
     );
 
@@ -218,9 +217,8 @@ DeployStabilskiTokenPool deploySepoliaEthTokenPool = new DeployStabilskiTokenPoo
 vm.selectFork(baseSepoliaFork);
 DeployStabilskiTokenPool deployBaseSepoliaTokenPool = new DeployStabilskiTokenPool();
 (baseSepoliaStabilskiTokenPool)=deployBaseSepoliaTokenPool.run(
-    address(baseSepoliaStabilskiToken), msg.sender, address(stabilskiToken), 
-    address(arbitrumstabilskiToken), baseSepoliaNetworkDetails.rmnProxyAddress, 
-    baseSepoliaNetworkDetails.routerAddress, ethSepoliaNetworkDetails.chainSelector, arbitrumChainSelector,
+    address(baseSepoliaStabilskiToken), msg.sender, address(stabilskiToken), baseSepoliaNetworkDetails.rmnProxyAddress, 
+    baseSepoliaNetworkDetails.routerAddress, ethSepoliaNetworkDetails.chainSelector,
     baseSepoliaNetworkDetails.tokenAdminRegistryAddress, baseSepoliaNetworkDetails.registryModuleOwnerCustomAddress
     );
 
@@ -230,11 +228,9 @@ DeployStabilskiTokenPool deployArbitrumSepoliaTokenPool = new DeployStabilskiTok
 (arbSepoliaStabilskiTokenPool)= deployArbitrumSepoliaTokenPool.run(
     address(arbitrumstabilskiToken), 
     msg.sender,
-    address(stabilskiToken), 
     address(baseSepoliaStabilskiToken),
     arbSepoliaNetworkDetails.rmnProxyAddress,
     arbSepoliaNetworkDetails.routerAddress,
-    ethSepoliaNetworkDetails.chainSelector,
     baseChainSelector,
     arbSepoliaNetworkDetails.tokenAdminRegistryAddress,
     arbSepoliaNetworkDetails.registryModuleOwnerCustomAddress

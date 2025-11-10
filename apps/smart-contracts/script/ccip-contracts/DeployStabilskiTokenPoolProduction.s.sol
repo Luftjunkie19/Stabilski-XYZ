@@ -15,16 +15,15 @@ error CCIPAdminAddressInvalid();
 error OnlyPendingAdministratorAllowed(address msgSender, address pendingAdmin);
 
 
-function run (address tokenAddress, address tokenAdmin, address firstRemoteTokenAddress, address secondRemoteTokenAddress, address rmnProxy,
+function run (address tokenAddress, address tokenAdmin, address firstRemoteTokenAddress, address rmnProxy,
 address router, uint64 firstRemoteChainSelector,
-uint64 secondRemoteChainSelector,
 address tokenAdminRegistryAddress,
 address registryModuleOwnerCustom
 ) external returns (BurnMintTokenPool stabilskiTokenPool) {
 
     vm.startBroadcast();
 
-    (stabilskiTokenPool) = deployStabilskiTokenOnChain(tokenAddress, tokenAdmin, firstRemoteTokenAddress, secondRemoteTokenAddress, rmnProxy, router, firstRemoteChainSelector, secondRemoteChainSelector,
+    (stabilskiTokenPool) = deployStabilskiTokenOnChain(tokenAddress, tokenAdmin, firstRemoteTokenAddress, rmnProxy, router, firstRemoteChainSelector,
     tokenAdminRegistryAddress,registryModuleOwnerCustom
     );
 
@@ -37,12 +36,10 @@ address registryModuleOwnerCustom
 function deployStabilskiTokenOnChain(
 address tokenAddress, 
 address tokenAdmin, 
-address firstRemoteTokenAddress, 
-address secondRemoteTokenAddress,
+address firstRemoteTokenAddress,
 address rmnProxy,
 address router,
 uint64 firstRemoteChainSelector,
-uint64 secondRemoteChainSelector,
 address tokenAdminRegistryAddress,
 address registryModuleOwnerCustom
 ) internal returns(BurnMintTokenPool stabilskiPool){
@@ -52,8 +49,7 @@ address registryModuleOwnerCustom
         tokenAdmin, 
         router, 
         tokenAdminRegistryAddress, registryModuleOwnerCustom, 
-        firstRemoteChainSelector, firstRemoteTokenAddress, 
-        secondRemoteChainSelector, secondRemoteTokenAddress, rmnProxy);
+        firstRemoteChainSelector, firstRemoteTokenAddress, rmnProxy);
         return (stabilskiPool);
     
 
@@ -70,8 +66,6 @@ address tokenAdminRegistryAddress,
 address registryModuleOwnerCustom,
 uint64 firstRemoteChainSelector,
 address firstRemoteTokenAddress,
-uint64 secondRemoteChainSelector,
-address secondRemoteTokenAddress,
 address rmnProxy) private returns (BurnMintTokenPool stabilskiTokenPool) {
 
     StabilskiToken token = StabilskiToken(tokenAddress);
@@ -112,7 +106,7 @@ address rmnProxy) private returns (BurnMintTokenPool stabilskiTokenPool) {
         tokenAdminRegistryContract.setPool(tokenAddress, address(tokenPool));
 
         // ChainUpdates + chain configurations etc.
-        TokenPool.ChainUpdate[] memory chains = new TokenPool.ChainUpdate[](2);
+        TokenPool.ChainUpdate[] memory chains = new TokenPool.ChainUpdate[](1);
       
         
         chains[0] = TokenPool.ChainUpdate({
