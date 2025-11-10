@@ -15,46 +15,21 @@ error CCIPAdminAddressInvalid();
 error OnlyPendingAdministratorAllowed(address msgSender, address pendingAdmin);
 
 
-function run (address tokenAddress, address tokenAdmin, address firstRemoteTokenAddress, address rmnProxy,
-address router, uint64 firstRemoteChainSelector,
+function run (address tokenAddress, address tokenAdmin, address rmnProxy,
+address router,
 address tokenAdminRegistryAddress,
 address registryModuleOwnerCustom
 ) external returns (BurnMintTokenPool stabilskiTokenPool) {
 
     vm.startBroadcast();
 
-    (stabilskiTokenPool) = deployStabilskiTokenOnChain(tokenAddress, tokenAdmin, firstRemoteTokenAddress, rmnProxy, router, firstRemoteChainSelector,
-    tokenAdminRegistryAddress,registryModuleOwnerCustom
+    (stabilskiTokenPool) = performDeploy(tokenAddress, tokenAdmin, router,
+    tokenAdminRegistryAddress, registryModuleOwnerCustom, rmnProxy
     );
 
     vm.stopBroadcast();
 
     return (stabilskiTokenPool);
-
-}
-
-function deployStabilskiTokenOnChain(
-address tokenAddress, 
-address tokenAdmin, 
-address firstRemoteTokenAddress,
-address rmnProxy,
-address router,
-uint64 firstRemoteChainSelector,
-address tokenAdminRegistryAddress,
-address registryModuleOwnerCustom
-) internal returns(BurnMintTokenPool stabilskiPool){
-    
-
-       (stabilskiPool) = performDeploy(tokenAddress, 
-        tokenAdmin, 
-        router, 
-        tokenAdminRegistryAddress, registryModuleOwnerCustom, 
-        firstRemoteChainSelector, firstRemoteTokenAddress, rmnProxy);
-        return (stabilskiPool);
-    
-
-
- 
 
 }
 
@@ -64,8 +39,6 @@ address tokenAdmin,
 address routerAddress,
 address tokenAdminRegistryAddress,
 address registryModuleOwnerCustom,
-uint64 firstRemoteChainSelector,
-address firstRemoteTokenAddress,
 address rmnProxy) private returns (BurnMintTokenPool stabilskiTokenPool) {
 
     StabilskiToken token = StabilskiToken(tokenAddress);
@@ -104,31 +77,6 @@ address rmnProxy) private returns (BurnMintTokenPool stabilskiTokenPool) {
 
         // Use the administrator's address to set the pool for the token
         tokenAdminRegistryContract.setPool(tokenAddress, address(tokenPool));
-
-        // ChainUpdates + chain configurations etc.
-        TokenPool.ChainUpdate[] memory chains = new TokenPool.ChainUpdate[](1);
-      
-        
-        chains[0] = TokenPool.ChainUpdate({
-            remoteChainSelector: firstRemoteChainSelector,
-            remotePoolAddress: abi.encode(address(tokenPool)),
-            allowed:true,
-            remoteTokenAddress: abi.encode(firstRemoteTokenAddress),
-            outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 167}),
-            inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 167})
-        });
-
-        //   chains[1] = TokenPool.ChainUpdate({
-        //     remoteChainSelector: secondRemoteChainSelector,
-        //     remotePoolAddress: abi.encode(address(tokenPool)),
-        //     allowed:true,
-        //     remoteTokenAddress: abi.encode(secondRemoteTokenAddress),
-        //     outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 167}),
-        //     inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 167})
-        // });
-
-
-TokenPool(address(tokenPool)).applyChainUpdates(chains);
 
 stabilskiTokenPool = tokenPool;
 
