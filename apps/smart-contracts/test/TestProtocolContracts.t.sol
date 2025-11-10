@@ -15,8 +15,10 @@ import { IRouterClient } from "../lib/ccip/contracts/src/v0.8/ccip/interfaces/IR
 import{CCIPLocalSimulatorFork, Register} from "../lib/chainlink-local/src/ccip/CCIPLocalSimulatorFork.sol";
 import { console } from "../lib/forge-std/src/console.sol";
 import { Client } from "../lib/ccip/contracts/src/v0.8/ccip/libraries/Client.sol";
-import {DeployStabilskiTokenPool} from '../script/ccip-contracts/DeployStabilskiTokenPoolProduction.s.sol';
+
 import {RateLimiter} from "../lib/ccip/contracts/src/v0.8/ccip/libraries/RateLimiter.sol";
+import {BurnMintTokenPool} from "../lib/ccip/contracts/src/v0.8/ccip/pools/BurnMintTokenPool.sol";
+import {DeployStabilskiTokenPool} from '../script/ccip-contracts/DeployStabilskiTokenPoolProduction.s.sol';
 
 contract TestContract is Test {
 
@@ -82,6 +84,40 @@ uint256 constant borrowWBTCAmount = 10e8;
 TokenPool ethSepoliaStabilskiTokenPool;
 TokenPool arbSepoliaStabilskiTokenPool;
 TokenPool baseSepoliaStabilskiTokenPool;
+
+
+function applyChain(address sourceTokenPool, address firstRemoteTokenPool, address secondRemoteTokenPool,
+
+address firstRemoteToken, address secondRemoteToken, uint64 firstRemoteChainSelector, uint64 secondRemoteChainSelector
+) private {
+
+BurnMintTokenPool tokenPool = BurnMintTokenPool(sourceTokenPool);
+
+ // ChainUpdates + chain configurations etc.
+        TokenPool.ChainUpdate[] memory chains = new TokenPool.ChainUpdate[](2);
+      
+        
+        chains[0] = TokenPool.ChainUpdate({
+            remoteChainSelector: firstRemoteChainSelector,
+            remotePoolAddress: abi.encode(address(firstRemoteTokenPool)),
+            allowed:true,
+            remoteTokenAddress: abi.encode(firstRemoteToken),
+            outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 167}),
+            inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 167})
+        });
+
+          chains[1] = TokenPool.ChainUpdate({
+            remoteChainSelector: secondRemoteChainSelector,
+            remotePoolAddress: abi.encode(address(secondRemoteTokenPool)),
+            allowed:true,
+            remoteTokenAddress: abi.encode(secondRemoteToken),
+            outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 167}),
+            inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 167})
+        });
+        
+        
+        TokenPool(address(tokenPool)).applyChainUpdates(chains);
+}
 
 
 
@@ -207,9 +243,9 @@ DeployContracts deployBaseSepoliaContracts = new DeployContracts();
 vm.selectFork(sepoliaEthFork);
 DeployStabilskiTokenPool deploySepoliaEthTokenPool = new DeployStabilskiTokenPool();
 (ethSepoliaStabilskiTokenPool) = deploySepoliaEthTokenPool.run(
-    address(stabilskiToken), msg.sender, address(baseSepoliaStabilskiToken), 
+    address(stabilskiToken), msg.sender,
     ethSepoliaNetworkDetails.rmnProxyAddress,
-    ethSepoliaNetworkDetails.routerAddress, baseChainSelector,
+    ethSepoliaNetworkDetails.routerAddress,
     ethSepoliaNetworkDetails.tokenAdminRegistryAddress, ethSepoliaNetworkDetails.registryModuleOwnerCustomAddress
     );
 
@@ -217,8 +253,8 @@ DeployStabilskiTokenPool deploySepoliaEthTokenPool = new DeployStabilskiTokenPoo
 vm.selectFork(baseSepoliaFork);
 DeployStabilskiTokenPool deployBaseSepoliaTokenPool = new DeployStabilskiTokenPool();
 (baseSepoliaStabilskiTokenPool)=deployBaseSepoliaTokenPool.run(
-    address(baseSepoliaStabilskiToken), msg.sender, address(stabilskiToken), baseSepoliaNetworkDetails.rmnProxyAddress, 
-    baseSepoliaNetworkDetails.routerAddress, ethSepoliaNetworkDetails.chainSelector,
+    address(baseSepoliaStabilskiToken), msg.sender,baseSepoliaNetworkDetails.rmnProxyAddress, 
+    baseSepoliaNetworkDetails.routerAddress,
     baseSepoliaNetworkDetails.tokenAdminRegistryAddress, baseSepoliaNetworkDetails.registryModuleOwnerCustomAddress
     );
 
@@ -228,15 +264,17 @@ DeployStabilskiTokenPool deployArbitrumSepoliaTokenPool = new DeployStabilskiTok
 (arbSepoliaStabilskiTokenPool)= deployArbitrumSepoliaTokenPool.run(
     address(arbitrumstabilskiToken), 
     msg.sender,
-    address(baseSepoliaStabilskiToken),
     arbSepoliaNetworkDetails.rmnProxyAddress,
     arbSepoliaNetworkDetails.routerAddress,
-    baseChainSelector,
     arbSepoliaNetworkDetails.tokenAdminRegistryAddress,
     arbSepoliaNetworkDetails.registryModuleOwnerCustomAddress
     );
 
+
 vm.selectFork(sepoliaEthFork);
+
+
+
 }
 
 function testGetCollateralInfo() public {
@@ -574,6 +612,33 @@ vm.stopPrank();
 
 
 function testCCIPTransferFromSepoliaETHtoBaseSepolia() public {
+
+vm.selectFork(sepoliaEthFork);
+vm.prank(ethSepoliaStabilskiTokenPool.owner());
+applyChain(
+    address(ethSepoliaStabilskiTokenPool), address(baseSepoliaStabilskiTokenPool),address(arbSepoliaStabilskiTokenPool),
+    address(baseSepoliaStabilskiToken), address(arbitrumstabilskiToken), baseChainSelector, arbitrumChainSelector
+    );
+
+vm.selectFork(baseSepoliaFork);
+vm.prank(baseSepoliaStabilskiTokenPool.owner());
+applyChain(
+    address(baseSepoliaStabilskiTokenPool), address(ethSepoliaStabilskiTokenPool),address(arbSepoliaStabilskiTokenPool),
+    address(stabilskiToken), address(arbitrumstabilskiToken), sepoliaDestinationChainSelector, arbitrumChainSelector
+    );
+
+vm.selectFork(arbitrumSepoliaFork);
+vm.prank(msg.sender);
+applyChain(
+    address(arbSepoliaStabilskiTokenPool),
+    address(ethSepoliaStabilskiTokenPool),
+    address(baseSepoliaStabilskiTokenPool),
+    address(stabilskiToken), address(arbitrumstabilskiToken), sepoliaDestinationChainSelector, arbitrumChainSelector
+    );
+
+vm.selectFork(sepoliaEthFork);
+
+
     address linkSepolia = ethSepoliaNetworkDetails.linkAddress;
         ccipLocalSimulatorFork.requestLinkFromFaucet(address(borrower), 200 ether);
 
@@ -616,7 +681,7 @@ uint256 balanceBeforeTx= stabilskiToken.balanceOf(borrower);
     ccipLocalSimulatorFork.switchChainAndRouteMessage(baseSepoliaFork);
 
         uint256 balanceOfAfterBaseSepolia = baseSepoliaStabilskiToken.balanceOf(borrower);
-        assertEq(balanceOfAfterBaseSepolia, amountToSend);
+        assertEq(balanceOfAfterBaseSepolia, 1e18);
 
 }
 
