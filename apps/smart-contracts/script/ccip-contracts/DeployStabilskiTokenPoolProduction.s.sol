@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
 import {Script} from '../../lib/forge-std/src/Script.sol';
@@ -15,17 +15,43 @@ error CCIPAdminAddressInvalid();
 error OnlyPendingAdministratorAllowed(address msgSender, address pendingAdmin);
 
 
-function run (address tokenAddress, address tokenAdmin, address rmnProxy,
-address router,
-address tokenAdminRegistryAddress,
-address registryModuleOwnerCustom
+function run (
 ) external returns (BurnMintTokenPool stabilskiTokenPool) {
 
     vm.startBroadcast();
 
-    (stabilskiTokenPool) = performDeploy(tokenAddress, tokenAdmin, router,
-    tokenAdminRegistryAddress, registryModuleOwnerCustom, rmnProxy
+if(block.chainid == vm.envUint("ETH_SEPOLIA_CHAINID")){
+
+    (stabilskiTokenPool) = performDeploy(vm.envAddress("STABILSKI_ETH_TOKEN_ADDR"), msg.sender, 
+    vm.envAddress("ETH_CCIP_ROUTER"),
+    vm.envAddress("ETH_CCIP_TOKEN_ADMIN_REGISTRY"), 
+    vm.envAddress("ETH_CCIP_MODULE_REGISTRY_OWNER"),
+    vm.envAddress("ETH_CCIP_RMN")
     );
+
+}
+
+if(block.chainid == vm.envUint("ARBITRUM_TESTNET_CHAINID")){
+    (stabilskiTokenPool) = performDeploy(vm.envAddress("STABILSKI_ARB_TOKEN_ADDR"), msg.sender, 
+      vm.envAddress("ARBITRUM_CCIP_ROUTER"),
+    vm.envAddress("ARBITRUM_TOKEN_ADMIN_REGISTRY"), 
+    vm.envAddress("ARBITRUM_TOKEN_REGISTRY_MODULE_OWNER"),
+    vm.envAddress("ARBITRUM_CCIP_CHAIN_RMN")
+    );
+
+}
+
+if(block.chainid == vm.envUint("BASE_TESTNET_CHAINID")){
+        (stabilskiTokenPool) = performDeploy(
+vm.envAddress("STABILSKI_BASE_TOKEN_ADDR"), msg.sender, 
+vm.envAddress("BASE_CCIP_ROUTER"),
+vm.envAddress("BASE_TOKEN_ADMIN_REGISTRY"), 
+vm.envAddress("BASE_REGISTRY_MODULE_OWNER"),
+vm.envAddress("BASE_CCIP_RMN_CONTRACTOR")
+    );
+}
+
+
 
     vm.stopBroadcast();
 
