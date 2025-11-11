@@ -19,7 +19,7 @@ import { Client } from "../lib/ccip/contracts/src/v0.8/ccip/libraries/Client.sol
 import {RateLimiter} from "../lib/ccip/contracts/src/v0.8/ccip/libraries/RateLimiter.sol";
 import {BurnMintTokenPool} from "../lib/ccip/contracts/src/v0.8/ccip/pools/BurnMintTokenPool.sol";
 import {DeployStabilskiTokenPool} from '../script/ccip-contracts/DeployStabilskiTokenPoolProduction.s.sol';
-
+import {CcipSender} from "../script/ccip-contracts/DeployCCIPSender.s.sol";
 contract TestContract is Test {
 
 uint256 sepoliaEthFork;
@@ -86,6 +86,10 @@ TokenPool arbSepoliaStabilskiTokenPool;
 TokenPool baseSepoliaStabilskiTokenPool;
 
 
+CcipSender ccipSenderEth;
+CcipSender ccipSenderArb;
+CcipSender ccipSenderBase;
+
 function applyChain(address sourceTokenPool, address firstRemoteTokenPool, address secondRemoteTokenPool,
 
 address firstRemoteToken, address secondRemoteToken, uint64 firstRemoteChainSelector, uint64 secondRemoteChainSelector
@@ -146,6 +150,7 @@ vm.makePersistent(address(ccipLocalSimulatorFork));
 router = IRouterClient(sourceNetworkDetails.routerAddress);
 sepoliaDestinationChainSelector = sourceNetworkDetails.chainSelector;
 
+
 // set the invalid address to test the collateral.
 wethInvalidAddress = vm.envAddress("SEPOLIA_ETH_WETH_ADDR");
 
@@ -181,6 +186,9 @@ vm.makePersistent(address(usdPlnOracle));
 
 vm.deal(borrower, 1000 ether);
 
+
+ccipSenderEth= new CcipSender(ethSepoliaNetworkDetails.routerAddress, address(stabilskiToken));
+
 // Switch to arbitrum fork
 vm.selectFork(arbitrumSepoliaFork);
 
@@ -204,6 +212,9 @@ minCollateralRatios[0]=12e17;
 
 DeployContracts deployContractsArbitrum = new DeployContracts();
 (ArbitrumvaultManager, arbitrumstabilskiToken, ArbitrumusdPlnOracle, ArbitrumcollateralManager) = deployContractsArbitrum.run(tokens, whitelist, priceFeeds, minCollateralRatios);
+
+ccipSenderArb= new CcipSender(arbSepoliaNetworkDetails.routerAddress, address(arbitrumstabilskiToken));
+
 
 vm.selectFork(baseSepoliaFork);
 // get the network details for the sepolia fork
@@ -239,6 +250,7 @@ minCollateralRatios[1]=14e17;
 DeployContracts deployBaseSepoliaContracts = new DeployContracts();
 (baseSepoliaVaultManager, baseSepoliaStabilskiToken, baseSepoliaPlnOracle, baseSepoliaCollateralManager) = deployBaseSepoliaContracts.run(tokens, whitelist, priceFeeds, minCollateralRatios);
 
+ccipSenderBase = new CcipSender(baseSepoliaNetworkDetails.routerAddress, address(baseSepoliaStabilskiToken));
 
 vm.selectFork(sepoliaEthFork);
 DeployStabilskiTokenPool deploySepoliaEthTokenPool = new DeployStabilskiTokenPool();
@@ -676,7 +688,7 @@ uint256 balanceBeforeTx= stabilskiToken.balanceOf(borrower);
         uint256 balanceAfterTx = stabilskiToken.balanceOf(borrower);
 
         assertEq(balanceAfterTx,  balanceBeforeTx - 1e18);
-        
+        vm.stopPrank();
     
     ccipLocalSimulatorFork.switchChainAndRouteMessage(baseSepoliaFork);
 
@@ -736,14 +748,14 @@ uint256 balanceBeforeTx= stabilskiToken.balanceOf(borrower);
                 receiver: abi.encode(address(borrower)),
                 data: "",
                 tokenAmounts: tokenToSendDetails,
-                extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 0})),
-                feeToken: address(linkSepolia)
+                extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 500000})),
+                feeToken: address(0)
             });
 
             uint256 feesToPay = routerEthSepolia.getFee(arbitrumChainSelector, message);
 
 
-     bytes32 messageId = routerEthSepolia.ccipSend(
+     bytes32 messageId = routerEthSepolia.ccipSend{value:feesToPay}(
             arbitrumChainSelector,message
         );
 
@@ -751,12 +763,12 @@ uint256 balanceBeforeTx= stabilskiToken.balanceOf(borrower);
         uint256 balanceAfterTx = stabilskiToken.balanceOf(borrower);
 
         assertEq(balanceAfterTx,  balanceBeforeTx - 1e18);
-        
+        vm.stopPrank();
     
     ccipLocalSimulatorFork.switchChainAndRouteMessage(arbitrumSepoliaFork);
 
-        uint256 balanceOfAfterTxArbSepolia = arbitrumstabilskiToken.balanceOf(borrower);
-        assertEq(balanceOfAfterTxArbSepolia, 1e18);
+        uint256 balanceOfAfterBaseSepolia = arbitrumstabilskiToken.balanceOf(borrower);
+        assertEq(balanceOfAfterBaseSepolia, 1e18);
 
 }
 

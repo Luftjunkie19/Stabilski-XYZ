@@ -45,6 +45,8 @@ const handleTokenChange = async () => {
 try {
 
   const encodedReceiverAddress = encodeAbiParameters([{type:'address', name:'receiver'}], [address as `0x${string}`]);
+  const encodedGasLimit=encodeAbiParameters([{type:'uint256', name:'gasLimit'}], [BigInt(500000)]);
+
 
   console.log(encodedReceiverAddress);
 
@@ -57,15 +59,24 @@ const messageObj={
     data:"",
     tokenAmounts:[{token:currentStabilskiContract, amount:BigInt(5e18)}],
     feeToken:zeroAddress,
-    extraArgs: ""
+    extraArgs: encodedGasLimit
   }
 
+  const getFee = await readContract(config, {
+    abi:routerAbi,
+    address: currentRouter,
+    functionName:"getFee",
+    args:[BigInt(chainSelectorBaseSepolia), messageObj],
+    chainId
+  });
+
+  console.log(getFee);
 
 writeContract({
     abi:routerAbi,
     address: currentRouter,
     functionName:"ccipSend",
-    args:[chainSelectorBaseSepolia, messageObj],
+    args:[BigInt(chainSelectorBaseSepolia), messageObj],
     chainId
   });
 
