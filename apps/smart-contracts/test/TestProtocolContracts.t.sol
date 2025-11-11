@@ -633,7 +633,7 @@ applyChain(
     address(arbSepoliaStabilskiTokenPool),
     address(ethSepoliaStabilskiTokenPool),
     address(baseSepoliaStabilskiTokenPool),
-    address(stabilskiToken), address(arbitrumstabilskiToken), sepoliaDestinationChainSelector, arbitrumChainSelector
+    address(stabilskiToken), address(baseSepoliaStabilskiToken), sepoliaDestinationChainSelector, baseChainSelector
     );
 
 vm.selectFork(sepoliaEthFork);
@@ -708,7 +708,7 @@ applyChain(
     address(arbSepoliaStabilskiTokenPool),
     address(ethSepoliaStabilskiTokenPool),
     address(baseSepoliaStabilskiTokenPool),
-    address(stabilskiToken), address(arbitrumstabilskiToken), sepoliaDestinationChainSelector, arbitrumChainSelector
+    address(stabilskiToken), address(baseSepoliaStabilskiToken), sepoliaDestinationChainSelector, baseChainSelector
     );
 
 vm.selectFork(sepoliaEthFork);
@@ -761,77 +761,155 @@ uint256 balanceBeforeTx= stabilskiToken.balanceOf(borrower);
 }
 
 
-function testCCIPTransferFromSepoliaBasetoArbSepolia() public {
+function testCCIPTransferFromSepoliaArbtoEthSepolia() public {
+
+vm.selectFork(arbitrumSepoliaFork);
+vm.deal(borrower, 100e18);
+vm.prank(arbSepoliaStabilskiTokenPool.owner());
+applyChain(
+    address(arbSepoliaStabilskiTokenPool),
+    address(ethSepoliaStabilskiTokenPool),
+    address(baseSepoliaStabilskiTokenPool),
+    address(stabilskiToken), address(baseSepoliaStabilskiToken), sepoliaDestinationChainSelector, baseChainSelector
+    );
+
+
+vm.selectFork(baseSepoliaFork);
+vm.deal(borrower, 100e18);
+vm.prank(baseSepoliaStabilskiTokenPool.owner());
+applyChain(
+    address(baseSepoliaStabilskiTokenPool), address(ethSepoliaStabilskiTokenPool),address(arbSepoliaStabilskiTokenPool),
+    address(stabilskiToken), address(arbitrumstabilskiToken), sepoliaDestinationChainSelector, arbitrumChainSelector
+    );
+
+
 
 vm.selectFork(sepoliaEthFork);
-vm.deal(msg.sender, 50e18);
+vm.deal(borrower, 50e18);
 vm.prank(ethSepoliaStabilskiTokenPool.owner());
 applyChain(
     address(ethSepoliaStabilskiTokenPool), address(baseSepoliaStabilskiTokenPool),address(arbSepoliaStabilskiTokenPool),
     address(baseSepoliaStabilskiToken), address(arbitrumstabilskiToken), baseChainSelector, arbitrumChainSelector
     );
 
-vm.selectFork(baseSepoliaFork);
-vm.prank(baseSepoliaStabilskiTokenPool.owner());
-vm.deal(msg.sender, 100e18);
-applyChain(
-    address(baseSepoliaStabilskiTokenPool), address(ethSepoliaStabilskiTokenPool),address(arbSepoliaStabilskiTokenPool),
-    address(stabilskiToken), address(arbitrumstabilskiToken), sepoliaDestinationChainSelector, arbitrumChainSelector
-    );
-
 vm.selectFork(arbitrumSepoliaFork);
-vm.deal(msg.sender, 100e18);
-vm.prank(arbSepoliaStabilskiTokenPool.owner());
-applyChain(
-    address(arbSepoliaStabilskiTokenPool),
-    address(ethSepoliaStabilskiTokenPool),
-    address(baseSepoliaStabilskiTokenPool),
-    address(stabilskiToken), address(arbitrumstabilskiToken), sepoliaDestinationChainSelector, arbitrumChainSelector
-    );
 
-vm.selectFork(baseSepoliaFork);
-vm.deal(msg.sender, 1000e18);
-
-    address linkSepolia = baseSepoliaNetworkDetails.linkAddress;
+    address linkSepolia = arbSepoliaNetworkDetails.linkAddress;
         ccipLocalSimulatorFork.requestLinkFromFaucet(address(borrower), 200e18);
 
         uint256 amountToSend = 5e18;
         Client.EVMTokenAmount[] memory tokenToSendDetails = new Client.EVMTokenAmount[](1);
         Client.EVMTokenAmount memory tokenAmount =
-            Client.EVMTokenAmount({token: address(baseSepoliaStabilskiToken), amount: 1e18});
+            Client.EVMTokenAmount({token: address(arbitrumstabilskiToken), amount: 1e18});
         tokenToSendDetails[0] = tokenAmount;
 
-        baseSepoliaStabilskiToken.mint(address(borrower), amountToSend);
+        arbitrumstabilskiToken.mint(address(borrower), amountToSend);
         vm.startPrank(borrower);
-        baseSepoliaStabilskiToken.approve(baseSepoliaNetworkDetails.routerAddress, 1e18);
-        IERC20(linkSepolia).approve(baseSepoliaNetworkDetails.routerAddress, 200e18);
+uint256 balanceBeforeTx= arbitrumstabilskiToken.balanceOf(borrower);
+        arbitrumstabilskiToken.approve(arbSepoliaNetworkDetails.routerAddress, 1e18);
+        IERC20(linkSepolia).approve(arbSepoliaNetworkDetails.routerAddress, 200e18);
 
-uint256 balanceBeforeTx= baseSepoliaStabilskiToken.balanceOf(borrower);
 
-        IRouterClient routerBaseSepolia = IRouterClient(baseSepoliaNetworkDetails.routerAddress);
+        IRouterClient routerBaseSepolia = IRouterClient(arbSepoliaNetworkDetails.routerAddress);
 
         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
                 receiver: abi.encode(address(borrower)),
                 data: "",
                 tokenAmounts: tokenToSendDetails,
-                extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 0})),
-                feeToken: address(linkSepolia)
+                extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 5000000})),
+                feeToken: address(0)
             });
 
             uint256 feesToPay = routerBaseSepolia.getFee(sepoliaDestinationChainSelector, message);
 
 
-     bytes32 messageId = routerBaseSepolia.ccipSend{gas:1e19}(
+     bytes32 messageId = routerBaseSepolia.ccipSend{value:feesToPay}(
             sepoliaDestinationChainSelector,message
         );
 
 
-        uint256 balanceAfterTx = baseSepoliaStabilskiToken.balanceOf(borrower);
+        uint256 balanceAfterTx = arbitrumstabilskiToken.balanceOf(borrower);
 
         assertEq(balanceAfterTx,  balanceBeforeTx - 1e18);
         
     
     ccipLocalSimulatorFork.switchChainAndRouteMessage(sepoliaEthFork);
+}
+
+
+function testCCIPTransferFromSepoliaArbtoBaseSepolia() public {
+
+vm.selectFork(arbitrumSepoliaFork);
+vm.deal(borrower, 100e18);
+vm.prank(arbSepoliaStabilskiTokenPool.owner());
+applyChain(
+    address(arbSepoliaStabilskiTokenPool),
+    address(ethSepoliaStabilskiTokenPool),
+    address(baseSepoliaStabilskiTokenPool),
+    address(stabilskiToken), address(baseSepoliaStabilskiToken), sepoliaDestinationChainSelector, baseChainSelector
+    );
+
+
+vm.selectFork(baseSepoliaFork);
+vm.deal(borrower, 100e18);
+vm.prank(baseSepoliaStabilskiTokenPool.owner());
+applyChain(
+    address(baseSepoliaStabilskiTokenPool), address(ethSepoliaStabilskiTokenPool),address(arbSepoliaStabilskiTokenPool),
+    address(stabilskiToken), address(arbitrumstabilskiToken), sepoliaDestinationChainSelector, arbitrumChainSelector
+    );
+
+
+
+vm.selectFork(sepoliaEthFork);
+vm.deal(borrower, 50e18);
+vm.prank(ethSepoliaStabilskiTokenPool.owner());
+applyChain(
+    address(ethSepoliaStabilskiTokenPool), address(baseSepoliaStabilskiTokenPool),address(arbSepoliaStabilskiTokenPool),
+    address(baseSepoliaStabilskiToken), address(arbitrumstabilskiToken), baseChainSelector, arbitrumChainSelector
+    );
+
+vm.selectFork(arbitrumSepoliaFork);
+
+    address linkSepolia = arbSepoliaNetworkDetails.linkAddress;
+        ccipLocalSimulatorFork.requestLinkFromFaucet(address(borrower), 200e18);
+
+        uint256 amountToSend = 5e18;
+        Client.EVMTokenAmount[] memory tokenToSendDetails = new Client.EVMTokenAmount[](1);
+        Client.EVMTokenAmount memory tokenAmount =
+            Client.EVMTokenAmount({token: address(arbitrumstabilskiToken), amount: 1e18});
+        tokenToSendDetails[0] = tokenAmount;
+
+        arbitrumstabilskiToken.mint(address(borrower), amountToSend);
+        vm.startPrank(borrower);
+uint256 balanceBeforeTx= arbitrumstabilskiToken.balanceOf(borrower);
+        arbitrumstabilskiToken.approve(arbSepoliaNetworkDetails.routerAddress, 1e18);
+        IERC20(linkSepolia).approve(arbSepoliaNetworkDetails.routerAddress, 200e18);
+
+
+        IRouterClient routerBaseSepolia = IRouterClient(arbSepoliaNetworkDetails.routerAddress);
+
+        Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
+                receiver: abi.encode(address(borrower)),
+                data: "",
+                tokenAmounts: tokenToSendDetails,
+                extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 500000})),
+                feeToken: address(0)
+            });
+
+            uint256 feesToPay = routerBaseSepolia.getFee(baseSepoliaNetworkDetails.chainSelector, message);
+
+
+     bytes32 messageId = routerBaseSepolia.ccipSend{value:feesToPay}(
+            baseSepoliaNetworkDetails.chainSelector,message
+        );
+
+
+        uint256 balanceAfterTx = arbitrumstabilskiToken.balanceOf(borrower);
+
+        assertEq(balanceAfterTx,  balanceBeforeTx - 1e18);
+        
+    
+    ccipLocalSimulatorFork.switchChainAndRouteMessage(baseSepoliaFork);
 }
 
 
