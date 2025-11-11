@@ -12,7 +12,7 @@ if(block.chainid == vm.envUint("ARBITRUM_TESTNET_CHAINID")) {
 }
 
 if(block.chainid == vm.envUint("ETH_SEPOLIA_CHAINID")) {
-    usdplnOracle = new USDPLNOracle(vm.envAddress("ETH_ROUTER"), vm.envBytes32("ETH_DON_ID"), 5765);
+    usdplnOracle = new USDPLNOracle(vm.envAddress("ETH_FUNCTIONS_ROUTER"), vm.envBytes32("ETH_DON_ID"), 5765);
 }
 
 if(block.chainid == vm.envUint("BASE_TESTNET_CHAINID")) {

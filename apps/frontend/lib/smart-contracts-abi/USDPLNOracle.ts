@@ -1,6 +1,8 @@
-export const usdplnOracleEthSepoliaAddress="0x9e2D878784751AC7D8660AaCC3cE536c5cac795d";
+export const usdplnOracleEthSepoliaAddress="0xC13Bf069727B9293e8507E9f82d28BD31AAbB886";
 
-export const usdplnOracleArbitrumSepoliaAddress="0x68D9e90C1e985Bd8277602Bf333FFB8AFBb690D4";
+export const usdplnOracleArbitrumSepoliaAddress="0x77822eCC7FA85732d9BbfE52DaAcAe3CDBA006b7";
+
+export const usdPlnOracleBaseSepoliaAddress="0xD2660205926F59E7fec8a169EbC89ab03413c25E";
 
 export const usdplnOracleABI=[
 {"type":"constructor","inputs":[{"name":"router","type":"address","internalType":"address"},{"name":"_donID","type":"bytes32","internalType":"bytes32"},
