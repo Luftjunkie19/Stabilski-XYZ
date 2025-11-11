@@ -45,10 +45,14 @@ const handleTokenChange = async () => {
 try {
 
   const encodedReceiverAddress = encodeAbiParameters([{type:'address', name:'receiver'}], [address as `0x${string}`]);
-  const encodedGasLimit=encodeAbiParameters([{type:'uint256', name:'gasLimit'}], [BigInt(500000)]);
+  const encodedGasLimit=encodeAbiParameters([{"components":[{"internalType":"uint256","name":"gasLimit","type":"uint256"}],
+                            "internalType":"struct Client.ExtraArgs",
+                            "name":"extraArgs","type":"tuple"}], [{'gasLimit':BigInt(500000)}]);
 
 
   console.log(encodedReceiverAddress);
+
+  console.log(encodedGasLimit);
 
 const currentStabilskiContract= chainId === ARBITRUM_SEPOLIA_CHAINID ? stabilskiTokenArbitrumSepoliaAddress : chainId === BASE_SEPOLIA_CHAINID ? stabilskiTokenBaseSepoliaAddress : stabilskiTokenEthSepoliaAddress;
 
@@ -57,28 +61,41 @@ const currentRouter= chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaRoute
 const messageObj={
     receiver:encodedReceiverAddress,
     data:"",
-    tokenAmounts:[{token:currentStabilskiContract, amount:BigInt(5e18)}],
+    tokenAmounts:[{token:stabilskiTokenEthSepoliaAddress, amount:BigInt(5e18)}],
     feeToken:zeroAddress,
     extraArgs: encodedGasLimit
   }
 
+const destinationChain=BigInt(chainSelectorArbitrumSepolia);
+
+  const isArbitrumSepoliaSupported = await readContract(config, {
+    abi:routerAbi,
+    address: ethereumSepoliaRouter,
+    functionName:"isChainSupported",
+    args:[destinationChain],
+    chainId
+  });
+
+console.log(isArbitrumSepoliaSupported, 'Is arbitrum supported by eth sepolia router');
+
   const getFee = await readContract(config, {
     abi:routerAbi,
-    address: currentRouter,
+    address: ethereumSepoliaRouter,
     functionName:"getFee",
-    args:[BigInt(chainSelectorBaseSepolia), messageObj],
+    args:[destinationChain, messageObj],
     chainId
   });
 
   console.log(getFee);
 
-writeContract({
-    abi:routerAbi,
-    address: currentRouter,
-    functionName:"ccipSend",
-    args:[BigInt(chainSelectorBaseSepolia), messageObj],
-    chainId
-  });
+// writeContract({
+//     abi:routerAbi,
+//     address: currentRouter,
+//     functionName:"ccipSend",
+//     args:[BigInt(chainSelectorBaseSepolia), messageObj],
+//     chainId,
+//     value:BigInt(1e15)
+//   });
 
 
 } catch (error) {
