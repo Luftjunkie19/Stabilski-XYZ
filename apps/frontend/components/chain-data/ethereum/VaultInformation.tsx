@@ -59,8 +59,10 @@ function VaultInformation({depostior, tokenAddress}: Props) {
         address: ethSepoliaVaultManagerAddress,
         functionName:'isLiquidatable',
         args:[depostior, tokenAddress],
-    })
+    });
 
+
+    
     if(vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" ){
         return (
             <>
@@ -129,7 +131,8 @@ function VaultInformation({depostior, tokenAddress}: Props) {
             </>
       )
     }
-  
+
+
 }
 
 export default VaultInformation

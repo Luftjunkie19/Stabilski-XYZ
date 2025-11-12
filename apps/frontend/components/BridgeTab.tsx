@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 
 import { Card } from "./ui/card"
 import { TabsContent } from './ui/tabs'
@@ -26,7 +26,7 @@ function BridgeTab() {
 
 const {chainId, address}=useAccount();
 const [tokenAmountToSend, setTokenAmountToSend] = useState<number>(0);
-const [destinationChainSelector, setDestinationChainSelector]=useState<number>();
+const [destinationChainSelector, setDestinationChainSelector]=useState<BigInt>();
 
 
 const {data}=useReadContract({
@@ -40,6 +40,27 @@ const {data}=useReadContract({
 
 const {writeContract}=useWriteContract();
 
+const getCurrentRouter= ()=>{
+  switch(chainId){
+    case ARBITRUM_SEPOLIA_CHAINID:
+      return arbitrumSepoliaRouter
+    
+    case BASE_SEPOLIA_CHAINID:
+      return baseSepoliaRouter
+
+    case SEPOLIA_ETH_CHAINID:
+
+    return ethereumSepoliaRouter
+  }
+}
+
+const amountToBeTransfered = useMemo(()=>{
+  if(!data){
+    return 0;
+  }
+
+  return (Number(data) / 1e18) - tokenAmountToSend;
+},[tokenAmountToSend])
 
 const handleTokenChange = async () => {
 try {
@@ -56,34 +77,41 @@ try {
 
 const currentStabilskiContract= chainId === ARBITRUM_SEPOLIA_CHAINID ? stabilskiTokenArbitrumSepoliaAddress : chainId === BASE_SEPOLIA_CHAINID ? stabilskiTokenBaseSepoliaAddress : stabilskiTokenEthSepoliaAddress;
 
-const currentRouter= chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaRouter : chainId === BASE_SEPOLIA_CHAINID ? baseSepoliaRouter : ethereumSepoliaRouter;
+const currentRouter= getCurrentRouter();
+
+if(!currentRouter){
+  toast.error("No router, no party !");
+  return;
+}
 
 const messageObj={
     receiver:encodedReceiverAddress,
     data:"",
-    tokenAmounts:[{token:stabilskiTokenEthSepoliaAddress, amount:BigInt(5e18)}],
+    tokenAmounts:[{token:currentStabilskiContract, amount:BigInt(tokenAmountToSend * 1e18)}],
     feeToken:zeroAddress,
     extraArgs: encodedGasLimit
   }
 
-const destinationChain=BigInt(chainSelectorArbitrumSepolia);
-
   const isArbitrumSepoliaSupported = await readContract(config, {
     abi:routerAbi,
-    address: ethereumSepoliaRouter,
+    address: currentRouter,
     functionName:"isChainSupported",
-    args:[destinationChain],
-    chainId
+    args:[destinationChainSelector]
   });
 
 console.log(isArbitrumSepoliaSupported, 'Is arbitrum supported by eth sepolia router');
 
+console.log(destinationChainSelector, 'Chain selector');
+
+console.log(currentRouter, "router");
+
+console.log('Current chain', chainId);
+
   const getFee = await readContract(config, {
     abi:routerAbi,
-    address: ethereumSepoliaRouter,
+    address: currentRouter,
     functionName:"getFee",
-    args:[destinationChain, messageObj],
-    chainId
+    args:[destinationChainSelector, messageObj]
   });
 
   console.log(getFee);
@@ -180,12 +208,12 @@ const SelectOptions= ()=>{
 </div>
 
 <div className="">
-    <p>Balance: {data as unknown as bigint && Number(data) / 1e18} <span className='text-red-500'>PLST</span></p>
+    <p>Balance: {amountToBeTransfered} <span className='text-red-500'>PLST</span></p>
 </div>
   </div>
     <div className="h-1/2 w-full py-1 px-3 flex gap-3 flex-col">
   <Label className="text-xl text-red-500">Destination Chain</Label>
-   <Select onValueChange={(value)=>setDestinationChainSelector(Number(value))}>
+   <Select onValueChange={(value)=>setDestinationChainSelector(BigInt(value))}>
   <SelectTrigger className="w-full">
     <SelectValue placeholder="Token" />
   </SelectTrigger>

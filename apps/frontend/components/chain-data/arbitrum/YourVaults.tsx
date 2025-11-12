@@ -18,7 +18,7 @@ function YourVaults() {
     });
 
   return (
-    <div className='bg-white border p-2 rounded-lg border-red-500 shadow-md shadow-black max-w-xl w-full h-72 flex flex-col gap-2'>
+    <div className='bg-white border p-2 rounded-lg border-red-500 shadow-md shadow-black max-w-lg  w-full h-72 flex flex-col gap-2'>
         <p className='text-lg text-red-500'>Your Vaults (Arbitrum Sepolia)</p>
 
         {address && <div className="flex flex-col gap-2">
