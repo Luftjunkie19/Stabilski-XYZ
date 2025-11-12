@@ -11,8 +11,7 @@ import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { Input } from './ui/input'
 import { useAccount, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
-import {  ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
-
+import {  ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import {  stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi } from '@/lib/smart-contracts-abi/CollateralManager';
 import ChainDataWidget from './chain-data/ethereum/ChainDataWidget';
@@ -27,7 +26,7 @@ function BorrowTab() {
       console.log(data);
       setToken(undefined);
       setAmount(0);
-
+      setMaximumAmount(0);
     }
   }});
 
@@ -178,6 +177,43 @@ args:{
 });
 
 
+
+const TokensOptions = ()=>{
+ switch(chainId){
+    case SEPOLIA_ETH_CHAINID:
+      return(<>
+ 
+        <SelectItem className="flex items-center gap-2 p-1" value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
+    <SelectItem className="flex items-center gap-2 p-1"  value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/> <span className="text-sm">Wrapped Bitcoin (WBTC)</span></SelectItem>
+    <SelectItem className="flex items-center gap-2 p-1"  value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" /> <span className="text-sm">Chainlink (LINK)</span></SelectItem>
+
+</>);
+
+    case ARBITRUM_SEPOLIA_CHAINID:
+      return (  <>
+     <SelectItem className="flex items-center gap-2 p-1" value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" /> <span className="text-sm">Chainlink (LINK)</span></SelectItem>
+    </>);
+
+    case BASE_SEPOLIA_CHAINID:
+      return (
+  <>
+    <SelectItem className="flex items-center gap-2 p-1"  value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
+     <SelectItem className="flex items-center gap-2 p-1"  value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />  <span className="text-sm">Chainlink (LINK)</span></SelectItem>
+    </>
+
+      );
+
+    default:
+      return (<></>)
+    
+  }
+
+
+}
+
+
+
+
   return (
       <TabsContent value="borrow" className="flex flex-col gap-4 max-w-7xl w-full">
       
@@ -201,15 +237,8 @@ console.log(maxAmount, 'maxAmount');
   <SelectTrigger className="w-44">
     <SelectValue placeholder="Vaults" />
   </SelectTrigger>
-  <SelectContent className="max-w-64 w-full bg-white shadow-sm shadow-black rounded-lg">
-   {chainId && chainId === 11155111 ? <>
-        <SelectItem value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> Wrapped Ethereum (WETH)</SelectItem>
-    <SelectItem value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/> Wrapped Bitcoin (WBTC)</SelectItem>
-    <SelectItem value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" /> Chainlink (LINK)</SelectItem>
-    </> : 
-    <>
-     <SelectItem value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" /> Chainlink (LINK)</SelectItem>
-    </>}
+  <SelectContent className="w-64 relative flex flex-col gap-3 bg-white shadow-sm shadow-black rounded-lg">
+<TokensOptions/>
   </SelectContent>
 </Select>
 </div>

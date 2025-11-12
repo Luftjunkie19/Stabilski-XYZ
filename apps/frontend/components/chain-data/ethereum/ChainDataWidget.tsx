@@ -86,16 +86,22 @@ const {chainId, address}=useAccount();
 
   return (
 <div className="w-full flex items-center justify-center flex-wrap gap-4">
-        <div className="flex flex-col gap-6 max-w-md bg-white border-red-500 border-1 shadow-md shadow-black p-4 rounded-lg h-64">
+        <div className="flex flex-col overflow-y-auto gap-3 max-w-md w-full bg-white border-red-500 border-1 shadow-md shadow-black p-4 rounded-lg h-64">
   {collateralTokenPriceData && 
-<div className="flex flex-col gap-2">
+<div className="flex flex-col gap-2 w-full h-full">
   <p className='text-red-500'>Crypto Prices (USD)</p>
-<div onClick={() => console.log(collateralTokenPriceData)} className="w-full flex items-center gap-6">
+<div className="w-full flex flex-wrap items-center gap-6">
 <div className='flex text-sm items-center gap-1'>
-  <FaBitcoin className='text-orange-500 text-base'/> {collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(2)}
+  <FaBitcoin className='text-orange-500 text-base'/> 
+<p className='text-sm'>{collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(2)}</p>
 </div>
-<div className='flex text-sm items-center gap-1'><FaEthereum className='text-zinc-500 text-base'/> {(collateralTokenPriceData[1] && Number(collateralTokenPriceData[1].result)/ 1e18).toFixed(2)}</div>
-<div className='flex text-sm items-center gap-1'><SiChainlink className='text-blue-500 text-base'/> {collateralTokenPriceData[2] && (Number(collateralTokenPriceData[2].result) / 1e18).toFixed(2)}</div>
+<div className='flex text-sm items-center gap-1'><FaEthereum className='text-zinc-500 text-base'/> 
+<p className='text-sm'>{(collateralTokenPriceData[1] && Number(collateralTokenPriceData[1].result)/ 1e18).toFixed(2)}</p>
+</div>
+<div className='flex text-sm items-center gap-1'><SiChainlink className='text-blue-500 text-base'/> 
+<p>{collateralTokenPriceData[2] && (Number(collateralTokenPriceData[2].result) / 1e18).toFixed(2)}</p>
+</div>
+
 </div>
 
 </div>
@@ -113,6 +119,10 @@ const {chainId, address}=useAccount();
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultSepoliaEthereumManagerContract[2] && vaultSepoliaEthereumManagerContract[2].result as unknown as bigint && Number(vaultSepoliaEthereumManagerContract[2].result)  && (Number(vaultSepoliaEthereumManagerContract[2].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>
 
+</div>
+}
+
+
 <p className='py-2 flex md:items-center flex-col md:flex-row items-start gap-2'>
   Your PLST Balance: {balancePLST as unknown as bigint
    && <span
@@ -127,10 +137,7 @@ const {chainId, address}=useAccount();
    }
 </p>
 
-{oraclePrice as unknown as bigint && <p className="text-sm text-zinc-500 sm:text-base tracking">USD/PLN (Ethereum Sepolia): <span className='text-red-500 font-bold'>{(Number(oraclePrice) / 1e4).toFixed(4)} PLN</span></p>}
-</div>
-}
-
+<p className="text-sm text-zinc-500 sm:text-base tracking">USD/PLN (Ethereum Sepolia): <span className='text-red-500 font-bold'>{oraclePrice as unknown as bigint && (Number(oraclePrice) / 1e4).toFixed(4)} PLN</span></p>
 
 </div>
 

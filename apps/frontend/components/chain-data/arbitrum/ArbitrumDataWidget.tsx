@@ -67,29 +67,29 @@ const {data:arbitrumSepoliaCollateralData}=useReadContract({
 
   return (
 <div className='flex items-center flex-wrap justify-center gap-3 w-full'>
-     <div className="flex flex-col gap-3 max-w-sm w-full
+     <div className="flex flex-col gap-3 max-w-lg sm:max-w-xs lg:max-w-md w-full
     bg-white p-4 rounded-lg border-red-500 border-1 shadow-md shadow-black h-64">
-  <p>Arbitrum Sepolia Onchain Info</p>
   {collateralTokenPriceData as unknown as bigint && 
 <div className="flex flex-col gap-2">
 <div  className="w-full flex flex-col gap-2">
-  <p>Crypto Prices (USD)</p>
+  <p className='text-red-500'>Crypto Prices (USD)</p>
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> 
-{collateralTokenPriceData as unknown as bigint && Number((collateralTokenPriceData as unknown as bigint)) && (Number((collateralTokenPriceData as unknown as bigint)) / 1e18).toFixed(2)} $</div>
+<p className='text-sm'>{collateralTokenPriceData as unknown as bigint && Number((collateralTokenPriceData as unknown as bigint)) && (Number((collateralTokenPriceData as unknown as bigint)) / 1e18).toFixed(2)} $</p>
+</div>
 </div>
 
 <div className="flex flex-col gap-1">
-  <p>Your Vault Collaterals:</p>
+  <p className='text-red-500'>Your Vault Collaterals</p>
   {arbitrumSepoliaCollateralData as unknown as any[] && 
    <div className='flex items-center gap-1'>
     <SiChainlink className='text-blue-500'/>
-    <p>{(Number((arbitrumSepoliaCollateralData as unknown as any[])[0])/1e18).toFixed(2)}</p>
+    <p className='text-sm'>{(Number((arbitrumSepoliaCollateralData as unknown as any[])[0])/1e18).toFixed(2)}</p>
     </div>
   }
 </div>
 
-<div className="flex  gap-1">
-  <p>Your PLST Balance:</p>
+<div className="flex gap-1 items-center">
+  <p className='text-red-500'>Your PLST Balance:</p>
 {stabilskiBalance as unknown as bigint && <div className='flex items-center gap-1'>
   <p className='text-red-500'>{(Number((stabilskiBalance as unknown as bigint)) / 1e18).toFixed(2)}</p>
   <Image src={StabilskiStableCoin} width={32} height={32} alt='' className='w-6 h-6'/>
