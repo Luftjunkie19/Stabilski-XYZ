@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { TabsContent } from '../ui/tabs'
 import { Label } from '../ui/label'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select'
@@ -10,10 +10,10 @@ import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Input } from '../ui/input'
 import { useAccount, useReadContract, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
-import { usdplnOracleABI, usdplnOracleEthSepoliaAddress } from '@/lib/smart-contracts-abi/USDPLNOracle';
-import { ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
+import { usdplnOracleABI, usdplnOracleArbitrumSepoliaAddress, usdPlnOracleBaseSepoliaAddress, usdplnOracleEthSepoliaAddress } from '@/lib/smart-contracts-abi/USDPLNOracle';
+import { ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ABI, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ABI, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
+import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenBaseSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
 import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 
@@ -100,13 +100,27 @@ function  ColltateralTab() {
         'args':[address],
         chainId:SEPOLIA_ETH_CHAINID
     },
-        {
+    {
                 abi:ARBITRUM_SEPOLIA_ABI,
                 address:ARBITRUM_SEPOLIA_LINK_ADDR,
                 functionName:'balanceOf',
                 args:[address],
                 chainId:ARBITRUM_SEPOLIA_CHAINID
-     }
+     },
+      {
+        'abi':BASE_SEPOLIA_LINK_ABI,
+        'address':BASE_SEPOLIA_LINK_ADDR,
+        'functionName':'balanceOf',
+        'args':[address],
+        chainId:BASE_SEPOLIA_CHAINID
+    },
+    {
+        'abi':BASE_SEPOLIA_WETH_ABI,
+        'address':BASE_SEPOLIA_WETH_ADDR,
+        'functionName':'balanceOf',
+        'args':[address],
+        chainId:BASE_SEPOLIA_CHAINID
+    }
     ];
 
     
@@ -140,7 +154,21 @@ function  ColltateralTab() {
         'args':[address],
         chainId:ARBITRUM_SEPOLIA_CHAINID
     },
-    
+    {
+        'abi':BASE_SEPOLIA_LINK_ABI,
+        'address':BASE_SEPOLIA_LINK_ADDR,
+        'functionName':'balanceOf',
+        'args':[address],
+        chainId:BASE_SEPOLIA_CHAINID
+    },
+    {
+        'abi':BASE_SEPOLIA_WETH_ABI,
+        'address':BASE_SEPOLIA_WETH_ADDR,
+        'functionName':'balanceOf',
+        'args':[address],
+        chainId:BASE_SEPOLIA_CHAINID
+    }
+  
     ]});
 
 
@@ -172,7 +200,21 @@ function  ColltateralTab() {
               functionName:'getTokenPrice',
               args:[ARBITRUM_SEPOLIA_LINK_ADDR],
               chainId:ARBITRUM_SEPOLIA_CHAINID
-            }
+            },
+      {
+        abi:stabilskiTokenCollateralManagerAbi,
+              address:stabilskiTokenBaseSepoliaCollateralManagerAddress,
+              functionName:'getTokenPrice',
+              args:[BASE_SEPOLIA_LINK_ADDR],
+              chainId:BASE_SEPOLIA_CHAINID
+      },
+            {
+        abi:stabilskiTokenCollateralManagerAbi,
+              address:stabilskiTokenBaseSepoliaCollateralManagerAddress,
+              functionName:'getTokenPrice',
+              args:[BASE_SEPOLIA_WETH_ADDR],
+              chainId:BASE_SEPOLIA_CHAINID
+      }
     ]});
     
     const {data:collateralData}=useReadContracts({contracts:[
@@ -203,40 +245,69 @@ function  ColltateralTab() {
               functionName:'getCollateralInfo',
               args:[address, ARBITRUM_SEPOLIA_LINK_ADDR],
               chainId:ARBITRUM_SEPOLIA_CHAINID
+    },
+       {
+              abi:stabilskiTokenCollateralManagerAbi,
+              address:stabilskiTokenArbitrumSepoliaCollateralManagerAddress,
+              functionName:'getCollateralInfo',
+              args:[address, BASE_SEPOLIA_LINK_ADDR],
+              chainId:BASE_SEPOLIA_CHAINID
+    },
+     {
+              abi:stabilskiTokenCollateralManagerAbi,
+              address:stabilskiTokenArbitrumSepoliaCollateralManagerAddress,
+              functionName:'getCollateralInfo',
+              args:[address, BASE_SEPOLIA_WETH_ADDR],
+              chainId:BASE_SEPOLIA_CHAINID
     }
     ]});
 
+    const currentUsdPlnOracle=()=>{
+      switch(chainId){
+        case SEPOLIA_ETH_CHAINID:
+          return usdplnOracleEthSepoliaAddress
+        case ARBITRUM_SEPOLIA_CHAINID:
+          return usdplnOracleArbitrumSepoliaAddress
+        case BASE_SEPOLIA_CHAINID:
+          return usdPlnOracleBaseSepoliaAddress
+      }
+    }
+
+    const currentOraclePriceAddress= currentUsdPlnOracle();
+
+
     const {data:usdplnOraclePrice}=useReadContract({
          'abi': usdplnOracleABI,
-        'address':usdplnOracleEthSepoliaAddress,
+        'address':currentOraclePriceAddress,
         'functionName':'getPLNPrice',
         'args':[],
-        chainId:SEPOLIA_ETH_CHAINID
+        chainId
     });
 
 
-    const getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken= useCallback(
-   ()=>{
-      if(!collateralTokenPriceData && !usdplnOraclePrice && !token && !collateralData) return 0;
+    const getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken= useCallback(()=>{
+      if(!collateralTokenPriceData || !usdplnOraclePrice || !token || !collateralData) return 0;
 
-      if(collateralData && collateralTokenPriceData && usdplnOraclePrice && token
-&& chainId === SEPOLIA_ETH_CHAINID
-      ){
+      if(collateralData && collateralTokenPriceData && usdplnOraclePrice && token){
         
-        const main =((amount * Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === token)].result) * Number(usdplnOraclePrice) * 1e18)/1e22);
-        const divider = Number((collateralData as unknown as any)[arrayOfContracts.findIndex(c => c.address === token)].result[1]) / 1e18 ;
+        const convertedNumber= Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === token)].result);
 
-const maxToBorrow = (main / (divider * 1e18)); ;
+        const main =((amount * convertedNumber) * Number(usdplnOraclePrice) * 1e18) / 1e22;
 
-        return (
- (maxToBorrow).toFixed(6)
-);
 
+const maxToBorrow = (main / 1e18);
+
+console.log(maxToBorrow);
+
+        return (maxToBorrow).toFixed(4);
 }
 
 return 0;
 
-},[collateralTokenPriceData, usdplnOraclePrice, token, collateralData, chainId, amount, arrayOfContracts])
+
+
+
+},[collateralTokenPriceData, usdplnOraclePrice, token, collateralData, chainId, amount, arrayOfContracts]);
 
 
 const TokensOptions = ()=>{
@@ -258,8 +329,8 @@ const TokensOptions = ()=>{
     case BASE_SEPOLIA_CHAINID:
       return (
   <>
-    <SelectItem className="flex items-center gap-2 p-1"  value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
-     <SelectItem className="flex items-center gap-2 p-1"  value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />  <span className="text-sm">Chainlink (LINK)</span></SelectItem>
+    <SelectItem className="flex items-center gap-2 p-1"  value={BASE_SEPOLIA_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
+     <SelectItem className="flex items-center gap-2 p-1"  value={BASE_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />  <span className="text-sm">Chainlink (LINK)</span></SelectItem>
     </>
 
       );
@@ -272,6 +343,40 @@ const TokensOptions = ()=>{
 
 }
 
+const CollateralTokensBalance=()=>{
+switch(chainId){
+case SEPOLIA_ETH_CHAINID:
+  return (<>
+  {data && 
+<div className="flex flex-col gap-1 px-4">
+  <div className="w-full flex sm:items-center flex-row  gap-3">
+<div className='flex items-center gap-1'>
+  <FaBitcoin className='text-orange-500'/> {(data[0] && Number(data[0].result) / 1e8).toFixed(2)}
+</div>
+<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {(data[1] && Number(data[1].result) / 1e18).toFixed(2)}</div>
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {data[2] && (Number(data[2].result) / 1e18).toFixed(2)}</div>
+</div>
+</div>}
+  </>)
+
+case ARBITRUM_SEPOLIA_CHAINID:
+  return(<>{
+    data && 
+<div className="flex flex-col gap-1 px-4">
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {data[3] && (Number(data[3].result) / 1e18).toFixed(2)}</div>
+</div>
+  }
+  </>)
+ 
+ case BASE_SEPOLIA_CHAINID:
+  return (<>{data && <div className="flex items-center gap-2 px-4">
+    <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {data[4] && (Number(data[4].result) / 1e18).toFixed(2)}</div>
+        <div className='flex items-center gap-1'><FaEthereum className='text-blue-800'/> {data[5] && (Number(data[5].result) / 1e18).toFixed(2)}</div>
+    </div>}</>)
+
+}
+
+}
 
 
   return (
@@ -284,10 +389,10 @@ const TokensOptions = ()=>{
   <Input step={0.01} onChange={(e)=>setAmount(Number(e.target.value))} type="number" min={0} max={maximumAmount}  className="w-full"/>
  <Select value={token} onValueChange={(value) => {
 setToken(value as `0x${string}`);
+console.log(data);
+if(data && data[arrayOfContracts.findIndex(contract => contract.address === value)].result){
 
-
-if(data){
-  const maxToBorrow=Number(data[arrayOfContracts.findIndex(contract => contract.address === value)].result) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18);
+  const maxToBorrow= Number(data[arrayOfContracts.findIndex(contract => contract.address === value)].result) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18);
   console.log(maxToBorrow, 'maxToBorrow');
   setMaximumAmount(maxToBorrow);
 }
@@ -310,24 +415,8 @@ if(data){
 <p className='text-red-500'>PLST</p>
 </div>
   </div>
-  {chainId && chainId === SEPOLIA_ETH_CHAINID && data && 
-<div className="flex flex-col gap-1 px-4">
 
-  <div className="w-full flex sm:items-center flex-row  gap-3">
-<div className='flex items-center gap-1'>
-  <FaBitcoin className='text-orange-500'/> {(data[0] && Number(data[0].result) / 1e8).toFixed(2)}
-</div>
-<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {(data[1] && Number(data[1].result) / 1e18).toFixed(2)}</div>
-<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {data[2] && (Number(data[2].result) / 1e18).toFixed(2)}</div>
-</div>
-</div>
-}
-
-  {chainId && chainId === ARBITRUM_SEPOLIA_CHAINID && data && 
-<div className="flex flex-col gap-1 px-4">
-<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {data[3] && (Number(data[3].result) / 1e18).toFixed(2)}</div>
-</div>
-}
+<CollateralTokensBalance/>
 </Card>
 
 <div className="flex flex-wrap w-full gap-2 justify-center">
