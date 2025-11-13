@@ -1,6 +1,6 @@
 import { stabilskiTokenCollateralManagerAbi } from '@/lib/smart-contracts-abi/CollateralManager';
 import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import { ChainType, ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
 import { FaMagnifyingGlass } from 'react-icons/fa6';
 import { useReadContract } from 'wagmi';
@@ -43,14 +43,14 @@ function ProtocolOnChainPositions({ collateralManagerAddress, vaultManagerAddres
     </div>}
 
 {collateralTokens as unknown as string[] && depositors as unknown as string[] && (depositors as unknown as string[]).length > 0  &&  (collateralTokens as unknown as string[]).length > 0 && (collateralTokens as unknown as string[]).map((tokenAddr:string)=>(
-<>
-{(depositors as unknown as string[]).map((depositor:string)=>(
+
+(depositors as unknown as string[]).map((depositor:string)=>(
   <VaultTokenPosition 
   collateralManagerAddress={collateralManagerAddress} 
   vaultManagerAddress={vaultManagerAddress} key={depositor} 
   depositor={depositor as `0x${string}`} 
-  tokenAddress={tokenAddr as `0x${string}`}/>))}
-</>
+  tokenAddress={tokenAddr as `0x${string}`}/>))
+
 ))}
 
 
