@@ -1,9 +1,9 @@
 'use client';
 import React from 'react'
-import { TabsContent } from './ui/tabs'
-import Header from './ui/Header'
-import StabilskiXYZHero from './tabs/intro/StabilskiXYZHero'
-import ProjectDetails from './tabs/intro/ProjectDetails'
+import { TabsContent } from '../ui/tabs'
+import Header from '../ui/Header'
+import StabilskiXYZHero from '../tabs/intro/StabilskiXYZHero'
+import ProjectDetails from '../tabs/intro/ProjectDetails'
 
 function IntroTab() {
   return (
