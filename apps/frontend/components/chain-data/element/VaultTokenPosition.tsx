@@ -1,64 +1,65 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager'
-import Image from 'next/image'
-import React from 'react'
-import { useAccount, useReadContract, useWriteContract } from 'wagmi'
-import stabilskiStableCoin from '@/public/Logox32.png';
 import { Button } from '@/components/ui/button';
-import { ARBITRUM_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
+import { stabilskiTokenCollateralManagerAbi } from '@/lib/smart-contracts-abi/CollateralManager';
 import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
+import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
+import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import React from 'react'
 import { toast } from 'sonner';
-import { stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '../../../lib/smart-contracts-abi/CollateralManager';
+import Image from "next/image";
+import { useAccount, useReadContract, useWriteContract } from 'wagmi';
+import stabilskiStableCoin from "@/public/Logox32.png"
 
 type Props = {
-    depostior:`0x${string}`,
-    tokenAddress:`0x${string}`
+  depositor:ethereumAddress,
+  tokenAddress:ethereumAddress,
+  vaultManagerAddress:ethereumAddress,
+  collateralManagerAddress:ethereumAddress,
 }
 
-function VaultInformation({depostior, tokenAddress}: Props) {
-    const {writeContract}=useWriteContract({});
+function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress, collateralManagerAddress}: Props) {
+ const {writeContract}=useWriteContract({});
     const { chainId, address}=useAccount();
     const {data:collateralValue}=useReadContract({
         abi: vaultManagerAbi,
-        address: ethSepoliaVaultManagerAddress,
+        address: vaultManagerAddress,
         functionName:'getCollateralValue',
-        args:[depostior, tokenAddress],
+        args:[depositor, tokenAddress],
     });
 
     const {data:vaultInfo}=useReadContract({
         abi: vaultManagerAbi,
-        address: ethSepoliaVaultManagerAddress,
+        address: vaultManagerAddress,
         functionName:'getVaultInfo',
-        args:[depostior, tokenAddress],
+        args:[depositor, tokenAddress],
     });
 
     const {data:healthData}=useReadContract({
         abi: vaultManagerAbi,
-        address: ethSepoliaVaultManagerAddress,
+        address: vaultManagerAddress,
         functionName:'getVaultHealthFactor',
-        args:[depostior, tokenAddress],
+        args:[depositor, tokenAddress],
     });
 
     const {data:maxBorrowable}=useReadContract({
         abi: vaultManagerAbi,
-        address: ethSepoliaVaultManagerAddress,
+        address: vaultManagerAddress,
         functionName:'getMaxBorrowableStabilskiTokens',
-        args:[depostior, tokenAddress],
-        chainId:SEPOLIA_ETH_CHAINID
+        args:[depositor, tokenAddress],
+        chainId
     });
 
     const {data:tokenPrice}=useReadContract({
         abi: stabilskiTokenCollateralManagerAbi,
-        address: stabilskiTokenSepoliaEthCollateralManagerAddress,
+        address: collateralManagerAddress,
         functionName:'getTokenPrice',
         args:[tokenAddress],
     });
 
     const {data:isLiquidatable}=useReadContract({
         abi: vaultManagerAbi,
-        address: ethSepoliaVaultManagerAddress,
+        address: vaultManagerAddress,
         functionName:'isLiquidatable',
-        args:[depostior, tokenAddress],
+        args:[depositor, tokenAddress],
     });
 
 
@@ -73,8 +74,8 @@ function VaultInformation({depostior, tokenAddress}: Props) {
         }}
         className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row items-center sm:justify-between`}>
     <div className="w-full">
-        <p className='hidden md:block'>{depostior.slice(0, 21)}...</p>
-    <p className='block md:hidden'>{depostior.slice(0, 10)}...</p>
+        <p className='hidden md:block'>{depositor.slice(0, 21)}...</p>
+    <p className='block md:hidden'>{depositor.slice(0, 10)}...</p>
     <div className="flex items-center gap-2">
     <div className="flex items-center ">
         <p className='text-sm'><span className='text-red-500'>
@@ -105,17 +106,17 @@ function VaultInformation({depostior, tokenAddress}: Props) {
             console.log(isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean));
     writeContract({
         chainId,
-        address: chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaVaultManagerAddress : ethSepoliaVaultManagerAddress,
+        address: tokenAddress,
         abi:stabilskiTokenABI,
         functionName:'approve',
         args:[address, 111e18],
     });
             writeContract({
                 chainId,
-                address: chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaVaultManagerAddress : ethSepoliaVaultManagerAddress,
+                address: vaultManagerAddress,
                 abi:vaultManagerAbi,
                 functionName:'liquidateVault',
-                args:[depostior, tokenAddress],
+                args:[depositor, tokenAddress],
             });
             return;
         }
@@ -131,8 +132,6 @@ function VaultInformation({depostior, tokenAddress}: Props) {
             </>
       )
     }
-
-
 }
 
-export default VaultInformation
+export default VaultTokenPosition

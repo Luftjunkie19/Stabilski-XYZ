@@ -2,12 +2,12 @@
 
 import React, { useMemo, useState } from 'react'
 
-import { Card } from "./ui/card"
-import { TabsContent } from './ui/tabs'
-import { Label } from './ui/label'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
+import { Card } from "./../ui/card"
+import { TabsContent } from './../ui/tabs'
+import { Label } from './../ui/label'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './../ui/select'
+import { Button } from './../ui/button'
+import { Input } from './../ui/input'
 import Image from 'next/image';
 import arbitrumLogo from "@/public/arbitrum-logo.png";
 import baseLogo from "@/public/base-logo.png";

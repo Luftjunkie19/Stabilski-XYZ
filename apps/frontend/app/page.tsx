@@ -3,7 +3,7 @@ import Image from "next/image";
 import StabilskiStableCoin from '@/public/Logox192.png'
 import {FaXTwitter, FaTelegram, FaDiscord, FaGithub } from "react-icons/fa6"
 import Link from "next/link";
-import TabsContainer from "@/components/TabsContainer";
+import TabsContainer from "../components/tabs/TabsContainer";
 
 
 

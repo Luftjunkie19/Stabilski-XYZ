@@ -1,26 +1,25 @@
 'use client';
 
 import React, { useCallback, useState } from 'react'
-import { TabsContent } from './ui/tabs'
-import { Label } from './ui/label'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select'
+import { TabsContent } from '../ui/tabs'
+import { Label } from '../ui/label'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select'
 import { FaEthereum, FaBitcoin } from 'react-icons/fa6'
 import { SiChainlink } from 'react-icons/si'
-import { Button } from './ui/button'
-import { Card } from './ui/card'
-import { Input } from './ui/input'
+import { Button } from '../ui/button'
+import { Card } from '../ui/card'
+import { Input } from '../ui/input'
 import { useAccount, useReadContract, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
 import { usdplnOracleABI, usdplnOracleEthSepoliaAddress } from '@/lib/smart-contracts-abi/USDPLNOracle';
-import ChainDataWidget from './chain-data/ethereum/ChainDataWidget';
-import ArbitrumDataWidget from './chain-data/arbitrum/ArbitrumDataWidget';
 import { ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
 import { toast } from 'sonner';
+import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 
 
 
-function ColltateralTab() {
+function  ColltateralTab() {
     useSwitchChain({mutation:{
       onSuccess:(data)=>{
         console.log(data);
@@ -375,21 +374,7 @@ writeContract({
 }} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-red-500">Put Collateral</Button>
 </div>
 
-
-
-
-{chainId === SEPOLIA_ETH_CHAINID && <>
-<ChainDataWidget/>
-</>}
-
-{chainId === ARBITRUM_SEPOLIA_CHAINID && <>
-<ArbitrumDataWidget/>
-</>}
-
-
-{chainId === BASE_SEPOLIA_CHAINID && <>
-</>
-}
+<OnChainDataContainer/>
 
 
   </TabsContent>

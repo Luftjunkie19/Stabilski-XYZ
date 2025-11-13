@@ -1,65 +1,59 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager'
-import Image from 'next/image'
+import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
+import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
-import { useAccount, useReadContract, useWatchContractEvent } from 'wagmi'
-import stabilskiStableCoin from '@/public/Logox32.png';
-type Props = {
-    depostior:`0x${string}`,
-    tokenAddress:`0x${string}`
-}
-
-import {GiReceiveMoney, GiPayMoney} from 'react-icons/gi';
+import { GiPayMoney, GiReceiveMoney } from 'react-icons/gi';
+import { toast } from 'sonner';
+import { useAccount, useReadContract, useWatchContractEvent } from 'wagmi';
+import Image from "next/image";
+import stabilskiStableCoin from '@/public/Logox32.png'
 import RepayDialog from '@/components/dialogs/RepayDialog';
 import WithdrawDialog from '@/components/dialogs/WithdrawDialog';
-import { toast } from 'sonner';
-import { SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 
+type Props = {vaultManagerAddress:ethereumAddress, depositor:ethereumAddress, tokenAddress:ethereumAddress,}
 
-function VaultElement({depostior, tokenAddress}: Props) {
-  const {chainId}=useAccount();
+function UserVaultHandlePosition({vaultManagerAddress, depositor, tokenAddress}: Props) {
     const {data:collateralValue}=useReadContract({
         abi: vaultManagerAbi,
-        address: ethSepoliaVaultManagerAddress,
+        address: vaultManagerAddress,
         functionName:'getCollateralValue',
-        args:[depostior, tokenAddress],
+        args:[depositor, tokenAddress],
     });
 
     const {data:vaultInfo}=useReadContract({
         abi: vaultManagerAbi,
-        address: ethSepoliaVaultManagerAddress,
+        address: vaultManagerAddress,
         functionName:'getVaultInfo',
-        args:[depostior, tokenAddress],
+        args:[depositor, tokenAddress],
     });
 
     const {data:healthData}=useReadContract({
         abi: vaultManagerAbi,
-        address: ethSepoliaVaultManagerAddress,
+        address: vaultManagerAddress,
         functionName:'getVaultHealthFactor',
-        args:[depostior, tokenAddress],
+        args:[depositor, tokenAddress],
     });
 
     const {data:isLiquidatable}=useReadContract({
         abi: vaultManagerAbi,
-        address: ethSepoliaVaultManagerAddress,
+        address: vaultManagerAddress,
         functionName:'isLiquidatable',
-        args:[depostior, tokenAddress],
+        args:[depositor, tokenAddress],
     })
 
 
 
     useWatchContractEvent({
-  address: chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
+  address: vaultManagerAddress,
   abi: vaultManagerAbi,
   eventName: 'DebtRepaid',
   onLogs: (logs) => {
     console.log('New logs!', logs);
     toast.success(`
-Debt repaid successfully for ${(logs[0] as any).args.vaultOwner} PLST on ${tokenAddress === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : tokenAddress === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : tokenAddress === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : 'LINK'} vault!
+Debt repaid successfully for ${(logs[0] as any).args.vaultOwner} PLST on ${tokenAddress} vault!
     `);
   },
   args:{
-    vaultOwner: depostior,
+    vaultOwner: depositor,
     token: tokenAddress,
   },
 
@@ -74,8 +68,8 @@ Debt repaid successfully for ${(logs[0] as any).args.vaultOwner} PLST on ${token
             {vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" &&
         <div className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row px-2 gap-1 flex sm:items-center justify-between`}>
     <div className="w-full">
-        <p className='hidden md:block'>{depostior.slice(0, 21)}...</p>
-    <p className='block md:hidden'>{depostior.slice(0, 10)}...</p>
+        <p className='hidden md:block'>{depositor.slice(0, 21)}...</p>
+    <p className='block md:hidden'>{depositor.slice(0, 10)}...</p>
     <div className="flex items-center gap-2 flex-wrap">
     <div className="flex items-center">
         <GiPayMoney className='mr-1' />
@@ -106,9 +100,6 @@ Debt repaid successfully for ${(logs[0] as any).args.vaultOwner} PLST on ${token
      <WithdrawDialog/>
     </div>
 
-    
-    
-    
         </div>
             }
             </>
@@ -117,4 +108,4 @@ Debt repaid successfully for ${(logs[0] as any).args.vaultOwner} PLST on ${token
   
 }
 
-export default VaultElement
+export default UserVaultHandlePosition
