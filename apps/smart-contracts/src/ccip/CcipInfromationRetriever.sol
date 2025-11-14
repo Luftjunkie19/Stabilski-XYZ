@@ -41,7 +41,7 @@ function getCcipMessage(address receiverAddress, uint256 amountToSend) public vi
         return message;
 }
 
-function getCCIPMessageFee(address receiverAddress, uint256 amountToSend, uint64 destinationSelector) external view returns (uint256) {
+function getCCIPMessageFee(address receiverAddress, uint256 amountToSend, uint64 destinationSelector) public view returns (uint256) {
 Client.EVM2AnyMessage memory ccipMessage = getCcipMessage(receiverAddress, amountToSend);
 
 uint256 feesToPay = router.getFee(destinationSelector, ccipMessage);
@@ -49,6 +49,7 @@ uint256 feesToPay = router.getFee(destinationSelector, ccipMessage);
 return feesToPay;
 
 }
+
 
 
 
