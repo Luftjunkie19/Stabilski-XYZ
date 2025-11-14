@@ -133,3 +133,36 @@ applychains-arb:
 		--verify \
 		--etherscan-api-key $(ETHER_SCAN_API_KEY) \
 		--via-ir
+
+deploy-ccipRetriever-eth:
+	forge script script/ccip-contracts/DeployCcipRetriever.s.sol \
+		--fork-url $(ETH_SEPOLIA_RPC_URL) \
+		--sender 0x7789884c5c88ae84775f266045b96fd6cb5c734b \
+		--account primaryWallet \
+		--broadcast \
+		-vvvvv \
+		--verify \
+		--etherscan-api-key $(ETHER_SCAN_API_KEY) \
+		--via-ir
+
+deploy-ccipRetriever-arb:
+	forge script script/ccip-contracts/DeployCcipRetriever.s.sol \
+		--fork-url $(ARB_SEPOLIA_RPC_URL) \
+		--sender 0x7789884c5c88ae84775f266045b96fd6cb5c734b \
+		--account primaryWallet \
+		--broadcast \
+		-vvvvv \
+		--verify \
+		--etherscan-api-key $(ETHER_SCAN_API_KEY) \
+		--via-ir
+
+deploy-ccipRetriever-base:
+	forge script script/ccip-contracts/DeployCcipRetriever.s.sol \
+		--fork-url $(BASE_SEPOLIA_RPC_URL) \
+		--sender 0x7789884c5c88ae84775f266045b96fd6cb5c734b \
+		--account primaryWallet \
+		--broadcast \
+		-vvvvv \
+		--verify \
+		--etherscan-api-key $(ETHER_SCAN_API_KEY) \
+		--via-ir

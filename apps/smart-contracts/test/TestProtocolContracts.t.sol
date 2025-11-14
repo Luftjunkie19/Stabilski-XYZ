@@ -19,7 +19,7 @@ import { Client } from "../lib/ccip/contracts/src/v0.8/ccip/libraries/Client.sol
 import {RateLimiter} from "../lib/ccip/contracts/src/v0.8/ccip/libraries/RateLimiter.sol";
 import {BurnMintTokenPool} from "../lib/ccip/contracts/src/v0.8/ccip/pools/BurnMintTokenPool.sol";
 import {DeployStabilskiTokenPool} from '../script/ccip-contracts/DeployStabilskiTokenPoolProduction.s.sol';
-import {CcipSender} from "../script/ccip-contracts/DeployCCIPSender.s.sol";
+
 contract TestContract is Test {
 
 uint256 sepoliaEthFork;
@@ -86,9 +86,6 @@ TokenPool arbSepoliaStabilskiTokenPool;
 TokenPool baseSepoliaStabilskiTokenPool;
 
 
-CcipSender ccipSenderEth;
-CcipSender ccipSenderArb;
-CcipSender ccipSenderBase;
 
 function applyChain(address sourceTokenPool, address firstRemoteTokenPool, address secondRemoteTokenPool,
 
@@ -186,9 +183,6 @@ vm.makePersistent(address(usdPlnOracle));
 
 vm.deal(borrower, 1000 ether);
 
-
-ccipSenderEth= new CcipSender(ethSepoliaNetworkDetails.routerAddress, address(stabilskiToken));
-
 // Switch to arbitrum fork
 vm.selectFork(arbitrumSepoliaFork);
 
@@ -212,8 +206,6 @@ minCollateralRatios[0]=12e17;
 
 DeployContracts deployContractsArbitrum = new DeployContracts();
 (ArbitrumvaultManager, arbitrumstabilskiToken, ArbitrumusdPlnOracle, ArbitrumcollateralManager) = deployContractsArbitrum.run(tokens, whitelist, priceFeeds, minCollateralRatios);
-
-ccipSenderArb= new CcipSender(arbSepoliaNetworkDetails.routerAddress, address(arbitrumstabilskiToken));
 
 
 vm.selectFork(baseSepoliaFork);
@@ -250,7 +242,6 @@ minCollateralRatios[1]=14e17;
 DeployContracts deployBaseSepoliaContracts = new DeployContracts();
 (baseSepoliaVaultManager, baseSepoliaStabilskiToken, baseSepoliaPlnOracle, baseSepoliaCollateralManager) = deployBaseSepoliaContracts.run(tokens, whitelist, priceFeeds, minCollateralRatios);
 
-ccipSenderBase = new CcipSender(baseSepoliaNetworkDetails.routerAddress, address(baseSepoliaStabilskiToken));
 
 vm.selectFork(sepoliaEthFork);
 DeployStabilskiTokenPool deploySepoliaEthTokenPool = new DeployStabilskiTokenPool();
