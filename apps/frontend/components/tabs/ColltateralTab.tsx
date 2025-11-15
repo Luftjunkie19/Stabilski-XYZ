@@ -296,9 +296,6 @@ function  ColltateralTab() {
 
 
 const maxToBorrow = (main / 1e18);
-
-console.log(maxToBorrow);
-
         return (maxToBorrow).toFixed(4);
 }
 

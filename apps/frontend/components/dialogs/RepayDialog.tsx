@@ -182,7 +182,7 @@ console.log(vaultInfoContracts.findIndex((info)=>info.args[1] === value));
   </div>}
 
 
-<div className="flex items-center justify-center gap-2">
+<div className="flex w-full flex-wrap items-center justify-center gap-2">
   <Button onClick={()=>{
   writeContract({
     'abi':stabilskiTokenABI,
@@ -193,7 +193,7 @@ console.log(vaultInfoContracts.findIndex((info)=>info.args[1] === value));
     ],
     chainId
   });
-}} className={`bg-blue-500 max-w-4/5 w-full cursor-pointer hover:bg-blue-800 hover:scale-95`}>Approve PLST</Button>
+}} className={`bg-blue-500 max-w-40 w-full cursor-pointer hover:bg-blue-800 hover:scale-95`}>Approve PLST</Button>
 
 <Button onClick={()=>{
   console.log(token);
@@ -204,7 +204,7 @@ console.log(vaultInfoContracts.findIndex((info)=>info.args[1] === value));
     'args':[token, amount *  (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)],
     chainId
   });
-}} className={`bg-green-500 max-w-4/5 w-full cursor-pointer hover:bg-green-800 hover:scale-95`}>Repay</Button>
+}} className={`bg-green-500 max-w-40 w-full cursor-pointer hover:bg-green-800 hover:scale-95`}>Repay</Button>
 </div>
 
   </DialogContent>
