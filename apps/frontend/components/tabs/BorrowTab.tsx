@@ -225,9 +225,9 @@ const TokensOptions = ()=>{
  setToken(value as `0x${string}`);
  if(maxBorrowableData){
   console.log(maxBorrowableData, 'maxBorrowableData');
-   const selectedContractNumber=Number(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)].result);
-   console.log(selectedContractNumber)
-const maxAmount = selectedContractNumber / 1e18;
+   const selectedContractNumber=Number(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)].result as bigint / BigInt(1e18));
+
+const maxAmount = selectedContractNumber;
 console.log(maxAmount, 'maxAmount');
    setMaximumAmount(maxAmount);
  }
