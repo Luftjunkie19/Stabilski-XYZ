@@ -16,11 +16,8 @@ IRouterClient router;
 constructor(address stabilskiSourceAddress, address routerAddress){
     router = IRouterClient(routerAddress);
     sourceStabilskiToken = StabilskiToken(stabilskiSourceAddress);
-    if(block.chainid == 11155111){
-        gasLimit=0;
-    }else{
-        gasLimit = 500000;
-    }
+    gasLimit = 500000;
+
 }
 
 function getCcipMessage(address receiverAddress, uint256 amountToSend) public view returns (Client.EVM2AnyMessage memory){
