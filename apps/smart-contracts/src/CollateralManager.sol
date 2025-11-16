@@ -2,13 +2,14 @@
 pragma solidity ^0.8.24;
 import {AggregatorV3Interface} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-contract CollateralManager {
+import {AccessControl} from
+    "../lib/ccip/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/access/AccessControl.sol";
+
+contract CollateralManager is AccessControl {
 error InvalidCollateralToken();
-error InvalidPriceFeed();
-error InvalidMinCollateralRatio();
 error CollateralAlreadyExists();
 error TokenPriceNotAvailable();
-error NotAllowedChain();
+error IneligibleSender(address sender);
 
 struct CollateralInfo{
     address priceFeed;
@@ -22,6 +23,15 @@ mapping(address => CollateralInfo) public collateralTypes;
 
 // Chain ==> CollateralTokens
 mapping(uint256=>address[]) public collateralTokens;
+
+uint256 private constant liquidationBonusPercentage = 5;
+uint256 private constant punishmentPercentage = 3;
+
+address private collateralManagerOwner;
+
+bytes32 private constant CONTROLLER_ROLE = keccak256("CONTROLLER_ROLE"); 
+
+
 constructor(address[] memory _collateralTokens, address[] memory _priceFeeds, uint256[] memory _minCollateralRatios)  {
 
  for(uint256 i = 0; i < _collateralTokens.length; i++) {
@@ -29,11 +39,14 @@ constructor(address[] memory _collateralTokens, address[] memory _priceFeeds, ui
             priceFeed: _priceFeeds[i],
             minCollateralRatio: _minCollateralRatios[i],
             isActive: true,
-            liquidationBonus: 5,
-            punishment: 3
+            liquidationBonus: liquidationBonusPercentage,
+            punishment: punishmentPercentage
         });
         collateralTokens[block.chainid].push(_collateralTokens[i]);
     }
+
+    _grantRole(CONTROLLER_ROLE, msg.sender);
+    collateralManagerOwner=msg.sender;
 
 }
 
@@ -44,12 +57,7 @@ modifier onlyActiveCollateral(address token) {
     _;
 }
 
-modifier onlyAllowedChains() {
-   if(block.chainid != 11155111 && block.chainid != 421614){
-        revert NotAllowedChain();
-    }
-    _;
-}
+
 
 modifier onlyExistingCollateral(address token){
 if(collateralTypes[token].priceFeed == address(0) || collateralTypes[token].minCollateralRatio == 0) {
@@ -58,6 +66,32 @@ if(collateralTypes[token].priceFeed == address(0) || collateralTypes[token].minC
 _;
 }
 
+modifier onlyOwner(){
+    if(msg.sender != collateralManagerOwner){
+        revert IneligibleSender(msg.sender);
+    }  
+    _;
+}
+
+modifier onlyController(){
+    if(!hasRole(CONTROLLER_ROLE, msg.sender)){
+        revert IneligibleSender(msg.sender);
+    }
+_;
+}
+
+modifier onlyNotExistingCollateral(address proposedCollateralToken){
+    if(collateralTypes[proposedCollateralToken].priceFeed != address(0) && collateralTypes[proposedCollateralToken].minCollateralRatio != 0){
+        revert CollateralAlreadyExists();
+    }
+    _;
+}
+
+function grantControllerRole (address pendingControllerAddress) onlyOwner external {
+  _grantRole(CONTROLLER_ROLE, pendingControllerAddress);  
+
+  emit RoleGranted(CONTROLLER_ROLE, pendingControllerAddress, msg.sender);
+}
 
 
 function addCollateralType(
@@ -66,7 +100,7 @@ function addCollateralType(
     uint256 minCollateralRatio,
     uint256 liquidationBonus,
     uint256 punishment
-) external {
+) external onlyNotExistingCollateral(collateralToken) onlyController {
     collateralTypes[collateralToken] = CollateralInfo({
         priceFeed: priceFeed,
         minCollateralRatio: minCollateralRatio,
@@ -74,18 +108,19 @@ function addCollateralType(
         liquidationBonus: liquidationBonus,
         punishment: punishment
     });
+    collateralTokens[block.chainid].push(collateralToken);
     }
 
 function updateCollateral(
     address collateralToken,
     address priceFeed,
     uint256 minCollateralRatio
-) external onlyExistingCollateral(collateralToken) {
+) external onlyExistingCollateral(collateralToken) onlyController {
     collateralTypes[collateralToken].minCollateralRatio = minCollateralRatio;
     collateralTypes[collateralToken].priceFeed = priceFeed;
 }
 
-function toggleCollateral(address token) external onlyExistingCollateral(token) {
+function toggleCollateral(address token) external onlyExistingCollateral(token) onlyController {
    collateralTypes[token].isActive = !collateralTypes[token].isActive;
 }
 
@@ -95,9 +130,12 @@ function getTokenPrice(address token) public view onlyActiveCollateral(token) re
             /* uint80 roundId */,
             int256 answer,
             /*uint256 startedAt*/,
-            /*uint256 updatedAt*/,
+            uint256 updatedAt,
             /*uint80 answeredInRound*/
         ) = priceFeed.latestRoundData();
+
+    
+
 uint8 decimals = priceFeed.decimals();
         return (uint256(answer) * 1e18) / (10 ** decimals);
     }
@@ -106,7 +144,7 @@ function getCollateralInfo(address token) public view onlyActiveCollateral(token
     return (collateralTypes[token].priceFeed, collateralTypes[token].minCollateralRatio, collateralTypes[token].isActive, collateralTypes[token].liquidationBonus, collateralTypes[token].punishment);
 }
 
-function getCollateralTokens() public view onlyAllowedChains returns (address[] memory) {
+function getCollateralTokens() public view returns (address[] memory) {
     return collateralTokens[block.chainid];
 }
 

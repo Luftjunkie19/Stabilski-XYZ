@@ -43,7 +43,7 @@ priceFeeds = new address[](1) ;
 minCollateralRatios = new uint256[](1);
 tokens[0]=address(vm.envAddress("ARBITRUM_LINK_ADDRESS"));
 priceFeeds[0]=vm.envAddress("ARBITRUM_LINK_USD_RATE");
-minCollateralRatios[0]=12e17;
+minCollateralRatios[0]=135e16;
 
     
     stabilskiToken = new StabilskiToken("Stabilski", "PLST");

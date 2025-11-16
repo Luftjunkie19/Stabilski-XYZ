@@ -12,8 +12,7 @@ import { Card } from '../ui/card'
 import { Input } from '../ui/input'
 import { useAccount, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
 import {  ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
-import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import {  stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi } from '@/lib/smart-contracts-abi/CollateralManager';
+import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 
@@ -139,25 +138,38 @@ const {chainId, address}=useAccount();
 
 
 const borrowPolishStableCoin= ()=>{
-if(chainId === ARBITRUM_SEPOLIA_CHAINID){
-  writeContract({
-    abi:stabilskiTokenCollateralManagerAbi,
-    address:stabilskiTokenArbitrumSepoliaCollateralManagerAddress,
-    functionName:'mintPLST',
-    args:[token, amount * 10 ** 18],
-    chainId:ARBITRUM_SEPOLIA_CHAINID
-});
-return;
-}
-  writeContract({
+  try{
+    const currentVaultManager = ()=>{
+      switch(chainId){
+        case SEPOLIA_ETH_CHAINID:
+          return ethSepoliaVaultManagerAddress;
+  
+        case  ARBITRUM_SEPOLIA_CHAINID:
+          return arbitrumSepoliaVaultManagerAddress
+  
+        case BASE_SEPOLIA_CHAINID:
+          return baseSepoliaVaultManagerAddress;
+      }
+    }
+  
+    const currentVaultAddress= currentVaultManager();
+
+    console.log(currentVaultAddress);
+
+    writeContract({
     abi:vaultManagerAbi,
-    address:ethSepoliaVaultManagerAddress,
+    address: currentVaultAddress as `0x${string}`,
     functionName:'mintPLST',
-    args:[token, amount * 10 ** 18],
-    chainId:SEPOLIA_ETH_CHAINID
-  });
+    args:[token, amount * 1e18],
+    chainId
+});
 
   toast.loading('Borrowing PLST...', {'dismissible':true, 'duration':5000, 'id':'borrow-plst'});
+  }catch(err){
+console.log(err);
+toast.error('Something went wrong');
+  }
+  
 }
 
 

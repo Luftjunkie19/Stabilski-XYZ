@@ -153,11 +153,13 @@ return (
   const collaterizationRatio =collateralInfos as unknown as any[] && Number((collateralInfos as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[1]) / 1e18;
   const collateralValue =collateralInfos as unknown as any[] && Number((vaultInfo as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[0]) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18);
 
-  const maxWithdrawAmount =(Number(collateralValue)  / Number(collaterizationRatio));
+  const maxWithdrawAmount =(Number(collateralValue));
 
-  if(value  && maxWithdrawAmount){
-    setMaximumAmount(maxWithdrawAmount);
-  }
+  setMaximumAmount(maxWithdrawAmount)
+
+  // if(value  && maxWithdrawAmount){
+  //   setMaximumAmount(maxWithdrawAmount);
+  // }
 
  }}>
   <SelectTrigger className="max-w-24">
