@@ -324,8 +324,8 @@ const UserCollaterals=()=>{
     case BASE_SEPOLIA_CHAINID:
       return (<>
       {vaultTokensOnchainData && <div  className="w-full flex-wrap flex items-center gap-6">
-<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {vaultTokensOnchainData[1] && vaultTokensOnchainData[0].result as unknown as bigint   && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result)/ 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
-<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultTokensOnchainData[2] && vaultTokensOnchainData[1].result as unknown as bigint && Number(vaultTokensOnchainData[1].result)  && (Number(vaultTokensOnchainData[1].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
+<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {vaultTokensOnchainData[1] && vaultTokensOnchainData[1].result as unknown as bigint   && Number(vaultTokensOnchainData[1].result)  && (Number(vaultTokensOnchainData[1].result)/ 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultTokensOnchainData[1] && vaultTokensOnchainData[0].result as unknown as bigint && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>}
       </>)
 

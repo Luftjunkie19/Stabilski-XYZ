@@ -6,12 +6,12 @@ import { DialogHeader,Dialog, DialogTrigger, DialogContent, DialogTitle, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Input } from '../ui/input';
 import { useAccount,  useReadContracts, useWriteContract } from 'wagmi';
-import { SEPOLIA_ETH_WETH_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_LINK_ADDR, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
+import { SEPOLIA_ETH_WETH_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_LINK_ADDR, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { FaEthereum, FaBitcoin } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
 import { Label } from '../ui/label';
 import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
-import { arbitrumSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
+import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 
 
 
@@ -118,6 +118,21 @@ const { address, chainId }=useAccount();
       'args':[address, ARBITRUM_SEPOLIA_LINK_ADDR],
       chainId:ARBITRUM_SEPOLIA_CHAINID,
     },
+      {
+      'abi':vaultManagerAbi,
+      'address':baseSepoliaVaultManagerAddress,
+      'functionName':'getVaultInfo',
+      'args':[address, BASE_SEPOLIA_LINK_ADDR],
+      chainId:BASE_SEPOLIA_CHAINID,
+    },
+    {
+      'abi':vaultManagerAbi,
+      'address':baseSepoliaVaultManagerAddress,
+      'functionName':'getVaultInfo',
+      'args':[address, BASE_SEPOLIA_WETH_ADDR],
+      chainId:ARBITRUM_SEPOLIA_CHAINID,
+    },
+
     ]
   }
   );
@@ -150,9 +165,6 @@ const {writeContract}=useWriteContract();
   <Label>Vault</Label>
    <Select onValueChange={(value)=>{
   setToken(value as `0x${string}`);
-console.log(vaultInfoContracts.findIndex((info)=>info.args[1] === value));
-  console.log(((vaultInfo as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result));
-
   if(value  && vaultInfoContracts.findIndex((info)=>info.args[1] === value) !== -1  && (vaultInfo as unknown as any[]) && ((vaultInfo as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result)) {
     setMaximumAmount(Number((vaultInfo as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[1]) / 1e18);
   }
