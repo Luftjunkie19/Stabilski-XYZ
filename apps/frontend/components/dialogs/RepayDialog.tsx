@@ -10,7 +10,7 @@ import { SEPOLIA_ETH_WETH_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_LINK_ADDR, AR
 import { FaEthereum, FaBitcoin } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
 import { Label } from '../ui/label';
-import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
+import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenBaseSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 
 
@@ -68,6 +68,20 @@ const { address, chainId }=useAccount();
       'args':[address, ARBITRUM_SEPOLIA_LINK_ADDR],
       chainId:ARBITRUM_SEPOLIA_CHAINID,
     },
+     {
+      'abi':vaultManagerAbi,
+      'address':baseSepoliaVaultManagerAddress,
+      'functionName':'getVaultInfo',
+      'args':[address, BASE_SEPOLIA_LINK_ADDR],
+      chainId:BASE_SEPOLIA_CHAINID,
+    },
+     {
+      'abi':vaultManagerAbi,
+      'address':baseSepoliaVaultManagerAddress,
+      'functionName':'getVaultInfo',
+      'args':[address, BASE_SEPOLIA_WETH_ADDR],
+      chainId:BASE_SEPOLIA_CHAINID,
+    },
     ]
 
     const {data:stabilskiBalances}=useReadContracts({contracts:[
@@ -84,6 +98,13 @@ const { address, chainId }=useAccount();
         'functionName':'balanceOf',
         'args':[address],
         chainId:ARBITRUM_SEPOLIA_CHAINID
+    },
+      {
+         'abi':stabilskiTokenABI,
+        'address':stabilskiTokenBaseSepoliaAddress,
+        'functionName':'balanceOf',
+        'args':[address],
+        chainId:BASE_SEPOLIA_CHAINID
     }
     ]});
 
@@ -144,8 +165,8 @@ const {writeContract}=useWriteContract();
 
   return (
    <Dialog>
-  <DialogTrigger>
- <Button  className={`bg-blue-500 cursor-pointer hover:bg-blue-800 hover:scale-95`}>Repay</Button>
+  <DialogTrigger className={`bg-blue-500 cursor-pointer hover:bg-blue-800 hover:scale-95 p-2 text-white text-sm transition-all rounded-md`}>
+ Repay
   </DialogTrigger>
   <DialogContent className='flex flex-col gap-4 items-center w-full '>
     <DialogHeader>

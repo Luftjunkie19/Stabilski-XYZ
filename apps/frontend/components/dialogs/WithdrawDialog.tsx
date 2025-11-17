@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+'use client';
+
+
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog'
 import React, { useState } from 'react'
 import { DialogHeader } from '../ui/dialog'
@@ -6,7 +8,6 @@ import { Button } from '../ui/button'
 import {  useAccount, useReadContracts, useWriteContract } from 'wagmi';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
-import {  stabilskiTokenArbitrumSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -126,8 +127,8 @@ function WithdrawDialog() {
 
 return (
 <Dialog>
-  <DialogTrigger>
-    <Button variant={'destructive'} className={`bg-red-500 cursor-pointer  hover:bg-red-800 hover:scale-95`} >Withdraw</Button>
+  <DialogTrigger className={`bg-red-500 cursor-pointer transition-all rounded-md text-sm text-white p-2   hover:bg-red-800 hover:scale-95`} >
+    Withdraw
   </DialogTrigger>
   <DialogContent className='flex flex-col gap-4 w-full'>
     <DialogHeader>
@@ -150,7 +151,7 @@ return (
   <Label>Vault</Label>
    <Select onValueChange={(value)=>{
   setToken(value as `0x${string}`);
-  const collaterizationRatio =collateralInfos as unknown as any[] && Number((collateralInfos as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[1]) / 1e18;
+  // const collaterizationRatio =collateralInfos as unknown as any[] && Number((collateralInfos as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[1]) / 1e18;
   const collateralValue =collateralInfos as unknown as any[] && Number((vaultInfo as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[0]) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18);
 
   const maxWithdrawAmount =(Number(collateralValue));

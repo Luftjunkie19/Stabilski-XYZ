@@ -3,9 +3,9 @@ import React from 'react'
 import Image from 'next/image'
 import StabilskiStableCoin2 from '@/public/Logox512.png';
 import { motion } from 'motion/react';
-type Props = {}
 
-function StabilskiXYZHero({}: Props) {
+
+function StabilskiXYZHero() {
   return (
     <div className="flex w-full justify-between items-center flex-col sm:flex-row">
         <motion.div whileInView={{

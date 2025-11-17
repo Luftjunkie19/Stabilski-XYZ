@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useCallback, useState } from 'react'
 import { TabsContent } from '../ui/tabs'
 import { Label } from '../ui/label'
@@ -18,7 +17,7 @@ import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 
 
-function  ColltateralTab() {
+function ColltateralTab() {
     useSwitchChain({mutation:{
       onSuccess:(data)=>{
         console.log(data);
@@ -326,7 +325,7 @@ case SEPOLIA_ETH_CHAINID:
     });
 
 
-    const getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken= useCallback(async ()=>{
+    const getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken= useCallback(()=>{
       if(!collateralTokenPriceData || !usdplnOraclePrice || !token || !collateralData) return 0;
 
       if(collateralData && collateralTokenPriceData && usdplnOraclePrice && token){
@@ -342,6 +341,7 @@ case SEPOLIA_ETH_CHAINID:
         
         const convertedNumber= Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === token)].result);
 
+
         const main =((amount * convertedNumber) * Number(usdplnOraclePrice) * 1e18) / 1e22;
 
 
@@ -354,7 +354,7 @@ return 0;
 
 
 
-},[collateralTokenPriceData, usdplnOraclePrice, token, collateralData, amount]);
+},[collateralTokenPriceData, usdplnOraclePrice, token, collateralData, arrayOfContracts, amount]);
 
 
 const TokensOptions = ()=>{
