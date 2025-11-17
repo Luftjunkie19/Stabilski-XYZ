@@ -11,7 +11,7 @@ import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Input } from '../ui/input'
 import { useAccount, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
-import {  ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
+import {  ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ABI, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ABI, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
@@ -65,8 +65,21 @@ const {chainId, address}=useAccount();
             'functionName':'balanceOf',
             'args':[address],
             chainId:ARBITRUM_SEPOLIA_CHAINID
+        },
+         {
+             'abi':BASE_SEPOLIA_LINK_ABI,
+            'address':BASE_SEPOLIA_LINK_ADDR,
+            'functionName':'balanceOf',
+            'args':[address],
+            chainId:BASE_SEPOLIA_CHAINID
+        },
+           {
+             'abi':BASE_SEPOLIA_WETH_ABI,
+            'address':BASE_SEPOLIA_WETH_ADDR,
+            'functionName':'balanceOf',
+            'args':[address],
+            chainId:BASE_SEPOLIA_CHAINID
         }
-        
     ];
 
     const {data:vaultContractInfo}=useReadContracts({
@@ -132,6 +145,20 @@ const {chainId, address}=useAccount();
           functionName:'getMaxBorrowableStabilskiTokens',
           args:[address, ARBITRUM_SEPOLIA_LINK_ADDR],
           chainId:ARBITRUM_SEPOLIA_CHAINID
+        },
+          {
+          abi:vaultManagerAbi,
+          address:baseSepoliaVaultManagerAddress,
+          functionName:'getMaxBorrowableStabilskiTokens',
+          args:[address, BASE_SEPOLIA_LINK_ADDR],
+          chainId:BASE_SEPOLIA_CHAINID
+        },
+        {
+          abi:vaultManagerAbi,
+          address:baseSepoliaVaultManagerAddress,
+          functionName:'getMaxBorrowableStabilskiTokens',
+          args:[address, BASE_SEPOLIA_WETH_ADDR],
+          chainId:BASE_SEPOLIA_CHAINID
         }
       ]
     });
@@ -164,7 +191,7 @@ const borrowPolishStableCoin= ()=>{
     chainId
 });
 
-  toast.loading('Borrowing PLST...', {'dismissible':true, 'duration':5000, 'id':'borrow-plst'});
+  toast.loading('Borrowing PLST...', {'dismissible':true, 'duration':5});
   }catch(err){
 console.log(err);
 toast.error('Something went wrong');
@@ -208,8 +235,8 @@ const TokensOptions = ()=>{
     case BASE_SEPOLIA_CHAINID:
       return (
   <>
-    <SelectItem className="flex items-center gap-2 p-1"  value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
-     <SelectItem className="flex items-center gap-2 p-1"  value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />  <span className="text-sm">Chainlink (LINK)</span></SelectItem>
+    <SelectItem className="flex items-center gap-2 p-1"  value={BASE_SEPOLIA_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
+     <SelectItem className="flex items-center gap-2 p-1"  value={BASE_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />  <span className="text-sm">Chainlink (LINK)</span></SelectItem>
     </>
 
       );
@@ -222,9 +249,6 @@ const TokensOptions = ()=>{
 
 }
 
-
-
-
   return (
       <TabsContent value="borrow" className="flex flex-col gap-4 max-w-7xl w-full">
       
@@ -236,8 +260,9 @@ const TokensOptions = ()=>{
  <Select onValueChange={(value)=>{
  setToken(value as `0x${string}`);
  if(maxBorrowableData){
-  console.log(maxBorrowableData, 'maxBorrowableData');
    const selectedContractNumber=Number(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)].result as bigint / BigInt(1e18));
+
+console.log(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)]);
 
 const maxAmount = selectedContractNumber;
 console.log(maxAmount, 'maxAmount');
