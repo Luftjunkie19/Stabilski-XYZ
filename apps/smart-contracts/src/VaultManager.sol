@@ -276,21 +276,6 @@ if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token]
 }
 
 
-// Commented out if goes to prodution
-function getVaultFlawedHealthFactor(address vaultOwner, address token) public view returns (uint256) {
-
-    uint256 collateralAmountInPLN = _getCollateralValue(vaultOwner, token);
-
-    (, uint256 minCollateralRatio,,,)= collateralManager.getCollateralInfo(token);
-
-    uint256 debtAmount = vaults[vaultOwner][token].debt;
-
-if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || debtAmount == 0) return type(uint256).max;
-
-    return  ((collateralAmountInPLN * decimalPointsNormalizer / debtAmount) * 1e18 / (minCollateralRatio)); 
-}
-
-
 
 
 
@@ -329,18 +314,6 @@ function isLiquidatable(address vaultOwner, address token) public view returns (
 
     return healthFactor < liquidationThreshold;
 }
-
-// function isLiquidatable(address vaultOwner, address token) public view returns (bool) {
-//     uint256 healthFactor = getVaultFlawedHealthFactor(vaultOwner, token);
-//     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
-
-//     // Apply a 15% liquidation threshold buffer
-//     uint256 liquidationThreshold = (minCollateralRatio * liquidationBuffer) / 100;
-
-//     return healthFactor < liquidationThreshold;
-// }
-
-
 
 
 function getCollateralValue(address owner, address token) external view returns (uint256 inPLN){
