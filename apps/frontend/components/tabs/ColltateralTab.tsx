@@ -37,9 +37,36 @@ function  ColltateralTab() {
 
     const {writeContract}=useWriteContract();
 
+    const currentTokenWatchAbi=()=>{
+      switch(token){
+
+        case SEPOLIA_ETH_WETH_ADDR:
+          return SEPOLIA_ETH_WETH_ABI
+
+        case SEPOLIA_ETH_WBTC_ADDR:
+          return SEPOLIA_ETH_WBTC_ABI
+
+        case SEPOLIA_ETH_LINK_ADDR:
+          return SEPOLIA_ETH_LINK_ABI
+
+          case ARBITRUM_SEPOLIA_LINK_ADDR:
+            return ARBITRUM_SEPOLIA_ABI
+
+          case BASE_SEPOLIA_WETH_ADDR:
+            return BASE_SEPOLIA_WETH_ABI
+
+          case BASE_SEPOLIA_LINK_ADDR:
+            return BASE_SEPOLIA_LINK_ABI
+
+        }
+    }
+
+    const currentAbi =currentTokenWatchAbi();
+
+
      useWatchContractEvent({
     address: token,
-    abi: token === SEPOLIA_ETH_WETH_ADDR ? SEPOLIA_ETH_WETH_ABI : token === SEPOLIA_ETH_WBTC_ADDR ? SEPOLIA_ETH_WBTC_ABI : token === SEPOLIA_ETH_LINK_ADDR ? SEPOLIA_ETH_LINK_ABI : ARBITRUM_SEPOLIA_ABI,
+    abi: currentAbi as any,
     eventName: 'Approval',
     'onError':(error)=>{
       console.error('Error watching contract event:', error);
@@ -439,13 +466,12 @@ if(token){
 }} className="p-6 transition-all shadow-sm shadow-black hover:bg-blue-900 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-blue-500">Approve Collateral</Button>
   
 <Button disabled={!approved} onClick={()=>{
-  const multiplier = token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18;
 if(chainId === SEPOLIA_ETH_CHAINID && token && amount){
     writeContract({
     'abi':vaultManagerAbi,
     'address':ethSepoliaVaultManagerAddress,
     'functionName':'depositCollateral',
-    'args':[token, amount * multiplier],
+    'args':[token],
   });
   return;
 }
@@ -455,7 +481,7 @@ if(chainId === ARBITRUM_SEPOLIA_CHAINID && token && amount){
       'abi':vaultManagerAbi,
       'address':arbitrumSepoliaVaultManagerAddress,
       'functionName':'depositCollateral',
-      'args':[token, amount * 1e18],
+      'args':[token],
     });
 return;
 }
@@ -465,7 +491,7 @@ if(token && amount && chainId === BASE_SEPOLIA_CHAINID){
       'abi':vaultManagerAbi,
       'address':baseSepoliaVaultManagerAddress,
       'functionName':'depositCollateral',
-      'args':[token, amount * 1e18],
+      'args':[token,],
     });
 }
 

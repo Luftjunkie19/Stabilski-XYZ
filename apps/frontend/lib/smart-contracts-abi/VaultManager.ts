@@ -1,72 +1,10 @@
-export const ethSepoliaVaultManagerAddress="0x8612346204254ce797d2cdC81Dc054388ceb3817";
+export const ethSepoliaVaultManagerAddress="0x180C1fF90F739Fc1563DA16AD472634474EB85Df";
 
-export const arbitrumSepoliaVaultManagerAddress="0xc8048350F442Cd535065232d7b9da279Dd1C1Ca4";
+export const arbitrumSepoliaVaultManagerAddress="0x180C1fF90F739Fc1563DA16AD472634474EB85Df";
 
-export const baseSepoliaVaultManagerAddress="0x04Aa393f949F7d9a8c39fC79FA5815843310AbA7";
+export const baseSepoliaVaultManagerAddress="0xF63B4ddC1c41274672BDcD90a80c76C516605b1B";
 
-export const vaultManagerAbi=[
-{"type":"constructor","inputs":[{"name":"_usdPlnOracle","type":"address","internalType":"address"},
-{"name":"_stabilskiToken","type":"address","internalType":"address"},
-{"name":"_collateralManager","type":"address","internalType":"address"}],"stateMutability":"nonpayable"},
-{"type":"function","name":"collateralManager","inputs":[],
-"outputs":[{"name":"","type":"address","internalType":"contract CollateralManagerInterface"}],"stateMutability":"view"},
-{"type":"function","name":"depositCollateral",
-"inputs":[{"name":"token","type":"address","internalType":"address"},{"name":"amount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},
-{"type":"function","name":"getAllBorrowers","inputs":[],"outputs":[{"name":"","type":"address[]","internalType":"address[]"}],
-"stateMutability":"nonpayable"},
-{"type":"function","name":"getCollateralValue","inputs":[{"name":"owner","type":"address","internalType":"address"},
-{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"inPLN","type":"uint256","internalType":"uint256"}],
-"stateMutability":"view"},
-{"type":"function","name":"getIsHealthyAfterWithdrawal",
-"inputs":[{"name":"amount","type":"uint256","internalType":"uint256"},
-    {"name":"token","type":"address","internalType":"address"}],
-"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},
-{"type":"function","name":"getMaxBorrowableStabilskiTokens","inputs":[{"name":"owner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"amount","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
-{"type":"function","name":"getVaultHealthFactor","inputs":[{"name":"vaultOwner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
-{"type":"function","name":"getVaultInfo","inputs":[{"name":"owner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"collateralAmount","type":"uint256","internalType":"uint256"},{"name":"debt","type":"uint256","internalType":"uint256"},{"name":"collateralToken","type":"address","internalType":"address"},{"name":"healthFactor","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
-{"type":"function","name":"isLiquidatable","inputs":[{"name":"vaultOwner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},
-{"type":"function","name":"liquidateVault","inputs":[{"name":"vaultOwner","type":"address","internalType":"address"},{"name":"token","type":"address","internalType":"address"}],"outputs":[],"stateMutability":"nonpayable"},
-{"type":"function","name":"mintPLST","inputs":[{"name":"collateralToken","type":"address","internalType":"address"},{"name":"amount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},
-{"type":"function","name":"repayPLST","inputs":[{"name":"collateralToken","type":"address","internalType":"address"},{"name":"amount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"stabilskiToken","inputs":[],"outputs":[{"name":"","type":"address","internalType":"contract StabilskiTokenInterface"}],"stateMutability":"view"},
-{"type":"function","name":"usdPlnOracle","inputs":[],"outputs":[{"name":"","type":"address","internalType":"contract USDPLNOracleInterface"}],"stateMutability":"view"},
-{"type":"function","name":"vaults","inputs":[{"name":"","type":"address","internalType":"address"},{"name":"","type":"address","internalType":"address"}],"outputs":[{"name":"collateralAmount","type":"uint256","internalType":"uint256"},{"name":"collateralTypeToken","type":"address","internalType":"address"},{"name":"debt","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
-{"type":"function","name":"withdrawCollateral",
-    "inputs":[{"name":"token","type":"address","internalType":"address"},
-        {"name":"amount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},
-{"type":"event","name":"CollateralDeposited",
-    "inputs":[
-        {"name":"vaultOwner","type":"address","indexed":false,"internalType":"address"},
-        {"name":"token","type":"address","indexed":false,"internalType":"address"},
-        {"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
-{"type":"event","name":"CollateralWithdrawn",
-    "inputs":[
-        {"name":"vaultOwner","type":"address","indexed":false,"internalType":"address"},
-        {"name":"token","type":"address","indexed":false,"internalType":"address"},
-        {"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],
-        "anonymous":false},
-{"type":"event","name":"DebtRepaid",
-    "inputs":[
-        {"name":"vaultOwner","type":"address","indexed":false,"internalType":"address"},
-        {"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},
-        {"name":"token","type":"address","indexed":false,"internalType":"address"}],
-        "anonymous":false},
-{"type":"event","name":"StabilskiTokenMinted",
-    "inputs":
-    [{"name":"vaultOwner","type":"address","indexed":false,"internalType":"address"},
-        {"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
-{"type":"event","name":"VaultLiquidated","inputs":[{"name":"vaultOwner","type":"address","indexed":false,"internalType":"address"},{"name":"liquidator","type":"address","indexed":false,"internalType":"address"},{"name":"debtAmount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"collateralAmount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
-{"type":"error","name":"AddressEmptyCode","inputs":[{"name":"target","type":"address","internalType":"address"}]},
-{"type":"error","name":"AddressInsufficientBalance","inputs":[{"name":"account","type":"address","internalType":"address"}]},
-{"type":"error","name":"FailedInnerCall","inputs":[]},
-{"type":"error","name":"InvalidAllowance","inputs":[]},
-{"type":"error","name":"InvalidCollateralToken","inputs":[]},
-{"type":"error","name":"InvalidVault","inputs":[]},
-{"type":"error","name":"LiquidatorCannotBeVaultOwner","inputs":[]},
-{"type":"error","name":"NotEnoughCollateral","inputs":[]},
-{"type":"error","name":"NotEnoughDebt","inputs":[]},
-{"type":"error","name":"NotEnoughPLST","inputs":[]},
-{"type":"error","name":"OverCollateralized","inputs":[]},
-{"type":"error","name":"ReentrancyGuardReentrantCall","inputs":[]},
-{"type":"error","name":"SafeERC20FailedOperation","inputs":[{"name":"token","type":"address","internalType":"address"}]},
-{"type":"error","name":"UnderCollateralized","inputs":[]},
-{"type":"error","name":"VaultAlreadyExists","inputs":[]}];
+export const vaultManagerAbi=[{"inputs":[{"internalType":"address","name":"_usdPlnOracle","type":"address"},{"internalType":"address","name":"_stabilskiToken","type":"address"},{"internalType":"address","name":"_collateralManager","type":"address"},{"internalType":"address","name":"_bitcoinAddress","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"InvalidVault","type":"error"},{"inputs":[],"name":"LiquidatorCannotBeVaultOwner","type":"error"},{"inputs":[],"name":"NotEnoughCollateral","type":"error"},{"inputs":[],"name":"NotEnoughDebt","type":"error"},{"inputs":[],"name":"NotEnoughPLST","type":"error"},{"inputs":[],"name":"OverCollateralized","type":"error"},{"inputs":[],"name":"ReentrancyGuardReentrantCall","type":"error"},{"inputs":[],"name":"TransferFailed","type":"error"},{"inputs":[],"name":"UnderCollateralized","type":"error"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"vaultOwner","type":"address"},{"indexed":false,"internalType":"address","name":"token","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"CollateralDeposited","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"vaultOwner","type":"address"},{"indexed":false,"internalType":"address","name":"token","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"CollateralWithdrawn","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"vaultOwner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"address","name":"token","type":"address"}],"name":"DebtRepaid","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"vaultOwner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"StabilskiTokenMinted","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"vaultOwner","type":"address"},{"indexed":false,"internalType":"address","name":"liquidator","type":"address"},{"indexed":false,"internalType":"uint256","name":"debtAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"collateralAmount","type":"uint256"}],"name":"VaultLiquidated","type":"event"},{"inputs":[],"name":"collateralManager","outputs":[{"internalType":"contract CollateralManagerInterface","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"token","type":"address"}],"name":"depositCollateral","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"getAllBorrowers","outputs":[{"internalType":"address[]","name":"","type":"address[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"token","type":"address"}],"name":"getCollateralValue","outputs":[{"internalType":"uint256","name":"inPLN","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"address","name":"token","type":"address"}],"name":"getIsHealthyAfterWithdrawal","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"token","type":"address"}],"name":"getMaxBorrowableStabilskiTokens","outputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"vaultOwner","type":"address"},{"internalType":"address","name":"token","type":"address"}],"name":"getVaultHealthFactor","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"token","type":"address"}],"name":"getVaultInfo","outputs":[{"internalType":"uint256","name":"collateralAmount","type":"uint256"},{"internalType":"uint256","name":"debt","type":"uint256"},{"internalType":"address","name":"collateralToken","type":"address"},{"internalType":"uint256","name":"healthFactor","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"vaultOwner","type":"address"},{"internalType":"address","name":"token","type":"address"}],"name":"isLiquidatable","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"vaultOwner","type":"address"},{"internalType":"address","name":"token","type":"address"}],"name":"liquidateVault","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"collateralToken","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mintPLST","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"collateralToken","type":"address"}],"name":"repayPLST","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"stabilskiToken","outputs":[{"internalType":"contract StabilskiTokenInterface","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"usdPlnOracle","outputs":[{"internalType":"contract USDPLNOracleInterface","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"}],"name":"vaults","outputs":[{"internalType":"uint256","name":"collateralAmount","type":"uint256"},{"internalType":"address","name":"collateralTypeToken","type":"address"},{"internalType":"uint256","name":"debt","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"token","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawCollateral","outputs":[],"stateMutability":"nonpayable","type":"function"}];
+
+
+
