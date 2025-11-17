@@ -9,6 +9,8 @@ contract CollateralManager is AccessControl {
 error InvalidCollateralToken();
 error CollateralAlreadyExists();
 error TokenPriceNotAvailable();
+error TooLowMinCollateralRatio(uint256 ratioProvided);
+error InvalidUpdateData();
 error IneligibleSender(address sender);
 
 struct CollateralInfo{
@@ -27,6 +29,7 @@ mapping(uint256=>address[]) public collateralTokens;
 uint256 private constant liquidationBonusPercentage = 5;
 uint256 private constant punishmentPercentage = 3;
 
+uint256 private constant minimalCollatarealRatio=125e16;
 address private collateralManagerOwner;
 
 bytes32 private constant CONTROLLER_ROLE = keccak256("CONTROLLER_ROLE"); 
@@ -101,6 +104,12 @@ function addCollateralType(
     uint256 liquidationBonus,
     uint256 punishment
 ) external onlyNotExistingCollateral(collateralToken) onlyController {
+
+if(minCollateralRatio < minimalCollatarealRatio){
+    revert TooLowMinCollateralRatio(minCollateralRatio);
+}
+
+
     collateralTypes[collateralToken] = CollateralInfo({
         priceFeed: priceFeed,
         minCollateralRatio: minCollateralRatio,
@@ -115,12 +124,16 @@ function updateCollateral(
     address collateralToken,
     address priceFeed,
     uint256 minCollateralRatio
-) external onlyExistingCollateral(collateralToken) onlyController {
+) external onlyController onlyExistingCollateral(collateralToken) {
+if(minCollateralRatio < minimalCollatarealRatio || priceFeed == address(0)){
+    revert InvalidUpdateData();
+}
+
     collateralTypes[collateralToken].minCollateralRatio = minCollateralRatio;
     collateralTypes[collateralToken].priceFeed = priceFeed;
 }
 
-function toggleCollateral(address token) external onlyExistingCollateral(token) onlyController {
+function toggleCollateral(address token) external onlyController onlyExistingCollateral(token) {
    collateralTypes[token].isActive = !collateralTypes[token].isActive;
 }
 
@@ -140,7 +153,7 @@ uint8 decimals = priceFeed.decimals();
         return (uint256(answer) * 1e18) / (10 ** decimals);
     }
 
-function getCollateralInfo(address token) public view onlyActiveCollateral(token) returns (address, uint256, bool, uint256, uint256) {
+function getCollateralInfo(address token) public view onlyExistingCollateral(token) returns (address, uint256, bool, uint256, uint256) {
     return (collateralTypes[token].priceFeed, collateralTypes[token].minCollateralRatio, collateralTypes[token].isActive, collateralTypes[token].liquidationBonus, collateralTypes[token].punishment);
 }
 
@@ -148,6 +161,9 @@ function getCollateralTokens() public view returns (address[] memory) {
     return collateralTokens[block.chainid];
 }
 
+function getTheCollateralManagerOwner() public view returns (address){
+    return collateralManagerOwner;
+}
 
 }
 
