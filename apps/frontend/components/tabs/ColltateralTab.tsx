@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { TabsContent } from '../ui/tabs'
 import { Label } from '../ui/label'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select'
@@ -18,14 +18,14 @@ import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 
 
-
 function  ColltateralTab() {
     useSwitchChain({mutation:{
       onSuccess:(data)=>{
         console.log(data);
         setToken(undefined);
+        setMaximumAmount(0);
         setAmount(0);
-        
+        setApproved(false);
       }
     }});
 
@@ -66,7 +66,7 @@ function  ColltateralTab() {
 
      useWatchContractEvent({
     address: token,
-    abi: currentAbi as any,
+    abi: currentAbi,
     eventName: 'Approval',
     'onError':(error)=>{
       console.error('Error watching contract event:', error);
@@ -82,13 +82,27 @@ function  ColltateralTab() {
   }
   });
 
+  const currentVaultManager=()=>{
+    switch(chainId){
+case SEPOLIA_ETH_CHAINID:
+  return ethSepoliaVaultManagerAddress;
+  
+  case ARBITRUM_SEPOLIA_CHAINID:
+    return arbitrumSepoliaVaultManagerAddress
+
+  case BASE_SEPOLIA_CHAINID:
+    return baseSepoliaVaultManagerAddress
+    }
+  }
+
+  const vaultManagerAddress = currentVaultManager();
+
   useWatchContractEvent({
-    address: chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
+    address: vaultManagerAddress,
     abi: vaultManagerAbi,
     eventName: 'CollateralDeposited',
     'onError':(error)=>{
       console.error('Error watching contract event:', error);
-    
     },
   'onLogs':(logs)=>{
     toast.success(`Collateral successfully deposited ${
@@ -312,10 +326,19 @@ function  ColltateralTab() {
     });
 
 
-    const getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken= useCallback(()=>{
+    const getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken= useCallback(async ()=>{
       if(!collateralTokenPriceData || !usdplnOraclePrice || !token || !collateralData) return 0;
 
       if(collateralData && collateralTokenPriceData && usdplnOraclePrice && token){
+
+        // const maxPlstBorrowable = await readContract(config, {
+        //   address: ethSepoliaVaultManagerAddress,
+        //   abi: vaultManagerAbi,
+        //   functionName: 'getMaxBorrowableStabilskiTokens',
+        //   args:[address, token]
+        // });
+
+        // console.log(maxPlstBorrowable);
         
         const convertedNumber= Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === token)].result);
 
@@ -323,7 +346,7 @@ function  ColltateralTab() {
 
 
 const maxToBorrow = (main / 1e18);
-        return (maxToBorrow).toFixed(4);
+        return (maxToBorrow / 1.4);
 }
 
 return 0;
@@ -331,7 +354,7 @@ return 0;
 
 
 
-},[collateralTokenPriceData, usdplnOraclePrice, token, collateralData, chainId, amount, arrayOfContracts]);
+},[collateralTokenPriceData, usdplnOraclePrice, token, collateralData, amount]);
 
 
 const TokensOptions = ()=>{
