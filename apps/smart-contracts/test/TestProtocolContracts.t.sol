@@ -642,10 +642,11 @@ function testLiqudationProcess() public {
 vm.startPrank(borrower);
 sepoliaWETHMockToken.approveInternal(address(vaultManager), borrowTokenAmount);
 vaultManager.depositCollateral(address(sepoliaWETHMockToken));
-vaultManager.mintPLST(address(sepoliaWETHMockToken), vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWETHMockToken)));
+
+uint256 mintAmount = vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWETHMockToken));
+vaultManager.mintPLST(address(sepoliaWETHMockToken), mintAmount / 1000);
 
 (, uint256 debt,,)=vaultManager.getVaultInfo(borrower, address(sepoliaWETHMockToken));
-
 
 
 vm.expectRevert();
@@ -657,7 +658,7 @@ vm.stopPrank();
 
 vm.startPrank(liquidator);
 uint256 borrowerWethBalanceBeforeLiquidation = sepoliaWETHMockToken.balanceOf(borrower);
-sepoliaWETHMockToken.approveInternal(address(vaultManager), borrowTokenAmount);
+sepoliaWETHMockToken.approveInternal(address(vaultManager), 1e18);
 vaultManager.depositCollateral(address(sepoliaWETHMockToken));
 uint256 amountToMint = vaultManager.getMaxBorrowableStabilskiTokens(liquidator, address(sepoliaWETHMockToken));
 vaultManager.mintPLST(address(sepoliaWETHMockToken), amountToMint);
@@ -665,14 +666,49 @@ uint256 liquidatorWethBalanceBeforeLiquidation = sepoliaWETHMockToken.balanceOf(
 
 
 stabilskiToken.approve(address(vaultManager), debt);
+vm.expectRevert();
+vaultManager.liquidateVault(borrower, address(sepoliaWETHMockToken));
+
+vm.stopPrank();
+
+
+vm.startPrank(borrower);
+vaultManager.mintPLST(address(sepoliaWETHMockToken), vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWETHMockToken)));
+vm.stopPrank();
+
+vm.startPrank(liquidator);
+stabilskiToken.approve(address(vaultManager), debt);
+vm.expectRevert();
+vaultManager.liquidateVault(borrower, address(sepoliaWETHMockToken));
+
+sepoliaWETHMockToken.approveInternal(address(vaultManager), borrowTokenAmount);
+vaultManager.depositCollateral(address(sepoliaWETHMockToken));
+
+uint256 mintAmountLiquidator = vaultManager.getMaxBorrowableStabilskiTokens(liquidator, address(sepoliaWETHMockToken));
+vaultManager.mintPLST(address(sepoliaWETHMockToken), mintAmountLiquidator / 1000);
+
+
+stabilskiToken.approve(address(vaultManager), 0);
 
 vm.expectRevert();
 vaultManager.liquidateVault(borrower, address(sepoliaWETHMockToken));
 
-// assertEq(stabilskiToken.balanceOf(liquidator), 0);
-// assertGt(sepoliaWETHMockToken.balanceOf(liquidator), liquidatorWethBalanceBeforeLiquidation);
-// assertGt(sepoliaWETHMockToken.balanceOf(borrower), borrowerWethBalanceBeforeLiquidation);
+
+stabilskiToken.approve(address(vaultManager), mintAmount);
+
+vm.expectRevert();
+vaultManager.liquidateVault(borrower, address(sepoliaWETHMockToken));
+
+vaultManager.mintPLST(address(sepoliaWETHMockToken), mintAmountLiquidator - (mintAmountLiquidator / 1000));
+
+stabilskiToken.approve(address(vaultManager), mintAmount);
+vaultManager.liquidateVault(borrower, address(sepoliaWETHMockToken));
+
+
 vm.stopPrank();
+
+// assertGt(sepoliaWETHMockToken.balanceOf(liquidator), liquidatorWethBalanceBeforeLiquidation);
+// assertLt(sepoliaWETHMockToken.balanceOf(borrower), borrowerWethBalanceBeforeLiquidation);
 }
 
 
@@ -691,17 +727,40 @@ vaultManager.mintPLST(address(sepoliaWBTCMockToken), amountToMint);
 
 assertEq(stabilskiToken.balanceOf(borrower), amountToMint);
 
+bool isHealthyAfterWithrawal = vaultManager.getIsHealthyAfterWithdrawal(uint256(1e7), address(sepoliaWBTCMockToken));
+
+assertEq(isHealthyAfterWithrawal, false);
+
+stabilskiToken.approve(address(vaultManager), amountToMint);
+
+vaultManager.repayPLST(address(sepoliaWBTCMockToken));
+
+bool isHealthyAfterWithrawalSecond = vaultManager.getIsHealthyAfterWithdrawal(uint256(1e7), address(sepoliaWBTCMockToken));
+
+assertEq(isHealthyAfterWithrawalSecond, true);
+
 vm.stopPrank();
 
 }
 
 
-function testIfMaxBorrowableEqualCrossChain() public {
+function testIfMaxBorrowableLesserThanCollateralCrossChain() public {
+
+// Test Link Tokens AcrossChain
+
 vm.startPrank(borrower);
+
+sepoliaWLINKMockToken.approve(address(vaultManager), sepoliaWLINKMockToken.balanceOf(borrower) + 1e18);
+
+vm.expectRevert();
+vaultManager.depositCollateral(address(sepoliaWLINKMockToken));
+
 
 sepoliaWLINKMockToken.approve(address(vaultManager), 10e18);
 
 vaultManager.depositCollateral(address(sepoliaWLINKMockToken));
+
+uint256 sepoliaEthCollateralValue = vaultManager.getCollateralValue(borrower, address(sepoliaWLINKMockToken));
 
 uint256 sepoliaEthMaxBorrowableAmount = vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWLINKMockToken));
 
@@ -711,18 +770,119 @@ vm.selectFork(arbitrumSepoliaFork);
 
 vm.startPrank(borrower);
 
+arbitrumLINKMockToken.approve(address(ArbitrumvaultManager), 10000e18);
+
+vm.expectRevert();
+ArbitrumvaultManager.depositCollateral(address(arbitrumLINKMockToken));
+
 arbitrumLINKMockToken.approve(address(ArbitrumvaultManager), 10e18);
 
 ArbitrumvaultManager.depositCollateral(address(arbitrumLINKMockToken));
 
-uint256 arbitrumEthMaxBorrowableAmount = ArbitrumvaultManager.getMaxBorrowableStabilskiTokens(borrower, address(arbitrumLINKMockToken));
+uint256 arbitrumCollateralValue = ArbitrumvaultManager.getCollateralValue(borrower, address(arbitrumLINKMockToken));
+
+uint256 arbitrumMaxBorrowableAmount = ArbitrumvaultManager.getMaxBorrowableStabilskiTokens(borrower, address(arbitrumLINKMockToken));
 
 vm.stopPrank();
 
-assertEq(sepoliaEthMaxBorrowableAmount, arbitrumEthMaxBorrowableAmount);
+vm.selectFork(baseSepoliaFork);
+
+vm.startPrank(liquidator);
+
+baseLINKMockToken.approve(address(baseSepoliaVaultManager), 10e18);
+
+baseSepoliaVaultManager.depositCollateral(address(baseLINKMockToken));
+
+uint256 baseCollateralValue = baseSepoliaVaultManager.getCollateralValue(liquidator, address(baseLINKMockToken));
+
+(uint256 baseCollateralAmount,,address baseCollateralTokenAddress,)=baseSepoliaVaultManager.getVaultInfo(liquidator, address(baseLINKMockToken));
+
+uint256 baseMaxBorrowableAmount = baseSepoliaVaultManager.getMaxBorrowableStabilskiTokens(liquidator, address(baseLINKMockToken));
+
+baseSepoliaVaultManager.mintPLST(address(baseLINKMockToken), baseMaxBorrowableAmount);
+
+uint256 balanceBeforeTransferToOtherMember= baseSepoliaStabilskiToken.balanceOf(liquidator);
+
+baseSepoliaStabilskiToken.transfer(borrower, baseMaxBorrowableAmount / 10);
+
+baseSepoliaStabilskiToken.approve(address(baseSepoliaVaultManager), balanceBeforeTransferToOtherMember);
+vm.expectRevert();
+baseSepoliaVaultManager.repayPLST(baseCollateralTokenAddress);
+
+baseSepoliaStabilskiToken.approve(address(baseSepoliaVaultManager), baseSepoliaStabilskiToken.balanceOf(liquidator));
+baseSepoliaVaultManager.repayPLST(baseCollateralTokenAddress);
+
+vm.expectRevert();
+baseSepoliaVaultManager.withdrawCollateral(baseCollateralTokenAddress, baseCollateralAmount);
+
+
+vm.stopPrank();
+
+
+assertGt(baseCollateralValue, baseMaxBorrowableAmount);
+assertGt(arbitrumCollateralValue, arbitrumMaxBorrowableAmount);
+assertGt(sepoliaEthCollateralValue, sepoliaEthMaxBorrowableAmount);
 
 }
 
+
+function testIsAmountApprovedOverDebt() public {
+
+// Test WETH token
+
+vm.selectFork(sepoliaEthFork);
+
+vm.startPrank(borrower);
+
+sepoliaWETHMockToken.approve(address(vaultManager), 10e18);
+
+vaultManager.depositCollateral(address(sepoliaWETHMockToken));
+
+uint256 sepoliaEthCollateralValueWETH = vaultManager.getCollateralValue(borrower, address(sepoliaWLINKMockToken));
+
+uint256 sepoliaEthMaxBorrowableAmountWETH = vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWLINKMockToken));
+
+vm.stopPrank();
+
+vm.selectFork(baseSepoliaFork);
+
+vm.startPrank(borrower);
+
+baseWETHMockToken.approve(address(baseSepoliaVaultManager), 1e18);
+
+baseSepoliaVaultManager.depositCollateral(address(baseWETHMockToken));
+
+uint256 basehCollateralValueWETH = baseSepoliaVaultManager.getCollateralValue(borrower, address(baseWETHMockToken));
+
+uint256 baseMaxBorrowableAmountWETH = baseSepoliaVaultManager.getMaxBorrowableStabilskiTokens(borrower, address(baseWETHMockToken));
+
+
+vm.stopPrank();
+
+vm.prank(baseSepoliaCollateralManager.getTheCollateralManagerOwner());
+baseSepoliaCollateralManager.toggleCollateral(address(baseWETHMockToken));
+
+
+vm.startPrank(borrower);
+vm.expectRevert();
+baseSepoliaVaultManager.mintPLST(address(baseWETHMockToken), baseMaxBorrowableAmountWETH);
+vm.stopPrank();
+
+
+vm.prank(baseSepoliaCollateralManager.getTheCollateralManagerOwner());
+baseSepoliaCollateralManager.toggleCollateral(address(baseWETHMockToken));
+
+vm.startPrank(borrower);
+baseSepoliaVaultManager.mintPLST(address(baseWETHMockToken), baseMaxBorrowableAmountWETH);
+
+
+baseSepoliaStabilskiToken.approve(address(baseSepoliaVaultManager), baseSepoliaStabilskiToken.balanceOf(borrower));
+
+baseSepoliaVaultManager.repayPLST(address(baseWETHMockToken));
+
+vm.stopPrank();
+
+}
 
 
 

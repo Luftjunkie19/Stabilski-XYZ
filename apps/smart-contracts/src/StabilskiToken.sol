@@ -60,7 +60,7 @@ contract StabilskiToken is
         return super.totalSupply();
     }
 
-    function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) onlyController returns (bool) {
+    function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
         return super.transfer(to, amount);
     }
 
