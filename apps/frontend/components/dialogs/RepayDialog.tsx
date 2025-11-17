@@ -213,7 +213,7 @@ const {writeContract}=useWriteContract();
     'abi':vaultManagerAbi,
     'address':chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
     'functionName':'repayPLST',
-    'args':[token, amount *  (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)],
+    'args':[token],
     chainId
   });
 }} className={`bg-green-500 max-w-40 w-full cursor-pointer hover:bg-green-800 hover:scale-95`}>Repay</Button>
