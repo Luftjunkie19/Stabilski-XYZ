@@ -60,6 +60,15 @@ constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralM
 }
 
 
+modifier onlyEnabledCollateral(address tokenAddress) {
+    (address priceFeed, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(tokenAddress);
+    if (priceFeed == address(0) || minCollateralRatio < 125e16) {
+        revert InvalidVault();
+    }
+    _;
+}
+
+
 modifier onlyWhitelistedCollateral(address tokenAddress) {
     (address priceFeed, uint256 minCollateralRatio, bool enabled,,) = collateralManager.getCollateralInfo(tokenAddress);
     if (priceFeed == address(0) || enabled == false || minCollateralRatio < 125e16) {
@@ -109,7 +118,7 @@ function isInTheArray(address soughtAddr) internal view returns(bool) {
     return false;
 }
 
-function depositCollateral(address token) external nonReentrant onlyWhitelistedCollateral(token) {
+function depositCollateral(address token) external nonReentrant onlyEnabledCollateral(token) {
 uint256 amount = IERC20(token).allowance(msg.sender, address(this));
 
     if(amount == 0 || amount > IERC20(token).balanceOf(msg.sender)) {
@@ -129,7 +138,7 @@ uint256 amount = IERC20(token).allowance(msg.sender, address(this));
 
 }
 
-function mintPLST(address collateralToken, uint256 amount) external nonReentrant onlyWhitelistedCollateral(collateralToken) HasSufficientWalletBalance(amount, collateralToken) {
+function mintPLST(address collateralToken, uint256 amount) external nonReentrant onlyEnabledCollateral(collateralToken) HasSufficientWalletBalance(amount, collateralToken) {
     Vault storage vault = vaults[msg.sender][collateralToken];
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(vault.collateralTypeToken);
 
@@ -158,8 +167,8 @@ function repayPLST(address collateralToken) external nonReentrant {
         revert NotEnoughDebt();
     }
 
-    stabilskiToken.burn(msg.sender, amount);
     vaults[msg.sender][collateralToken].debt -= amount;
+    stabilskiToken.burn(msg.sender, amount);
     emit DebtRepaid(msg.sender, amount, address(stabilskiToken));
 }
 
@@ -169,7 +178,7 @@ function withdrawCollateral(address token, uint256 amount) external nonReentrant
         revert NotEnoughCollateral();
     }
     
-    (bool isHealthyAfterWithdrawal) =getIsHealthyAfterWithdrawal(amount, token);
+    (bool isHealthyAfterWithdrawal) = getIsHealthyAfterWithdrawal(amount, token);
 
     if(!isHealthyAfterWithdrawal) {
         revert UnderCollateralized();
@@ -182,24 +191,21 @@ function withdrawCollateral(address token, uint256 amount) external nonReentrant
 }
 
 
+
+
+
 // The function is supposed to liquidate the vault
 function liquidateVault(address vaultOwner, address token) external nonReentrant NoReadyForLiquidation(vaultOwner, token) {
 
-    if(vaults[vaultOwner][token].debt == 0) {
-        revert InvalidVault();
-    }
-
-    if(vaults[vaultOwner][token].collateralAmount == 0) {
-        revert InvalidVault();
-    }
-    
-    if(vaults[vaultOwner][token].collateralTypeToken == address(0)) {
+    if(vaults[vaultOwner][token].debt == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || vaults[vaultOwner][token].collateralAmount == 0) {
         revert InvalidVault();
     }
 
   uint256 debtAmount = vaults[vaultOwner][token].debt;
 
-  if(debtAmount > stabilskiToken.balanceOf(msg.sender)) {
+  uint256 allowedAmount = stabilskiToken.allowance(msg.sender, address(this));
+
+  if(debtAmount > allowedAmount) {
         revert NotEnoughPLST();
     }
 
@@ -240,7 +246,6 @@ uint256 debtAmountFromCollateral = (debtInUSD * decimalPoints) / collateralPrice
 
     IERC20(vaults[vaultOwner][token].collateralTypeToken).safeTransfer(msg.sender, debtAmountFromCollateral + bountyCollateral);
 
-    
 
 uint256 originalDebt = vaults[vaultOwner][token].debt;
 uint256 totalCollateralUsed = debtAmountFromCollateral + bountyCollateral + punishmentFromCollateral;
@@ -256,23 +261,10 @@ if (remainingCollateral > 0) {
 
 }
 
-// Commented out if goes to prodution
-// function getVaultFlawedHealthFactor(address vaultOwner, address token) public view returns (uint256) {
-
-//     uint256 collateralAmountInPLN = _getCollateralValue(vaultOwner, token);
-
-//     (, uint256 minCollateralRatio,,,)= collateralManager.getCollateralInfo(token);
-
-//     uint256 debtAmount = vaults[vaultOwner][token].debt;
-
-// if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || debtAmount == 0) return type(uint256).max;
-
-//     return  ((collateralAmountInPLN * decimalPointsNormalizer / debtAmount) * 1e18 / (minCollateralRatio)) - 1e18; 
-// }
 
 
 
-function getVaultHealthFactor(address vaultOwner, address token) public view returns (uint256) {
+function getVaultHealthFactor(address vaultOwner, address token) public view onlyWhitelistedCollateral(token) returns (uint256) {
 
     uint256 collateralAmountInPLN = _getCollateralValue(vaultOwner, token);
 
@@ -284,8 +276,25 @@ if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token]
 }
 
 
+// Commented out if goes to prodution
+function getVaultFlawedHealthFactor(address vaultOwner, address token) public view returns (uint256) {
 
-function getIsHealthyAfterWithdrawal(uint256 amount, address token) public view returns (bool) {
+    uint256 collateralAmountInPLN = _getCollateralValue(vaultOwner, token);
+
+    (, uint256 minCollateralRatio,,,)= collateralManager.getCollateralInfo(token);
+
+    uint256 debtAmount = vaults[vaultOwner][token].debt;
+
+if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || debtAmount == 0) return type(uint256).max;
+
+    return  ((collateralAmountInPLN * decimalPointsNormalizer / debtAmount) * 1e18 / (minCollateralRatio)); 
+}
+
+
+
+
+
+function getIsHealthyAfterWithdrawal(uint256 amount, address token) public onlyWhitelistedCollateral(token) view returns (bool) {
      uint256 collateralAmountAfterWithdrawal = vaults[msg.sender][token].collateralAmount - amount;
 
     (, uint256 minCollateralRatio,,,)=collateralManager.getCollateralInfo(vaults[msg.sender][token].collateralTypeToken);
@@ -321,17 +330,25 @@ function isLiquidatable(address vaultOwner, address token) public view returns (
     return healthFactor < liquidationThreshold;
 }
 
+// function isLiquidatable(address vaultOwner, address token) public view returns (bool) {
+//     uint256 healthFactor = getVaultFlawedHealthFactor(vaultOwner, token);
+//     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
+
+//     // Apply a 15% liquidation threshold buffer
+//     uint256 liquidationThreshold = (minCollateralRatio * liquidationBuffer) / 100;
+
+//     return healthFactor < liquidationThreshold;
+// }
+
+
+
 
 function getCollateralValue(address owner, address token) external view returns (uint256 inPLN){
-if(token != bitcoinAddress){
-    return (((vaults[owner][token].collateralAmount * collateralManager.getTokenPrice(token)) / decimalPointsNormalizer) * usdPlnOracle.getPLNPrice()) / decimalPointsForUsdPlnRate;
-}
-
-    return (((vaults[owner][token].collateralAmount * collateralManager.getTokenPrice(token)) / bitcoinDecimalPoints) * usdPlnOracle.getPLNPrice()) / decimalPointsForUsdPlnRate;
+return _getCollateralValue(owner, token);
 }
 
 
-function _getCollateralValue(address owner, address token) private view returns (uint256 inPLN){
+function _getCollateralValue(address owner, address token) private onlyWhitelistedCollateral(token) view returns (uint256 inPLN){
  if(token != bitcoinAddress){
     return (((vaults[owner][token].collateralAmount * collateralManager.getTokenPrice(token)) / decimalPointsNormalizer) * usdPlnOracle.getPLNPrice()) / decimalPointsForUsdPlnRate;
 }
@@ -343,7 +360,7 @@ function getMaxBorrowableStabilskiTokens(address owner, address token) external 
     return _getMaxBorrowableStabilskiTokens(owner, token);
 }
 
-function _getMaxBorrowableStabilskiTokens(address owner, address token) internal view returns (uint256 amount){
+function _getMaxBorrowableStabilskiTokens(address owner, address token) internal onlyWhitelistedCollateral(token) view returns (uint256 amount){
     uint256 collateralValue = _getCollateralValue(owner, token);
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
     uint256 maxBorrowable = (collateralValue / minCollateralRatio) * decimalPointsNormalizer;
