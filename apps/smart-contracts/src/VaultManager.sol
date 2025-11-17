@@ -62,7 +62,7 @@ constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralM
 
 modifier onlyWhitelistedCollateral(address tokenAddress) {
     (address priceFeed, uint256 minCollateralRatio, bool enabled,,) = collateralManager.getCollateralInfo(tokenAddress);
-    if (priceFeed == address(0)) {
+    if (priceFeed == address(0) || enabled == false || minCollateralRatio < 125e16) {
         revert InvalidVault();
     }
     _;
@@ -109,7 +109,13 @@ function isInTheArray(address soughtAddr) internal view returns(bool) {
     return false;
 }
 
-function depositCollateral(address token, uint256 amount) external nonReentrant onlyWhitelistedCollateral(token) {
+function depositCollateral(address token) external nonReentrant onlyWhitelistedCollateral(token) {
+uint256 amount = IERC20(token).allowance(msg.sender, address(this));
+
+    if(amount == 0 || amount > IERC20(token).balanceOf(msg.sender)) {
+        revert NotEnoughCollateral();
+    }
+
    IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
     vaults[msg.sender][token].collateralAmount += amount;
@@ -123,7 +129,7 @@ function depositCollateral(address token, uint256 amount) external nonReentrant 
 
 }
 
-function mintPLST(address collateralToken, uint256 amount) external nonReentrant HasSufficientWalletBalance(amount, collateralToken) {
+function mintPLST(address collateralToken, uint256 amount) external nonReentrant onlyWhitelistedCollateral(collateralToken) HasSufficientWalletBalance(amount, collateralToken) {
     Vault storage vault = vaults[msg.sender][collateralToken];
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(vault.collateralTypeToken);
 
@@ -140,7 +146,10 @@ function mintPLST(address collateralToken, uint256 amount) external nonReentrant
 }
 
 
-function repayPLST(address collateralToken, uint256 amount) external nonReentrant {
+function repayPLST(address collateralToken) external nonReentrant {
+
+    uint256 amount = stabilskiToken.allowance(msg.sender, address(this));
+
     if(amount == 0 || amount > stabilskiToken.balanceOf(msg.sender)) {
         revert NotEnoughPLST();
     }
@@ -331,10 +340,7 @@ function _getCollateralValue(address owner, address token) private view returns 
 }
 
 function getMaxBorrowableStabilskiTokens(address owner, address token) external view returns (uint256 amount){
-    uint256 collateralValue = _getCollateralValue(owner, token);
-    (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
-    uint256 maxBorrowable = (collateralValue / minCollateralRatio) * decimalPointsNormalizer;
-    return maxBorrowable - vaults[owner][token].debt;
+    return _getMaxBorrowableStabilskiTokens(owner, token);
 }
 
 function _getMaxBorrowableStabilskiTokens(address owner, address token) internal view returns (uint256 amount){

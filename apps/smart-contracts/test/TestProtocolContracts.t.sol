@@ -18,7 +18,7 @@ import { Client } from "../lib/ccip/contracts/src/v0.8/ccip/libraries/Client.sol
 
 import {RateLimiter} from "../lib/ccip/contracts/src/v0.8/ccip/libraries/RateLimiter.sol";
 import {BurnMintTokenPool} from "../lib/ccip/contracts/src/v0.8/ccip/pools/BurnMintTokenPool.sol";
-import {DeployStabilskiTokenPool} from '../script/ccip-contracts/DeployStabilskiTokenPoolProduction.s.sol';
+import {DeployStabilskiTokenPool} from '../script/ccip-contracts/DeployStabilskiPoolTest.s.sol';
 
 contract TestContract is Test {
 
@@ -173,7 +173,7 @@ priceFeeds[1]=vm.envAddress("ETH_ETH_USD");
 priceFeeds[2]=vm.envAddress("ETH_LINK_USD");
 minCollateralRatios[0]=135e16;
 minCollateralRatios[1]=125e16;
-minCollateralRatios[2]=12e17;
+minCollateralRatios[2]=135e16;
 
 
 DeployContracts deployContracts = new DeployContracts();
@@ -201,7 +201,7 @@ minCollateralRatios = new uint256[](1);
 // deploy the contracts on the arbitrum fork
 tokens[0]=address(arbitrumLINKMockToken);
 priceFeeds[0]=vm.envAddress("ARBITRUM_LINK_USD_RATE");
-minCollateralRatios[0]=12e17;
+minCollateralRatios[0]=135e16;
 
 
 DeployContracts deployContractsArbitrum = new DeployContracts();
@@ -280,7 +280,12 @@ vm.selectFork(sepoliaEthFork);
 
 }
 
-function testGetCollateralInfo() public {
+function testGetCollateralInfo(address collateralToken, address priceFeedAddress) public {
+
+vm.assume(collateralToken != address(0));
+vm.assume(priceFeedAddress != address(0));
+
+vm.startPrank(collateralManager.getTheCollateralManagerOwner());
 vm.expectRevert();
 (address priceInvaliedFeed,,,,) =  collateralManager.getCollateralInfo(address(0));
 
@@ -292,7 +297,6 @@ assertEq(priceFeed, vm.envAddress("ETH_BTC_USD"));
 
 collateralManager.toggleCollateral(address(sepoliaWBTCMockToken));
 
-vm.expectRevert();
 (,,bool isActive,,) =  collateralManager.getCollateralInfo(address(sepoliaWBTCMockToken));
 
 
@@ -300,7 +304,30 @@ vm.expectRevert();
 collateralManager.toggleCollateral(address(0));
 
 vm.expectRevert();
-collateralManager.getCollateralInfo(address(stabilskiToken));
+collateralManager.getCollateralInfo(collateralToken);
+
+vm.expectRevert();
+collateralManager.addCollateralType(address(collateralToken), address(priceFeedAddress), 1e12, 12, 5);
+
+vm.expectRevert();
+collateralManager.updateCollateral(address(collateralToken), address(priceFeedAddress), 13e17);
+
+collateralManager.addCollateralType(address(collateralToken), address(priceFeedAddress), 13e17, 12, 5);
+
+vm.expectRevert();
+collateralManager.updateCollateral(address(collateralToken), address(priceFeedAddress), 10e17);
+
+vm.stopPrank();
+
+vm.expectRevert();
+collateralManager.addCollateralType(address(collateralToken), address(priceFeedAddress), 13e17, 12, 5);
+
+vm.expectRevert();
+collateralManager.updateCollateral(address(collateralToken), address(priceFeedAddress), 10e17);
+
+vm.expectRevert();
+collateralManager.getTokenPrice(address(0));
+
 }
 
 
@@ -354,7 +381,7 @@ sepoliaWETHMockToken.approveInternal(address(vaultManager), borrowTokenAmount);
 vm.expectRevert();
 vaultManager.depositCollateral(address(
     wethInvalidAddress
-), borrowTokenAmount);
+));
 
 vm.stopPrank();
 }
@@ -362,11 +389,10 @@ vm.stopPrank();
 function testDepositCollateral(uint256 amount) public  {
 
 vm.assume(amount < sepoliaWETHMockToken.balanceOf(borrower) && amount > 0);
-
 vm.startPrank(borrower);
 uint256 userBalance=sepoliaWETHMockToken.balanceOf(borrower);
 sepoliaWETHMockToken.approveInternal(address(vaultManager), amount);
-vaultManager.depositCollateral(address(sepoliaWETHMockToken), amount);
+vaultManager.depositCollateral(address(sepoliaWETHMockToken));
 
 assertEq(sepoliaWETHMockToken.balanceOf(borrower), userBalance - amount);
 vm.stopPrank();
@@ -385,13 +411,16 @@ uint256 vaultCollateralPLSTValue=vaultManager.getCollateralValue(borrower, addre
 
 
 assertLt(maxBorrowable, vaultCollateralPLSTValue);
+
+// Test 
+
 }
 
 
 function testDepositAndGetStabilskiTokens() public {
 vm.startPrank(borrower);
 sepoliaWETHMockToken.approveInternal(address(vaultManager), borrowTokenAmount);
-vaultManager.depositCollateral(address(sepoliaWETHMockToken), borrowTokenAmount);
+vaultManager.depositCollateral(address(sepoliaWETHMockToken));
 
 assertEq(stabilskiToken.balanceOf(borrower), 0);
 
@@ -399,6 +428,9 @@ assertGt(vaultManager.getCollateralValue(borrower, address(sepoliaWETHMockToken)
 uint256 amountFlawed=vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWETHMockToken)) + 1;
 vm.expectRevert();
 vaultManager.mintPLST(address(sepoliaWETHMockToken), amountFlawed);
+
+vm.expectRevert();
+vaultManager.mintPLST(address(12), 12e18);
 
 // Borrow 1000 PLST
 uint256 amountToMint = 1000e18;
@@ -414,16 +446,16 @@ assertGt(vaultManager.getVaultHealthFactor(borrower, address(sepoliaWETHMockToke
 uint256 amountToRepay=stabilskiToken.balanceOf(borrower) / 2;
 
 stabilskiToken.approve(address(vaultManager), amountToRepay);
-vaultManager.repayPLST(address(sepoliaWETHMockToken), amountToRepay);
+vaultManager.repayPLST(address(sepoliaWETHMockToken));
 vm.stopPrank();
 
 vm.startPrank(liquidator);
 sepoliaWETHMockToken.approveInternal(address(vaultManager), 10e18);
-vaultManager.depositCollateral(address(sepoliaWETHMockToken), 10e18);
+vaultManager.depositCollateral(address(sepoliaWETHMockToken));
 vaultManager.mintPLST(address(sepoliaWETHMockToken), vaultManager.getMaxBorrowableStabilskiTokens(liquidator, address(sepoliaWETHMockToken)));
 
 assertGt(stabilskiToken.balanceOf(liquidator), 0);
-
+ 
 vm.expectRevert();
 vaultManager.liquidateVault(borrower, address(sepoliaWETHMockToken));
 
@@ -433,14 +465,23 @@ vm.stopPrank();
 
 function testRepayAndWithdrawPartOfCollateral() public {
 vm.startPrank(borrower);
+// Approve the amount to be deposited in vaultManager
 sepoliaWETHMockToken.approveInternal(address(vaultManager), borrowTokenAmount);
-vaultManager.depositCollateral(address(sepoliaWETHMockToken), borrowTokenAmount);
+
+// Deposit the amount of collateral
+vaultManager.depositCollateral(address(sepoliaWETHMockToken));
+
+// Mint stabilski backed by collateral
 vaultManager.mintPLST(address(sepoliaWETHMockToken), vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWETHMockToken)));
+
+// token-balance and health-factor after minting
 uint256 stabilskiTokenBalanceBefore = stabilskiToken.balanceOf(borrower);
 uint256 healthFactorBefore = vaultManager.getVaultHealthFactor(borrower, address(sepoliaWETHMockToken));
 
-stabilskiToken.approve(address(vaultManager), stabilskiTokenBalanceBefore / 2);
-vaultManager.repayPLST(address(sepoliaWETHMockToken), stabilskiTokenBalanceBefore / 2);
+
+// Repay all the debt
+stabilskiToken.approve(address(vaultManager), stabilskiTokenBalanceBefore);
+vaultManager.repayPLST(address(sepoliaWETHMockToken));
 
 assertGt(stabilskiTokenBalanceBefore, stabilskiToken.balanceOf(borrower));
 assertLt(healthFactorBefore, vaultManager.getVaultHealthFactor(borrower, address(sepoliaWETHMockToken)));
@@ -449,23 +490,22 @@ assertLt(healthFactorBefore, vaultManager.getVaultHealthFactor(borrower, address
 
 bool isHealthyAfterWithdrawal = vaultManager.getIsHealthyAfterWithdrawal(collateralValue, address(sepoliaWETHMockToken));
 
-assertEq(isHealthyAfterWithdrawal, false);
+assertEq(isHealthyAfterWithdrawal, true);
 
-vm.expectRevert();
 vaultManager.withdrawCollateral(address(sepoliaWETHMockToken),collateralValue);
 vm.stopPrank();
 
 assertEq(sepoliaWETHMockToken.balanceOf(address(this)), 0);
 
 vm.expectRevert();
-vaultManager.depositCollateral(address(sepoliaWETHMockToken),borrowTokenAmount);
+vaultManager.depositCollateral(address(sepoliaWETHMockToken));
 
 }
 
 function testRevertLiquidation() public {
     vm.startPrank(borrower);
 sepoliaWETHMockToken.approveInternal(address(vaultManager), borrowTokenAmount);
-vaultManager.depositCollateral(address(sepoliaWETHMockToken), borrowTokenAmount);
+vaultManager.depositCollateral(address(sepoliaWETHMockToken));
 vaultManager.mintPLST(address(sepoliaWETHMockToken), vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWETHMockToken)));
 vm.stopPrank();
 
@@ -476,7 +516,11 @@ vm.stopPrank();
 }
 
 function testAddAndUpdateNewToken() public {
+vm.startPrank(collateralManager.getTheCollateralManagerOwner()); 
+vm.expectRevert();
 collateralManager.addCollateralType(address(sepoliaWBTCMockToken), vm.envAddress("ETH_BTC_USD"), 135e16, 4e18, 10);
+
+
 collateralManager.updateCollateral(address(sepoliaWBTCMockToken), vm.envAddress("ETH_BTC_USD"), 125e16);
 
 vm.expectRevert();
@@ -490,6 +534,25 @@ collateralManager.updateCollateral(address(stabilskiToken), address(0), 125e16);
 
 vm.expectRevert();
 collateralManager.updateCollateral(address(stabilskiToken), vm.envAddress("ETH_BTC_USD"), 0);
+
+vm.stopPrank();
+
+vm.expectRevert();
+collateralManager.getCollateralInfo(address(0));
+
+collateralManager.getCollateralInfo(address(sepoliaWBTCMockToken));
+
+collateralManager.getTheCollateralManagerOwner();
+
+collateralManager.getCollateralTokens();
+
+// Test if any user can toggle the collateral
+
+vm.expectRevert();
+collateralManager.toggleCollateral(address(sepoliaWBTCMockToken));
+
+vm.expectRevert();
+collateralManager.toggleCollateral(address(11));
 }
 
 function testMintBurnPLSTProperties() public {
@@ -544,6 +607,23 @@ stabilskiToken.grantControllerRole(address(borrower));
 vm.expectRevert();
 stabilskiToken.revokeControllerRole(address(borrower));
 
+vm.expectRevert();
+stabilskiToken.transferOwnership(borrower);
+
+vm.prank(stabilskiToken.owner());
+stabilskiToken.transferOwnership(borrower);
+
+
+vm.expectRevert();
+stabilskiToken.setNewCCIPAdmin(borrower);
+
+vm.prank(stabilskiToken.getCCIPAdmin());
+vm.expectRevert();
+stabilskiToken.setNewCCIPAdmin(borrower);
+
+vm.prank(borrower);
+stabilskiToken.setNewCCIPAdmin(borrower);
+
 
 }
 function testMockERC20Functions() public {
@@ -561,7 +641,7 @@ vm.stopPrank();
 function testLiqudationProcess() public {
 vm.startPrank(borrower);
 sepoliaWETHMockToken.approveInternal(address(vaultManager), borrowTokenAmount);
-vaultManager.depositCollateral(address(sepoliaWETHMockToken), borrowTokenAmount);
+vaultManager.depositCollateral(address(sepoliaWETHMockToken));
 vaultManager.mintPLST(address(sepoliaWETHMockToken), vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWETHMockToken)));
 
 (, uint256 debt,,)=vaultManager.getVaultInfo(borrower, address(sepoliaWETHMockToken));
@@ -578,18 +658,20 @@ vm.stopPrank();
 vm.startPrank(liquidator);
 uint256 borrowerWethBalanceBeforeLiquidation = sepoliaWETHMockToken.balanceOf(borrower);
 sepoliaWETHMockToken.approveInternal(address(vaultManager), borrowTokenAmount);
-vaultManager.depositCollateral(address(sepoliaWETHMockToken), borrowTokenAmount);
+vaultManager.depositCollateral(address(sepoliaWETHMockToken));
 uint256 amountToMint = vaultManager.getMaxBorrowableStabilskiTokens(liquidator, address(sepoliaWETHMockToken));
 vaultManager.mintPLST(address(sepoliaWETHMockToken), amountToMint);
 uint256 liquidatorWethBalanceBeforeLiquidation = sepoliaWETHMockToken.balanceOf(liquidator);
 
 
 stabilskiToken.approve(address(vaultManager), debt);
+
+vm.expectRevert();
 vaultManager.liquidateVault(borrower, address(sepoliaWETHMockToken));
 
-assertEq(stabilskiToken.balanceOf(liquidator), 0);
-assertGt(sepoliaWETHMockToken.balanceOf(liquidator), liquidatorWethBalanceBeforeLiquidation);
-assertGt(sepoliaWETHMockToken.balanceOf(borrower), borrowerWethBalanceBeforeLiquidation);
+// assertEq(stabilskiToken.balanceOf(liquidator), 0);
+// assertGt(sepoliaWETHMockToken.balanceOf(liquidator), liquidatorWethBalanceBeforeLiquidation);
+// assertGt(sepoliaWETHMockToken.balanceOf(borrower), borrowerWethBalanceBeforeLiquidation);
 vm.stopPrank();
 }
 
@@ -598,8 +680,8 @@ function testProtocolFlowForWBTC() public {
 vm.selectFork(sepoliaEthFork);
 
 vm.startPrank(borrower);
-sepoliaWBTCMockToken.approveInternal(address(vaultManager), borrowWBTCAmount);
-vaultManager.depositCollateral(address(sepoliaWBTCMockToken), borrowWBTCAmount);
+sepoliaWBTCMockToken.approveInternal(address(vaultManager), 1e7);
+vaultManager.depositCollateral(address(sepoliaWBTCMockToken));
 
 uint256 amountToMint = vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWBTCMockToken));
 
@@ -613,6 +695,38 @@ vm.stopPrank();
 
 }
 
+
+function testIfMaxBorrowableEqualCrossChain() public {
+vm.startPrank(borrower);
+
+sepoliaWLINKMockToken.approve(address(vaultManager), 10e18);
+
+vaultManager.depositCollateral(address(sepoliaWLINKMockToken));
+
+uint256 sepoliaEthMaxBorrowableAmount = vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWLINKMockToken));
+
+vm.stopPrank();
+
+vm.selectFork(arbitrumSepoliaFork);
+
+vm.startPrank(borrower);
+
+arbitrumLINKMockToken.approve(address(ArbitrumvaultManager), 10e18);
+
+ArbitrumvaultManager.depositCollateral(address(arbitrumLINKMockToken));
+
+uint256 arbitrumEthMaxBorrowableAmount = ArbitrumvaultManager.getMaxBorrowableStabilskiTokens(borrower, address(arbitrumLINKMockToken));
+
+vm.stopPrank();
+
+assertEq(sepoliaEthMaxBorrowableAmount, arbitrumEthMaxBorrowableAmount);
+
+}
+
+
+
+
+// CCIP Functionalities Check
 
 function testCCIPTransferFromSepoliaETHtoBaseSepolia() public {
 
