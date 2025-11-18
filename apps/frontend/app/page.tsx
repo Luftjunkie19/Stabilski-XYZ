@@ -21,20 +21,15 @@ export default function Home() {
   </div>
 
   <div className="flex items-center gap-4">
-<Link href={'https://t.me/+x7c1r_FpS3YyYjVk'}>
+<Link target="_blank"
+href={'https://t.me/+x7c1r_FpS3YyYjVk'}>
   <FaTelegram size={30} className="text-[#24A1DE] bg-white rounded-full border border-[#24A1DE]"/>
 </Link>
 
 
-<Link href={'https://discord.gg/TeTbqc7HeK'}>
-  <FaDiscord size={30} className="text-[#5865F2]"  />
-</Link>
-
-<Link href={'https://x.com/StabilskiO'}>
-  <FaXTwitter size={24}  />
-</Link>
-
-<Link href={'https://github.com/Luftjunkie19/Stabilski-XYZ'}>
+<Link
+target="_blank"
+href={'https://github.com/Luftjunkie19/Stabilski-XYZ'}>
 <FaGithub size={24} className="text-black"/>
 </Link>
   </div>
