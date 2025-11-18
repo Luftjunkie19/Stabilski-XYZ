@@ -1,5 +1,5 @@
 import { stabilskiTokenCollateralManagerAbi } from '@/lib/smart-contracts-abi/CollateralManager';
-import { ChainType, ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
 import { useAccount, useReadContract } from 'wagmi';
 import UserVaultHandlePosition from './element/UserVaultHandlePosition';

@@ -1,7 +1,9 @@
+import { Abi } from "viem";
+
 export type ethereumAddress =`0x${string}`;
 
 export interface ContractType {
-    abi:any[],
+    abi:Abi[],
     address:ethereumAddress,
     functionName:string,
     args?:ethereumAddress[],

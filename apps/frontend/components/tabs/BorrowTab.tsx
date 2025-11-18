@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState } from 'react'
@@ -15,6 +14,8 @@ import {  ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
+import useBlockchainData from '@/lib/hooks/useBlockchainData';
+import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
 
 
 function BorrowTab() {
@@ -32,10 +33,9 @@ const {writeContract}=useWriteContract({
 });
 
  const [amount, setAmount] = useState<number>(0);
-  const [token, setToken] = useState<`0x${string}` | undefined>(undefined);
+  const [token, setToken] = useState<ethereumAddress | undefined>(undefined);
 const {chainId, address}=useAccount();
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
-
  
     const arrayOfContracts=[
        {
@@ -164,28 +164,15 @@ const {chainId, address}=useAccount();
     });
 
 
+    const {currentChainVaultManagerAddress}=useBlockchainData();
+
 const borrowPolishStableCoin= ()=>{
   try{
-    const currentVaultManager = ()=>{
-      switch(chainId){
-        case SEPOLIA_ETH_CHAINID:
-          return ethSepoliaVaultManagerAddress;
   
-        case  ARBITRUM_SEPOLIA_CHAINID:
-          return arbitrumSepoliaVaultManagerAddress
-  
-        case BASE_SEPOLIA_CHAINID:
-          return baseSepoliaVaultManagerAddress;
-      }
-    }
-  
-    const currentVaultAddress= currentVaultManager();
-
-    console.log(currentVaultAddress);
 
     writeContract({
     abi:vaultManagerAbi,
-    address: currentVaultAddress as `0x${string}`,
+    address: currentChainVaultManagerAddress as `0x${string}`,
     functionName:'mintPLST',
     args:[token, amount * 1e18],
     chainId
@@ -201,7 +188,7 @@ toast.error('Something went wrong');
 
 
 useWatchContractEvent({
-  address: chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaVaultManagerAddress : ethSepoliaVaultManagerAddress,
+  address: currentChainVaultManagerAddress as ethereumAddress,
   abi:vaultManagerAbi,
   eventName:'StabilskiTokenMinted',
   chainId:chainId,

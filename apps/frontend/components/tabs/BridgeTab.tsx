@@ -12,15 +12,17 @@ import Image from 'next/image';
 import arbitrumLogo from "@/public/arbitrum-logo.png";
 import baseLogo from "@/public/base-logo.png";
 import { FaEthereum } from 'react-icons/fa6';
-import { useAccount, useReadContract, useWriteContract } from 'wagmi';
-import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenBaseSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
+import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
+import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { ARBITRUM_SEPOLIA_CHAINID, BASE_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
-import { arbitrumSepoliaRouter, baseSepoliaRouter, ethereumSepoliaRouter, routerAbi } from '@/lib/smart-contracts-abi/ccip-routers/Router';
+import { routerAbi } from '@/lib/smart-contracts-abi/ccip-routers/Router';
 import { config } from '@/lib/Web3Provider';
 import { readContract } from '@wagmi/core'
 
 import { toast } from 'sonner';
-import { ccipInformationRetrieverAbi, ccipInformationRetrieverSepoliaArbAddress, ccipInformationRetrieverSepoliaBaseAddress, ccipInformationRetrieverSepoliaEthAddress } from '@/lib/smart-contracts-abi/ccip-routers/StabilskiTokenCCIPNeededData';
+import { ccipInformationRetrieverAbi } from '@/lib/smart-contracts-abi/ccip-routers/StabilskiTokenCCIPNeededData';
+import useBlockchainData from '@/lib/hooks/useBlockchainData';
+import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
 
 function BridgeTab() {
 const chainSelectorArbitrumSepolia = BigInt('3478487238524512106');
@@ -30,48 +32,27 @@ const chainSelectorBaseSepolia= BigInt('10344971235874465080');
 const {chainId, address}=useAccount();
 const [tokenAmountToSend, setTokenAmountToSend] = useState<number>(0);
 const [destinationChainSelector, setDestinationChainSelector]=useState<string>();
+const [approved, setApproved]=useState<boolean>(false);
 
+  const [sourceChainTx, setSourceChainTx]=useState<ethereumAddress>();
+  const [destinationPoolAddress, setDestinationPoolAddress]=useState<ethereumAddress>();
+  const [destinationRouterAddress, setDestinationRouterAddress]=useState<ethereumAddress>();
+
+const {currentStabilskiContractAddress, getCurrentRouter, getCurrentCcipRetriever, getCurrentPoolAddress}=useBlockchainData();
 
 const {data}=useReadContract({
     abi:stabilskiTokenABI,
-    address: chainId === ARBITRUM_SEPOLIA_CHAINID ? stabilskiTokenArbitrumSepoliaAddress : chainId === BASE_SEPOLIA_CHAINID ? stabilskiTokenBaseSepoliaAddress : stabilskiTokenEthSepoliaAddress,
+    address: currentStabilskiContractAddress as `0x${string}`,
     functionName: 'balanceOf',
     args: [address],
     chainId: chainId
 });
 
-
 const {writeContract, writeContractAsync}=useWriteContract();
-
-const getCurrentRouter= ()=>{
-  switch(chainId){
-    case ARBITRUM_SEPOLIA_CHAINID:
-      return arbitrumSepoliaRouter
-    
-    case BASE_SEPOLIA_CHAINID:
-      return baseSepoliaRouter
-
-    case SEPOLIA_ETH_CHAINID:
-    return ethereumSepoliaRouter
-  }
-}
-
-const getCurrentCcipRetriever= ()=>{
-  switch(chainId){
-    case SEPOLIA_ETH_CHAINID:
-      return ccipInformationRetrieverSepoliaEthAddress
-    
-    case ARBITRUM_SEPOLIA_CHAINID:
-      return ccipInformationRetrieverSepoliaArbAddress
-
-    case BASE_SEPOLIA_CHAINID:
-    return ccipInformationRetrieverSepoliaBaseAddress
-  }
-}
-
 
 const currentRouter= getCurrentRouter();
 const currentRetriever = getCurrentCcipRetriever();
+const currentPoolAddr= getCurrentPoolAddress();
 
 const amountToBeTransfered = useMemo(()=>{
 return (Number(data) / 1e18) - tokenAmountToSend;
@@ -79,12 +60,6 @@ return (Number(data) / 1e18) - tokenAmountToSend;
 
 const approveStabilskiTokens = async () => {
 try {
-
-const currentStabilskiContract= chainId === ARBITRUM_SEPOLIA_CHAINID ? stabilskiTokenArbitrumSepoliaAddress : chainId === BASE_SEPOLIA_CHAINID ? stabilskiTokenBaseSepoliaAddress : stabilskiTokenEthSepoliaAddress;
-
-console.log(currentRouter);
-
-console.log(amountToBeTransfered);
 
 if(!currentRouter){
   toast.error("No router, no party !");
@@ -102,25 +77,13 @@ console.log(isArbitrumSepoliaSupported, 'Is arbitrum supported by eth sepolia ro
 
 const turnedTokenAmountToSend= BigInt(tokenAmountToSend * 1e18);
 
-
-
 writeContract({
   abi:stabilskiTokenABI,
-    address: currentStabilskiContract,
+    address: currentStabilskiContractAddress as `0x${string}`,
     functionName:"approve",
     args:[currentRouter, turnedTokenAmountToSend],
     chainId
-})
-
-// writeContract({
-//     abi:routerAbi,
-//     address: currentRouter,
-//     functionName:"ccipSend",
-//     args:[destinationChainSelector, getCcipMessage],
-//     chainId,
-//     value: getFee as unknown as bigint
-//   });
-
+});
 
 } catch (error) {
   console.log(error);
@@ -129,12 +92,10 @@ writeContract({
 }
 
 const commitCCIPTransfer= async ()=>{
-const currentStabilskiContract= chainId === ARBITRUM_SEPOLIA_CHAINID ? stabilskiTokenArbitrumSepoliaAddress : chainId === BASE_SEPOLIA_CHAINID ? stabilskiTokenBaseSepoliaAddress : stabilskiTokenEthSepoliaAddress;
-
 
 const allowanceStabilskiToken= await readContract(config, {
     abi:stabilskiTokenABI,
-    address: currentStabilskiContract,
+    address: currentStabilskiContractAddress as ethereumAddress,
     functionName:"allowance",
     args:[address, currentRouter]
 });
@@ -160,17 +121,16 @@ console.log('Allowance', allowanceStabilskiToken)
   console.log(getCcipMessage, 'CCIP Message');
 
 
-   await writeContractAsync({
+  const txData = await writeContractAsync({
     abi:routerAbi,
     address: currentRouter as `0x${string}`,
     functionName:"ccipSend",
     args:[destinationChainSelector, getCcipMessage],
     chainId,
-    value: getFee as any,
-    'gas':BigInt(500_000) 
-    
+    value: getFee as any
   });
 
+  setSourceChainTx(txData);
 }
 
 const SelectOptions= ()=>{
@@ -223,6 +183,68 @@ const SelectOptions= ()=>{
 
 }
 
+   useWatchContractEvent({
+    address: currentStabilskiContractAddress as ethereumAddress,
+    abi: stabilskiTokenABI,
+    eventName: 'Approval',
+    'onError':(error)=>{
+      console.error('Error watching contract event:', error);
+    
+    },
+  'onLogs':(logs)=>{
+    console.log('New logs!', logs);
+    setApproved(true);
+    toast.success('Stabilski Tokens Approved Successfully');
+  },
+  args:{
+    owner: address,
+  }
+  });
+
+  useWatchContractEvent({
+    address: currentRouter,
+    abi: routerAbi,
+    'eventName':'Transfer',
+    args:{
+      from: currentPoolAddr
+    },
+   'onLogs':(logs)=>{
+    console.log(logs, 'Logs from Transfer');
+    toast.success('Successful Transfer to Burner (Destination Chain)');
+   },
+   'strict':true
+  });
+
+    useWatchContractEvent({
+    address: currentRouter,
+    abi: routerAbi,
+    'eventName':'Transfer',
+    args:{
+      from: currentPoolAddr,
+      value: BigInt(tokenAmountToSend * 1e18)
+    },
+   'onLogs':(logs)=>{
+    console.log(logs, 'Logs from Transfer');
+    toast.success('Successful Transfer to Burner (Destination Chain)');
+   },
+   'strict':true
+  });
+
+     useWatchContractEvent({
+    address: destinationRouterAddress,
+    abi: routerAbi,
+    'eventName':'Minted',
+    args:{
+      recipient: address,
+      value: BigInt(tokenAmountToSend * 1e18)
+    },
+   'onLogs':(logs)=>{
+    console.log(logs, 'Logs from Transfer');
+    toast.success('Successfuly Received PLST Tokens');
+   },
+   enabled: typeof destinationRouterAddress === 'string'
+  });
+
 
   return (
   <TabsContent value="bridge" className="flex flex-col gap-4 max-w-xl w-full">
@@ -259,8 +281,8 @@ const SelectOptions= ()=>{
     </Card>
 
    <div className="flex items-center w-full justify-center gap-3">
-     <Button onClick={approveStabilskiTokens} className="p-6  transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-72 self-center w-full bg-red-500">Approve Tokens</Button>
-      <Button onClick={commitCCIPTransfer} className="p-6  transition-all shadow-sm shadow-black hover:bg-blue-600 cursor-pointer hover:scale-95 text-lg max-w-72 self-center w-full bg-blue-500">Bridge Tokens</Button>
+     <Button onClick={approveStabilskiTokens} className="p-6  transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-base md:text-lg max-w-40 sm:max-w-72 self-center w-full bg-red-500">Approve Tokens</Button>
+      <Button disabled={!approved} onClick={commitCCIPTransfer} className={`p-6 disabled:bg-blue-400 disabled:opacity-95 transition-all shadow-sm shadow-black hover:bg-blue-600 cursor-pointer hover:scale-95 text-base md:text-lg max-w-40 sm:max-w-72 self-center w-full bg-blue-500`}>Bridge Tokens</Button>
    </div>
   </TabsContent>
   )
