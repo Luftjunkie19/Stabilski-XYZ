@@ -3,7 +3,7 @@ import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
 import { GiPayMoney, GiReceiveMoney } from 'react-icons/gi';
 import { toast } from 'sonner';
-import { useAccount, useReadContract, useWatchContractEvent } from 'wagmi';
+import { useReadContract, useWatchContractEvent } from 'wagmi';
 import Image from "next/image";
 import stabilskiStableCoin from '@/public/Logox32.png'
 import RepayDialog from '@/components/dialogs/RepayDialog';
@@ -49,7 +49,7 @@ function UserVaultHandlePosition({vaultManagerAddress, depositor, tokenAddress}:
   onLogs: (logs) => {
     console.log('New logs!', logs);
     toast.success(`
-Debt repaid successfully for ${(logs[0] as any).args.vaultOwner} PLST on ${tokenAddress} vault!
+Debt repaid successfully for ${(logs[0]).args.vaultOwner} PLST on ${tokenAddress} vault!
     `);
   },
   args:{

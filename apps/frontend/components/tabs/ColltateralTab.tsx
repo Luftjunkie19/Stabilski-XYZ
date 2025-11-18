@@ -1,5 +1,5 @@
 'use client';
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { TabsContent } from '../ui/tabs'
 import { Label } from '../ui/label'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select'
@@ -9,12 +9,14 @@ import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Input } from '../ui/input'
 import { useAccount, useReadContract, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
-import { usdplnOracleABI, usdplnOracleArbitrumSepoliaAddress, usdPlnOracleBaseSepoliaAddress, usdplnOracleEthSepoliaAddress } from '@/lib/smart-contracts-abi/USDPLNOracle';
+import { usdplnOracleABI } from '@/lib/smart-contracts-abi/USDPLNOracle';
 import { ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ABI, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ABI, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenBaseSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
 import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
+import useBlockchainData from '@/lib/hooks/useBlockchainData';
+import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
 
 
 function ColltateralTab() {
@@ -36,31 +38,10 @@ function ColltateralTab() {
 
     const {writeContract}=useWriteContract();
 
-    const currentTokenWatchAbi=()=>{
-      switch(token){
+    const {getTokenAbi, currentChainVaultManagerAddress, currentOraclePriceAddress}=useBlockchainData();
 
-        case SEPOLIA_ETH_WETH_ADDR:
-          return SEPOLIA_ETH_WETH_ABI
 
-        case SEPOLIA_ETH_WBTC_ADDR:
-          return SEPOLIA_ETH_WBTC_ABI
-
-        case SEPOLIA_ETH_LINK_ADDR:
-          return SEPOLIA_ETH_LINK_ABI
-
-          case ARBITRUM_SEPOLIA_LINK_ADDR:
-            return ARBITRUM_SEPOLIA_ABI
-
-          case BASE_SEPOLIA_WETH_ADDR:
-            return BASE_SEPOLIA_WETH_ABI
-
-          case BASE_SEPOLIA_LINK_ADDR:
-            return BASE_SEPOLIA_LINK_ABI
-
-        }
-    }
-
-    const currentAbi =currentTokenWatchAbi();
+    const currentAbi = getTokenAbi(token as `0x${string}`);
 
 
      useWatchContractEvent({
@@ -74,30 +55,15 @@ function ColltateralTab() {
   'onLogs':(logs)=>{
     console.log('New logs!', logs);
     setApproved(true);
-    toast.success('Collateral approved successfully');
+    toast.success('Stabilski Tokens Approved Successfully');
   },
   args:{
     owner: address,
   }
   });
 
-  const currentVaultManager=()=>{
-    switch(chainId){
-case SEPOLIA_ETH_CHAINID:
-  return ethSepoliaVaultManagerAddress;
-  
-  case ARBITRUM_SEPOLIA_CHAINID:
-    return arbitrumSepoliaVaultManagerAddress
-
-  case BASE_SEPOLIA_CHAINID:
-    return baseSepoliaVaultManagerAddress
-    }
-  }
-
-  const vaultManagerAddress = currentVaultManager();
-
   useWatchContractEvent({
-    address: vaultManagerAddress,
+    address: currentChainVaultManagerAddress as `0x${string}`,
     abi: vaultManagerAbi,
     eventName: 'CollateralDeposited',
     'onError':(error)=>{
@@ -118,7 +84,8 @@ case SEPOLIA_ETH_CHAINID:
   'enabled': amount > 0 && token !== undefined && address !== undefined && chainId !== undefined,
   });
 
-    const arrayOfContracts=[
+    const arrayOfContracts=useMemo(()=>{
+     return [
    {
          'abi':SEPOLIA_ETH_WBTC_ABI,
         'address':SEPOLIA_ETH_WBTC_ADDR,
@@ -162,7 +129,7 @@ case SEPOLIA_ETH_CHAINID:
         chainId:BASE_SEPOLIA_CHAINID
     }
     ];
-
+    }, [address]);
     
 
     const {data}=useReadContracts({contracts:[
@@ -302,23 +269,10 @@ case SEPOLIA_ETH_CHAINID:
     }
     ]});
 
-    const currentUsdPlnOracle=()=>{
-      switch(chainId){
-        case SEPOLIA_ETH_CHAINID:
-          return usdplnOracleEthSepoliaAddress
-        case ARBITRUM_SEPOLIA_CHAINID:
-          return usdplnOracleArbitrumSepoliaAddress
-        case BASE_SEPOLIA_CHAINID:
-          return usdPlnOracleBaseSepoliaAddress
-      }
-    }
-
-    const currentOraclePriceAddress= currentUsdPlnOracle();
-
 
     const {data:usdplnOraclePrice}=useReadContract({
          'abi': usdplnOracleABI,
-        'address':currentOraclePriceAddress,
+        'address':currentOraclePriceAddress as ethereumAddress,
         'functionName':'getPLNPrice',
         'args':[],
         chainId
@@ -329,30 +283,17 @@ case SEPOLIA_ETH_CHAINID:
       if(!collateralTokenPriceData || !usdplnOraclePrice || !token || !collateralData) return 0;
 
       if(collateralData && collateralTokenPriceData && usdplnOraclePrice && token){
-
-        // const maxPlstBorrowable = await readContract(config, {
-        //   address: ethSepoliaVaultManagerAddress,
-        //   abi: vaultManagerAbi,
-        //   functionName: 'getMaxBorrowableStabilskiTokens',
-        //   args:[address, token]
-        // });
-
-        // console.log(maxPlstBorrowable);
         
         const convertedNumber= Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === token)].result);
 
 
         const main =((amount * convertedNumber) * Number(usdplnOraclePrice) * 1e18) / 1e22;
-
-
-const maxToBorrow = (main / 1e18);
+        
+        const maxToBorrow = (main / 1e18);
         return (maxToBorrow / 1.4);
 }
 
 return 0;
-
-
-
 
 },[collateralTokenPriceData, usdplnOraclePrice, token, collateralData, arrayOfContracts, amount]);
 

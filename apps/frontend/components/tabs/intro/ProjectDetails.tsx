@@ -5,9 +5,8 @@ import { SiChainlink } from 'react-icons/si';
 import { toast } from 'sonner';
 import { SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { motion } from 'motion/react';
-type Props = {}
 
-function ProjectDetails({}: Props) {
+function ProjectDetails() {
   return (
         <div className="flex flex-col gap-2">
 

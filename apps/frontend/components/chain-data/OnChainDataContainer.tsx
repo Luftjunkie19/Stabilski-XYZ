@@ -1,7 +1,7 @@
 import { ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenBaseSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { usdplnOracleABI, usdplnOracleArbitrumSepoliaAddress, usdPlnOracleBaseSepoliaAddress, usdplnOracleEthSepoliaAddress } from '@/lib/smart-contracts-abi/USDPLNOracle';
-import { ChainType, ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
 import { FaBitcoin, FaEthereum } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
@@ -12,6 +12,7 @@ import UserVaults from './UserVaults';
 import ProtocolOnChainPositions from './ProtocolOnChainPositions';
 import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenBaseSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
+import { Abi } from 'viem';
 
 function OnChainDataContainer() {
   const {chainId, address}=useAccount();
@@ -207,10 +208,24 @@ const collateralPriceOnChainContracts=chainCollateralContracts();
 
 
   const {data:vaultTokensOnchainData}=useReadContracts({
-            contracts:vaultManagerContracts as any[]
+            contracts:vaultManagerContracts as readonly {
+    abi?: Abi | undefined;
+    functionName?: string | undefined;
+    args?: readonly unknown[] | undefined;
+    address?: `0x${string}` | undefined;
+    chainId?: number | undefined;
+}[]
         });
         
-  const {data:collateralTokenPriceData}=useReadContracts({contracts:collateralPriceOnChainContracts as any[]});
+  const {data:collateralTokenPriceData}=useReadContracts({contracts:collateralPriceOnChainContracts as 
+    readonly {
+    abi?: Abi | undefined;
+    functionName?: string | undefined;
+    args?: readonly unknown[] | undefined;
+    address?: `0x${string}` | undefined;
+    chainId?: number | undefined;
+}[]
+  });
 
   const {data:balancePLST} = useReadContract(
             {
