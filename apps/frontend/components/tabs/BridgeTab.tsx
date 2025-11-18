@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { ccipInformationRetrieverAbi } from '@/lib/smart-contracts-abi/ccip-routers/StabilskiTokenCCIPNeededData';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import Link from 'next/link';
 
 function BridgeTab() {
 const chainSelectorArbitrumSepolia = BigInt('3478487238524512106');
@@ -131,6 +132,7 @@ console.log('Allowance', allowanceStabilskiToken)
   });
 
   setSourceChainTx(txData);
+  setTokenAmountToSend(0);
 }
 
 const SelectOptions= ()=>{
@@ -241,6 +243,8 @@ const SelectOptions= ()=>{
    'onLogs':(logs)=>{
     console.log(logs, 'Logs from Transfer');
     toast.success('Successfuly Received PLST Tokens');
+    setApproved(false);
+    setSourceChainTx(undefined);
    },
    enabled: typeof destinationRouterAddress === 'string'
   });
@@ -284,8 +288,36 @@ const SelectOptions= ()=>{
      <Button onClick={approveStabilskiTokens} className="p-6  transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-base md:text-lg max-w-40 sm:max-w-72 self-center w-full bg-red-500">Approve Tokens</Button>
       <Button disabled={!approved} onClick={commitCCIPTransfer} className={`p-6 disabled:bg-blue-400 disabled:opacity-95 transition-all shadow-sm shadow-black hover:bg-blue-600 cursor-pointer hover:scale-95 text-base md:text-lg max-w-40 sm:max-w-72 self-center w-full bg-blue-500`}>Bridge Tokens</Button>
    </div>
+
+   {sourceChainTx &&
+   <div
+   className={
+    `flex flex-col gap-2
+    
+    `
+   }
+   >
+     <Link 
+   target="_blank"
+   href={`https://ccip.chain.link/#/side-drawer/msg/${sourceChainTx}`} className="text-blue-500 hover:text-blue-900 transition-all underline ">Click to see your transaction</Link>
+  
+  <Button className='p-3 max-w-52 w-full cursor-pointer hover:bg-gray-800
+  
+  '
+onClick={()=>{
+navigator.clipboard.writeText(sourceChainTx);
+toast.success("Successfully copied tx-hash");
+}}
+>
+  Copy Tx Hash
+</Button>
+   </div>
+   
+   }
+
   </TabsContent>
   )
+
 }
 
-export default BridgeTab
+export default BridgeTab;
