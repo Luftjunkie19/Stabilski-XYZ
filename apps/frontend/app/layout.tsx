@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import {  Audiowide
+import { Raleway, Outfit
 } from "next/font/google";
 import "./globals.css";
 import { Web3Provider } from "@/lib/Web3Provider";
@@ -14,9 +14,9 @@ import { Toaster } from "sonner";
 // });
 
 
-const audiowide = Audiowide({
-  variable: "--font-audiowide",
-  weight:['400'],
+const outfit = Outfit({
+  variable: "--font-outfit",
+  weight:['100', '200', '300', '500', '400', '600', '700', '800', '900'],
   style:["normal"],
   subsets: ["latin"],
 });
@@ -37,7 +37,7 @@ export default function RootLayout({
     <html lang="en">
       <Web3Provider>
       <body
-        className={`${audiowide.variable} antialiased`}
+        className={`${outfit.variable} antialiased`}
         >
         <Navbar/>
         <Toaster/>
