@@ -67,6 +67,17 @@ if(!currentRouter){
   return;
 }
 
+if(!destinationChainSelector){
+  toast.error("Destination Chain Has Not been selected");
+  return;
+}
+
+if(tokenAmountToSend === 0){
+  toast.error('Amount to send cross-chain cannot be equal 0');
+  return;
+}
+
+
   const isArbitrumSepoliaSupported = await readContract(config, {
     abi:routerAbi,
     address: currentRouter,
@@ -233,7 +244,6 @@ const SelectOptions= ()=>{
     'eventName':'Minted',
     args:{
       recipient: address,
-      sender: address,
       value: BigInt(tokenAmountToSend * 1e18)
     },
    'onLogs':(logs)=>{
@@ -297,16 +307,21 @@ const SelectOptions= ()=>{
    target="_blank"
    href={`https://ccip.chain.link/#/side-drawer/msg/${sourceChainTx}`} className="text-blue-500 hover:text-blue-900 transition-all underline ">Click to see your transaction</Link>
   
-  <Button className='p-3 max-w-52 w-full cursor-pointer hover:bg-gray-800
-  
-  '
+  <Button className='p-3 max-w-52 w-full cursor-pointer hover:bg-gray-800'
 onClick={()=>{
 navigator.clipboard.writeText(sourceChainTx);
-toast.success("Successfully copied tx-hash");
+toast.success("Successfully copied tx-hash", {
+  'classNames':{'toast':'bg-red-500'}});
 }}
 >
   Copy Tx Hash
 </Button>
+
+
+<div className="max-w-xs flex items-center p-2 w-full h-16 rounded-lg bg-gray-800/70 border-3 border-red-500 relative top-0 left-0 before:absolute before:top-0 before:left-0 before:w-full before:rounded-full before:h-72 before:bg-red-600 before:blur-3xl overflow-hidden">
+<p className='text-sm z-10 text-white'>Hello this is my popup ! </p>
+</div>
+
    </div>
    
    }
