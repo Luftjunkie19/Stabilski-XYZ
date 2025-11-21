@@ -20,7 +20,7 @@ import { config } from '@/lib/Web3Provider';
 import { readContract } from '@wagmi/core'
 
 import { toast } from 'sonner';
-import { ccipInformationRetrieverAbi } from '@/lib/smart-contracts-abi/ccip-routers/StabilskiTokenCCIPNeededData';
+import { ccipInformationRetrieverAbi, stabilskiTokenPoolAbi } from '@/lib/smart-contracts-abi/ccip-routers/StabilskiTokenCCIPNeededData';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
 import Link from 'next/link';
@@ -39,7 +39,7 @@ const [approved, setApproved]=useState<boolean>(false);
   const [destinationPoolAddress, setDestinationPoolAddress]=useState<ethereumAddress>();
   const [destinationRouterAddress, setDestinationRouterAddress]=useState<ethereumAddress>();
 
-const {currentStabilskiContractAddress, getCurrentRouter, getCurrentCcipRetriever, getCurrentPoolAddress}=useBlockchainData();
+const {currentStabilskiContractAddress, getCurrentRouter, getCurrentCcipRetriever, getCurrentPoolAddress, getPoolAddressByChainSelector}=useBlockchainData();
 
 const {data}=useReadContract({
     abi:stabilskiTokenABI,
@@ -94,6 +94,12 @@ writeContract({
 
 const commitCCIPTransfer= async ()=>{
 
+  if(!destinationChainSelector){
+    toast.error(`You haven't selected the destination chain.`);
+    return;
+  }
+
+
 const allowanceStabilskiToken= await readContract(config, {
     abi:stabilskiTokenABI,
     address: currentStabilskiContractAddress as ethereumAddress,
@@ -121,6 +127,9 @@ console.log('Allowance', allowanceStabilskiToken)
 
   console.log(getCcipMessage, 'CCIP Message');
 
+  const destPoolAddr = getPoolAddressByChainSelector(destinationChainSelector);
+
+  setDestinationPoolAddress(destPoolAddr);
 
   const txData = await writeContractAsync({
     abi:routerAbi,
@@ -204,9 +213,9 @@ const SelectOptions= ()=>{
   });
 
   useWatchContractEvent({
-    address: currentRouter,
-    abi: routerAbi,
-    'eventName':'Transfer',
+    address: currentPoolAddr,
+    abi: stabilskiTokenPoolAbi,
+    'eventName':'Burned',
     args:{
       from: currentPoolAddr
     },
@@ -214,30 +223,17 @@ const SelectOptions= ()=>{
     console.log(logs, 'Logs from Transfer');
     toast.success('Successful Transfer to Burner (Destination Chain)');
    },
-   'strict':true
+   'strict':true,
   });
 
-    useWatchContractEvent({
-    address: currentRouter,
-    abi: routerAbi,
-    'eventName':'Transfer',
-    args:{
-      from: currentPoolAddr,
-      value: BigInt(tokenAmountToSend * 1e18)
-    },
-   'onLogs':(logs)=>{
-    console.log(logs, 'Logs from Transfer');
-    toast.success('Successful Transfer to Burner (Destination Chain)');
-   },
-   'strict':true
-  });
 
      useWatchContractEvent({
-    address: destinationRouterAddress,
-    abi: routerAbi,
+    address: destinationPoolAddress,
+    abi: stabilskiTokenPoolAbi,
     'eventName':'Minted',
     args:{
       recipient: address,
+      sender: address,
       value: BigInt(tokenAmountToSend * 1e18)
     },
    'onLogs':(logs)=>{
@@ -246,7 +242,7 @@ const SelectOptions= ()=>{
     setApproved(false);
     setSourceChainTx(undefined);
    },
-   enabled: typeof destinationRouterAddress === 'string'
+  
   });
 
 

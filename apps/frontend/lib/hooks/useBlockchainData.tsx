@@ -123,15 +123,15 @@ function useBlockchainData() {
              }
            }
 
-           const getPoolAddressByChainSelector=(chainSelector:bigint)=>{
+           const getPoolAddressByChainSelector=(chainSelector:string)=>{
             switch(chainSelector){
-                case chainSelectorBaseSepolia:
+                case chainSelectorBaseSepolia.toString():
                     return stabilskiTokenPoolBaseSepolia
 
-                case chainSelectorArbitrumSepolia:
+                case chainSelectorArbitrumSepolia.toString():
                     return stabilskiTokenPoolArbSepolia
 
-                case chainSelectorSepoliaEth:
+                case chainSelectorSepoliaEth.toString():
                     return stabilskiTokenPoolEthSepolia
                 }
            }
