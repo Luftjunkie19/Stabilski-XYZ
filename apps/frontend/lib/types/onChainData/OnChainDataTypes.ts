@@ -13,3 +13,4 @@ export interface ContractType {
 export type ChainType = Pick<ContractType, 'chainId'>
 
 
+export type vaultInfoReturnType = [bigint, bigint, ethereumAddress, bigint];
