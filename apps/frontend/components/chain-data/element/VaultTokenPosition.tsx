@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { stabilskiTokenCollateralManagerAbi } from '@/lib/smart-contracts-abi/CollateralManager';
 import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ethereumAddress, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
 import { toast } from 'sonner';
 import Image from "next/image";
@@ -69,9 +69,6 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress, colla
             <>
             {vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" &&
         <div
-        onClick={()=>{
-            console.log(vaultInfo, maxBorrowable, tokenPrice);
-        }}
         className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row items-center sm:justify-between`}>
     <div className="w-full">
         <p className='hidden md:block'>{depositor.slice(0, 21)}...</p>
@@ -104,12 +101,13 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress, colla
     <Button onClick={()=>{
         if((isLiquidatable as unknown as boolean) && (isLiquidatable as unknown as boolean) === true){  
             console.log(isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean));
-    writeContract({
+
+            writeContract({
         chainId,
         address: tokenAddress,
         abi:stabilskiTokenABI,
         functionName:'approve',
-        args:[address, 111e18],
+        args:[address, (vaultInfo as vaultInfoReturnType)[1]],
     });
             writeContract({
                 chainId,

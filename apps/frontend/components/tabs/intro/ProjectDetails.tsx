@@ -4,7 +4,6 @@ import { FaBitcoin, FaEthereum } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
 import { toast } from 'sonner';
 import { BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
-import { motion } from 'motion/react';
 
 function ProjectDetails() {
   return (
