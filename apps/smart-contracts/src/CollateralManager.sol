@@ -153,7 +153,8 @@ uint8 decimals = priceFeed.decimals();
         return (uint256(answer) * 1e18) / (10 ** decimals);
     }
 
-function getCollateralInfo(address token) public view onlyExistingCollateral(token) returns (address, uint256, bool, uint256, uint256) {
+function getCollateralInfo(address token) public view onlyExistingCollateral(token) returns (
+    address, uint256, bool, uint256, uint256) {
     return (collateralTypes[token].priceFeed, collateralTypes[token].minCollateralRatio, collateralTypes[token].isActive, collateralTypes[token].liquidationBonus, collateralTypes[token].punishment);
 }
 

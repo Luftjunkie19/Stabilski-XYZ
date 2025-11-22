@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Raleway, Outfit
+import { Outfit
 } from "next/font/google";
 import "./globals.css";
 import { Web3Provider } from "@/lib/Web3Provider";

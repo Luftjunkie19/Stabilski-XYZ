@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { stabilskiTokenCollateralManagerAbi } from '@/lib/smart-contracts-abi/CollateralManager';
 import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { ethereumAddress, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
@@ -16,7 +15,7 @@ type Props = {
   collateralManagerAddress:ethereumAddress,
 }
 
-function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress, collateralManagerAddress}: Props) {
+function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress}: Props) {
  const {writeContract}=useWriteContract({});
     const { chainId, address}=useAccount();
     const {data:collateralValue}=useReadContract({
@@ -40,21 +39,6 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress, colla
         args:[depositor, tokenAddress],
     });
 
-    const {data:maxBorrowable}=useReadContract({
-        abi: vaultManagerAbi,
-        address: vaultManagerAddress,
-        functionName:'getMaxBorrowableStabilskiTokens',
-        args:[depositor, tokenAddress],
-        chainId
-    });
-
-    const {data:tokenPrice}=useReadContract({
-        abi: stabilskiTokenCollateralManagerAbi,
-        address: collateralManagerAddress,
-        functionName:'getTokenPrice',
-        args:[tokenAddress],
-    });
-
     const {data:isLiquidatable}=useReadContract({
         abi: vaultManagerAbi,
         address: vaultManagerAddress,
@@ -64,12 +48,12 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress, colla
 
 
     
-    if(vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" ){
+    if(vaultInfo as unknown as vaultInfoReturnType && (vaultInfo as unknown as vaultInfoReturnType)[2] !== "0x0000000000000000000000000000000000000000" ){
         return (
             <>
-            {vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" &&
+            {vaultInfo as unknown as vaultInfoReturnType && (vaultInfo as unknown as vaultInfoReturnType)[2] !== "0x0000000000000000000000000000000000000000" &&
         <div
-        className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row items-center sm:justify-between`}>
+        className={`w-full ${vaultInfo as unknown as vaultInfoReturnType && (vaultInfo as unknown as vaultInfoReturnType)[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row items-center sm:justify-between`}>
     <div className="w-full">
         <p className='hidden md:block'>{depositor.slice(0, 21)}...</p>
     <p className='block md:hidden'>{depositor.slice(0, 10)}...</p>
@@ -94,7 +78,7 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress, colla
     <div className='flex justify-between sm:flex-col items-end w-full'>
     
     <div className="flex items-center">
-        <p className='text-sm'><span>{(Number((vaultInfo as unknown as any[])[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>
+        <p className='text-sm'><span>{(Number((vaultInfo as unknown as vaultInfoReturnType)[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-8 h-8'/>
     </div>
 
