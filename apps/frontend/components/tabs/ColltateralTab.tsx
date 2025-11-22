@@ -72,7 +72,7 @@ function ColltateralTab() {
   'onLogs':(logs)=>{
     toast.success(`Collateral successfully deposited ${
  ( Number(
-  (logs[0] as any)
+  (logs[0])
     .args
     .amount
   ) / (token !== SEPOLIA_ETH_WBTC_ADDR ? 1e18 : 1e8)).toFixed(4)} ${token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : 'LINK'}`);

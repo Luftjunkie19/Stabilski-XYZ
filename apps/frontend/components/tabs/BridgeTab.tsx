@@ -37,7 +37,7 @@ const [approved, setApproved]=useState<boolean>(false);
 
   const [sourceChainTx, setSourceChainTx]=useState<ethereumAddress>();
   const [destinationPoolAddress, setDestinationPoolAddress]=useState<ethereumAddress>();
-  const [destinationRouterAddress, setDestinationRouterAddress]=useState<ethereumAddress>();
+  // const [destinationRouterAddress, setDestinationRouterAddress]=useState<ethereumAddress>();
 
 const {currentStabilskiContractAddress, getCurrentRouter, getCurrentCcipRetriever, getCurrentPoolAddress, getPoolAddressByChainSelector}=useBlockchainData();
 
@@ -148,7 +148,7 @@ console.log('Allowance', allowanceStabilskiToken)
     functionName:"ccipSend",
     args:[destinationChainSelector, getCcipMessage],
     chainId,
-    value: getFee as any
+    value: getFee as bigint
   });
 
   setSourceChainTx(txData);

@@ -1,5 +1,5 @@
 import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ethereumAddress, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
 import { GiPayMoney, GiReceiveMoney } from 'react-icons/gi';
 import { toast } from 'sonner';
@@ -62,11 +62,11 @@ Debt repaid successfully for ${(logs[0]).args.vaultOwner} PLST on ${tokenAddress
 
 
 
-    if(vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" ){
+    if(vaultInfo as unknown as vaultInfoReturnType && (vaultInfo as unknown as vaultInfoReturnType)[2] !== "0x0000000000000000000000000000000000000000" ){
         return (
             <>
-            {vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] !== "0x0000000000000000000000000000000000000000" &&
-        <div className={`w-full ${vaultInfo as unknown as any[] && (vaultInfo as unknown as any[])[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row px-2 gap-1 flex sm:items-center justify-between`}>
+            {vaultInfo as unknown as vaultInfoReturnType && (vaultInfo as vaultInfoReturnType)[2] !== "0x0000000000000000000000000000000000000000" &&
+        <div className={`w-full ${vaultInfo as vaultInfoReturnType && (vaultInfo as vaultInfoReturnType)[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row px-2 gap-1 flex sm:items-center justify-between`}>
     <div className="w-full">
         <p className='hidden md:block'>{depositor.slice(0, 21)}...</p>
     <p className='block md:hidden'>{depositor.slice(0, 10)}...</p>
@@ -81,7 +81,7 @@ Debt repaid successfully for ${(logs[0]).args.vaultOwner} PLST on ${tokenAddress
 
         <div className="flex items-center gap-1">
        <GiReceiveMoney className='mr-1' />
-        <p className='text-sm'><span>{(Number((vaultInfo as unknown as any[])[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>
+        <p className='text-sm'><span>{(Number((vaultInfo as unknown as vaultInfoReturnType)[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-7 h-7'/>
     </div>
     <p className={` text-sm ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ? 'text-red-500' : 'text-green-500' }`}>

@@ -15,7 +15,7 @@ import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, eth
 import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
-import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ethereumAddress, singleResultType } from '@/lib/types/onChainData/OnChainDataTypes';
 
 
 function BorrowTab() {
@@ -37,7 +37,7 @@ const {writeContract}=useWriteContract({
 const {chainId, address}=useAccount();
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
  
-    const arrayOfContracts=[
+    const arrayOfContracts =[
        {
              'abi':SEPOLIA_ETH_WBTC_ABI,
             'address':SEPOLIA_ETH_WBTC_ADDR,
@@ -193,7 +193,7 @@ useWatchContractEvent({
   eventName:'StabilskiTokenMinted',
   chainId:chainId,
 onLogs:(logs)=>{
-  toast.success(`You successfully borrowed ${Number((logs[0] as any).args.amount) / 1e18} PLST`);
+  toast.success(`You successfully borrowed ${Number((logs[0]).args.amount) / 1e18} PLST`);
 },
 args:{
   vaultOwner: address,
@@ -267,8 +267,14 @@ console.log(maxAmount, 'maxAmount');
 </div>
   </div>
     <div className="h-1/2 py-1 px-3 items-center flex gap-3 flex-col">
- <p className="text-red-500 text-2xl tracking">Your can still borrow</p>
-<p>{maxBorrowableData as unknown as any && vaultContractInfo as unknown as any && token && arrayOfContracts.find((contract) => contract.address === token) || arrayOfContracts.findIndex((contract) => contract.address === token) !== -1   ?  (((Number((maxBorrowableData as unknown as any)[arrayOfContracts.findIndex((contract) => contract.address === token)].result)) - (amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18))) /  1e18).toFixed(2) : 0 } <span className='text-red-500'>PLST</span></p>
+ <p 
+ onClick={()=>console.log(vaultContractInfo)}
+ className="text-red-500 text-2xl tracking">Your can still borrow</p>
+<p>{maxBorrowableData as unknown as singleResultType<bigint>
+ && vaultContractInfo as unknown as singleResultType<bigint>[]
+&& token && arrayOfContracts.find((contract) => contract.address === token) || arrayOfContracts.findIndex((contract) => contract.address === token) !== -1   ?  (((Number((maxBorrowableData as unknown as 
+singleResultType<bigint>[]
+)[arrayOfContracts.findIndex((contract) => contract.address === token)].result)) - (amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18))) /  1e18).toFixed(2) : 0 } <span className='text-red-500'>PLST</span></p>
 
   </div>
 </Card>

@@ -12,6 +12,7 @@ import { SiChainlink } from 'react-icons/si';
 import { Label } from '../ui/label';
 import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenBaseSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
+import { singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 
 
 
@@ -186,8 +187,8 @@ const {writeContract}=useWriteContract();
   <Label>Vault</Label>
    <Select onValueChange={(value)=>{
   setToken(value as `0x${string}`);
-  if(value  && vaultInfoContracts.findIndex((info)=>info.args[1] === value) !== -1  && (vaultInfo as unknown as any[]) && ((vaultInfo as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result)) {
-    setMaximumAmount(Number((vaultInfo as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[1]) / 1e18);
+  if(value  && vaultInfoContracts.findIndex((info)=>info.args[1] === value) !== -1  && (vaultInfo as unknown as vaultInfoReturnType) && ((vaultInfo as unknown as vaultInfoReturnType)[vaultInfoContracts.findIndex((info)=>info.args[1] === value)])) {
+    setMaximumAmount(Number((vaultInfo as unknown as vaultInfoReturnType)[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[1]) / 1e18);
   }
 
  }}>
@@ -209,7 +210,7 @@ const {writeContract}=useWriteContract();
 
 
 </div>
-{stabilskiBalances as unknown as any[] && arrayOfContracts.findIndex((contract) => contract.chainId === chainId) !== -1 && <div className='self-end text-sm flex items-center gap-1'>
+{stabilskiBalances as unknown as singleResultType<bigint>[] && arrayOfContracts.findIndex((contract) => contract.chainId === chainId) !== -1 && <div className='self-end text-sm flex items-center gap-1'>
     <Label>Available PLST</Label>
     <p className='text-red-500 font-bold'>{maximumAmount - amount}</p>
   </div>}

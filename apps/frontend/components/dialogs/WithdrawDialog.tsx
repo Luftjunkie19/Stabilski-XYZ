@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { SiChainlink } from 'react-icons/si';
 import { FaBitcoin, FaEthereum } from 'react-icons/fa6';
 import { stabilskiTokenBaseSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
+import { collateralInfoType, ContractType, singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 
 
 function WithdrawDialog() {
@@ -70,7 +71,7 @@ function WithdrawDialog() {
       ]
     const {data:vaultInfo}=useReadContracts(
   {
-    contracts:vaultInfoContracts as any
+    contracts:vaultInfoContracts as readonly ContractType[]
   }
   );
 
@@ -151,16 +152,12 @@ return (
   <Label>Vault</Label>
    <Select onValueChange={(value)=>{
   setToken(value as `0x${string}`);
-  // const collaterizationRatio =collateralInfos as unknown as any[] && Number((collateralInfos as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[1]) / 1e18;
-  const collateralValue =collateralInfos as unknown as any[] && Number((vaultInfo as unknown as any[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[0]) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18);
+  const collateralValue =collateralInfos as unknown as collateralInfoType
+   && Number((vaultInfo as unknown as singleResultType<vaultInfoReturnType>[])[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[0]) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18);
 
   const maxWithdrawAmount =(Number(collateralValue));
 
-  setMaximumAmount(maxWithdrawAmount)
-
-  // if(value  && maxWithdrawAmount){
-  //   setMaximumAmount(maxWithdrawAmount);
-  // }
+  setMaximumAmount(maxWithdrawAmount);
 
  }}>
   <SelectTrigger className="max-w-24">
