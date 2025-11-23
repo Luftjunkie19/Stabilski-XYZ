@@ -193,7 +193,8 @@ useWatchContractEvent({
   eventName:'StabilskiTokenMinted',
   chainId:chainId,
 onLogs:(logs)=>{
-  toast.success(`You successfully borrowed ${Number((logs[0]).args.amount) / 1e18} PLST`);
+  console.log('logs array', logs);
+  toast.success(`You successfully borrowed ${Number((amount * 10 ** 18)) / 1e18} PLST`);
 },
 args:{
   vaultOwner: address,

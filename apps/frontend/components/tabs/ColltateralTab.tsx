@@ -70,11 +70,10 @@ function ColltateralTab() {
       console.error('Error watching contract event:', error);
     },
   'onLogs':(logs)=>{
+    console.log('Collateral tabs logs', logs);
     toast.success(`Collateral successfully deposited ${
  ( Number(
-  (logs[0])
-    .args
-    .amount
+ amount
   ) / (token !== SEPOLIA_ETH_WBTC_ADDR ? 1e18 : 1e8)).toFixed(4)} ${token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : 'LINK'}`);
   },
   args:{
