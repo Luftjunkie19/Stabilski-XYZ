@@ -188,7 +188,7 @@ const {writeContract}=useWriteContract();
    <Select onValueChange={(value)=>{
   setToken(value as `0x${string}`);
   if(value  && vaultInfoContracts.findIndex((info)=>info.args[1] === value) !== -1  && (vaultInfo as unknown as vaultInfoReturnType) && ((vaultInfo as unknown as vaultInfoReturnType)[vaultInfoContracts.findIndex((info)=>info.args[1] === value)])) {
-    setMaximumAmount(Number((vaultInfo as unknown as vaultInfoReturnType)[vaultInfoContracts.findIndex((info)=>info.args[1] === value)].result[1]) / 1e18);
+    setMaximumAmount(Number(((vaultInfo as unknown as vaultInfoReturnType)[vaultInfoContracts.findIndex((info)=>info.args[1] === value)] as unknown as singleResultType<vaultInfoReturnType>).result[1]) / 1e18);
   }
 
  }}>

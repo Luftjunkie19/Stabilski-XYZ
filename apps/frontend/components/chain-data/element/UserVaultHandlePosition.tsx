@@ -49,7 +49,7 @@ function UserVaultHandlePosition({vaultManagerAddress, depositor, tokenAddress}:
   onLogs: (logs) => {
     console.log('New logs!', logs);
     toast.success(`
-Debt repaid successfully for ${(logs[0]).args.vaultOwner} PLST on ${tokenAddress} vault!
+Debt repaid successfully for ${depositor} PLST on ${tokenAddress} vault!
     `);
   },
   args:{

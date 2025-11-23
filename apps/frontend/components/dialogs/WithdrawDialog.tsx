@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { SiChainlink } from 'react-icons/si';
 import { FaBitcoin, FaEthereum } from 'react-icons/fa6';
 import { stabilskiTokenBaseSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
-import { collateralInfoType, ContractType, singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
+import { collateralInfoType, ethereumAddress, singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
+import { Abi } from 'viem';
 
 
 function WithdrawDialog() {
@@ -71,7 +72,13 @@ function WithdrawDialog() {
       ]
     const {data:vaultInfo}=useReadContracts(
   {
-    contracts:vaultInfoContracts as readonly ContractType[]
+    contracts:vaultInfoContracts as readonly {
+    abi?: Abi | undefined;
+    functionName?: string | undefined;
+    args?: readonly unknown[] | undefined;
+    address?: ethereumAddress | undefined;
+    chainId?: number | undefined;
+}[]
   }
   );
 
