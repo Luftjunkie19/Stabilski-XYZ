@@ -16,7 +16,7 @@ import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenBa
 import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
-import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import {  CollateralDeposited, ethereumAddress, ImprovedLog } from '@/lib/types/onChainData/OnChainDataTypes';
 
 
 function ColltateralTab() {
@@ -44,21 +44,25 @@ function ColltateralTab() {
     const currentAbi = getTokenAbi(token as `0x${string}`);
 
 
-     useWatchContractEvent({
+    
+
+useWatchContractEvent({
     address: token,
     abi: currentAbi,
     eventName: 'Approval',
-    'onError':(error)=>{
-      console.error('Error watching contract event:', error);
-    
-    },
   'onLogs':(logs)=>{
     console.log('New logs!', logs);
     setApproved(true);
     toast.success('Stabilski Tokens Approved Successfully');
   },
-  args:{
-    owner: address,
+  args: token === BASE_SEPOLIA_WETH_ADDR || token === SEPOLIA_ETH_WETH_ADDR ? 
+  {
+    src:address,
+    guy: currentChainVaultManagerAddress
+  }
+  : {
+    owner:address,
+    spender: currentChainVaultManagerAddress,
   }
   });
 
@@ -70,17 +74,21 @@ function ColltateralTab() {
       console.error('Error watching contract event:', error);
     },
   'onLogs':(logs)=>{
-    console.log('Collateral tabs logs', logs);
     toast.success(`Collateral successfully deposited ${
  ( Number(
- amount
+ (logs[0] as ImprovedLog<CollateralDeposited>).args?.amount 
   ) / (token !== SEPOLIA_ETH_WBTC_ADDR ? 1e18 : 1e8)).toFixed(4)} ${token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : 'LINK'}`);
+
+  setToken(undefined);
+  setAmount(0);
+  setApproved(false);
+
   },
   args:{
     vaultOwner: address,
     token: token,
   },
-  'enabled': amount > 0 && token !== undefined && address !== undefined && chainId !== undefined,
+  'enabled': token !== undefined && address !== undefined && chainId !== undefined,
   });
 
     const arrayOfContracts=useMemo(()=>{

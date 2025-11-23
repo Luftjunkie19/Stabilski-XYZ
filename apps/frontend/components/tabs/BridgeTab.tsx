@@ -22,7 +22,7 @@ import { readContract } from '@wagmi/core'
 import { toast } from 'sonner';
 import { ccipInformationRetrieverAbi, stabilskiTokenPoolAbi } from '@/lib/smart-contracts-abi/ccip-routers/StabilskiTokenCCIPNeededData';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
-import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ethereumAddress, ImprovedLog, ApprovalInterface } from '@/lib/types/onChainData/OnChainDataTypes';
 import Link from 'next/link';
 
 function BridgeTab() {
@@ -214,12 +214,12 @@ const SelectOptions= ()=>{
     
     },
   'onLogs':(logs)=>{
-    console.log('New logs!', logs);
     setApproved(true);
-    toast.success('Stabilski Tokens Approved Successfully');
+    toast.success(`Stabilski Tokens Approved Successfully (${(logs[0] as ImprovedLog<ApprovalInterface>).args?.value} PLST)`);
   },
   args:{
     owner: address,
+    spender:currentRouter
   }
   });
 
