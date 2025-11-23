@@ -5,8 +5,10 @@ import { ethereumAddress, vaultInfoReturnType } from '@/lib/types/onChainData/On
 import React from 'react'
 import { toast } from 'sonner';
 import Image from "next/image";
-import { useAccount, useReadContract, useWriteContract } from 'wagmi';
+import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
 import stabilskiStableCoin from "@/public/Logox32.png"
+import LiquidateDialog from '@/components/dialogs/LiquidateDialog';
+import useBlockchainData from '@/lib/hooks/useBlockchainData';
 
 type Props = {
   depositor:ethereumAddress,
@@ -47,6 +49,70 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress}: Prop
     });
 
 
+    const approvePLST=()=>{
+
+        if(depositor === address){
+            toast.error('Bro cmon, you cannot liquidate yourself XD');
+            return;
+        }
+
+        if((isLiquidatable as unknown as boolean) && (isLiquidatable as unknown as boolean) === true){  
+                 writeContract({
+        chainId,
+        address: tokenAddress,
+        abi:stabilskiTokenABI,
+        functionName:'approve',
+        args:[address, (vaultInfo as vaultInfoReturnType)[1]],
+    });
+    return;
+}
+
+toast.error('Vault is not yet liquidateable.')
+
+    }
+
+    const commitLiquidation= ()=>{
+        if((isLiquidatable as unknown as boolean) && (isLiquidatable as unknown as boolean) === true){  
+            console.log(isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean));
+
+            writeContract({
+                chainId,
+                address: vaultManagerAddress,
+                abi:vaultManagerAbi,
+                functionName:'liquidateVault',
+                args:[depositor, tokenAddress],
+            });
+            return;
+        }
+        toast.error("Vault is not liquidatable");
+    }
+
+    const {currentStabilskiContractAddress, currentChainVaultManagerAddress}=useBlockchainData();
+
+    const {data:stabilskiUserBalance}=useReadContract({
+        abi: stabilskiTokenABI,
+        address: currentStabilskiContractAddress as ethereumAddress,
+        functionName:'balanceOf',
+        args:[address]
+    });
+
+    useWatchContractEvent({
+        address:currentStabilskiContractAddress as ethereumAddress,
+        abi:stabilskiTokenABI,
+        eventName:'Approval',
+        'args':{
+            owner:address,
+            spender: currentChainVaultManagerAddress
+        },
+        'onError':(error)=>{
+            toast.error(error.message);
+        },
+        onLogs:(logs)=>{
+            console.log(logs);
+            toast.success('Stabilski Tokens Approved Correctly !')
+        }
+    })
+
     
     if(vaultInfo as unknown as vaultInfoReturnType && (vaultInfo as unknown as vaultInfoReturnType)[2] !== "0x0000000000000000000000000000000000000000" ){
         return (
@@ -74,7 +140,6 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress}: Prop
     </div>
     </div>
     
-    
     <div className='flex justify-between sm:flex-col items-end w-full'>
     
     <div className="flex items-center">
@@ -82,28 +147,7 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress}: Prop
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-8 h-8'/>
     </div>
 
-    <Button onClick={()=>{
-        if((isLiquidatable as unknown as boolean) && (isLiquidatable as unknown as boolean) === true){  
-            console.log(isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean));
-
-            writeContract({
-        chainId,
-        address: tokenAddress,
-        abi:stabilskiTokenABI,
-        functionName:'approve',
-        args:[address, (vaultInfo as vaultInfoReturnType)[1]],
-    });
-            writeContract({
-                chainId,
-                address: vaultManagerAddress,
-                abi:vaultManagerAbi,
-                functionName:'liquidateVault',
-                args:[depositor, tokenAddress],
-            });
-            return;
-        }
-        toast.error("Vault is not liquidatable");
-    }} variant={'destructive'} className={`${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ?  'bg-red-500 cursor-pointer' : 'bg-red-800 cursor-not-allowed'}  hover:bg-red-800 hover:scale-95`} disabled={isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) === false ? true : false}>Liquidate</Button>
+   <LiquidateDialog approvePLST={approvePLST} userBalance={stabilskiUserBalance as unknown as bigint} vaultDebt={(vaultInfo as vaultInfoReturnType)[1]} commitLiquidation={commitLiquidation} isLiquidatable={isLiquidatable as unknown as boolean}/>
     
     
     </div>
