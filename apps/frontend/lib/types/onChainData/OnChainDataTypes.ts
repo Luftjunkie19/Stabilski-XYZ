@@ -1,4 +1,5 @@
-import { Abi } from "viem";
+import { Abi, Log } from "viem";
+
 
 export type ethereumAddress =`0x${string}`;
 
@@ -28,3 +29,26 @@ export type collateralInfoType=[
     bigint,
     bigint
 ];
+
+
+export interface ImprovedLog<T> extends Log{
+    args?:T
+}
+
+export interface CollateralDeposited {
+    vaultOwner: ethereumAddress,
+    token: ethereumAddress,
+    amount:bigint
+}
+
+export interface ApprovalInterface{
+    owner:ethereumAddress,
+    spender:ethereumAddress,
+    value: bigint
+}
+
+export interface WethInterface{
+    src:ethereumAddress,
+    guy:ethereumAddress,
+    wad:bigint
+}
