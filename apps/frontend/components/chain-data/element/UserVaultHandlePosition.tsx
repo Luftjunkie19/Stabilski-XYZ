@@ -1,3 +1,4 @@
+'use client';
 import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { ethereumAddress, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'

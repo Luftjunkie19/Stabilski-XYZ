@@ -2,8 +2,6 @@
 
 import React from 'react'
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-
 import IntroTab from './IntroTab';
 import ColltateralTab from './ColltateralTab';
 import BridgeTab from './BridgeTab';

@@ -1,4 +1,3 @@
-
 import Image from "next/image";
 import StabilskiStableCoin from '@/public/Logox192.png'
 import {FaTelegram, FaGithub } from "react-icons/fa6"

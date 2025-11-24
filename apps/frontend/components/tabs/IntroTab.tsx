@@ -8,8 +8,6 @@ function IntroTab() {
   return (
   <TabsContent value="intro" className="flex flex-col gap-3 max-w-4xl w-full">
     <Header/>
- 
-
 
 <ProjectDetails/>
   </TabsContent>
