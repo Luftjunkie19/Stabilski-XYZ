@@ -15,7 +15,7 @@ import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, eth
 import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
-import { CollateralDeposited, ethereumAddress, ImprovedLog, singleResultType } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ethereumAddress, singleResultType } from '@/lib/types/onChainData/OnChainDataTypes';
 
 
 function BorrowTab() {
@@ -193,10 +193,8 @@ useWatchContractEvent({
   eventName:'StabilskiTokenMinted',
   chainId:chainId,
 onLogs:(logs)=>{
-  toast.success(`You successfully borrowed ${
-   Number((logs[0] as ImprovedLog<Omit<CollateralDeposited,'token'>
-    >).args?.amount)
-    / 1e18} PLST`);
+  console.log('logs array', logs);
+  toast.success(`You successfully borrowed ${Number((amount * 10 ** 18)) / 1e18} PLST`);
 },
 args:{
   vaultOwner: address,
