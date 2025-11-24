@@ -1,5 +1,5 @@
 import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import { CollateralDeposited, ethereumAddress, ImprovedLog, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ethereumAddress, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
 import { GiPayMoney, GiReceiveMoney } from 'react-icons/gi';
 import { toast } from 'sonner';
@@ -47,8 +47,10 @@ function UserVaultHandlePosition({vaultManagerAddress, depositor, tokenAddress}:
   abi: vaultManagerAbi,
   eventName: 'DebtRepaid',
   onLogs: (logs) => {
+    console.log('New logs!', logs);
     toast.success(`
-Debt repaid successfully for ${depositor} PLST on ${tokenAddress} vault (${(logs[0] as ImprovedLog<CollateralDeposited>).args?.amount} PLST`);
+Debt repaid successfully for ${depositor} PLST on ${tokenAddress} vault!
+    `);
   },
   args:{
     vaultOwner: depositor,
