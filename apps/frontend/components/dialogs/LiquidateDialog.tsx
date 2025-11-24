@@ -1,3 +1,4 @@
+'use client';
 import React from 'react'
 import stabilskiStableCoin from "@/public/Logox32.png"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
