@@ -6,14 +6,6 @@ import { Web3Provider } from "@/lib/Web3Provider";
 import Navbar from "@/components/ui/Navbar";
 import { Toaster } from "sonner";
 
-// const poppins = Lexend({
-//   variable: "--font-lexend",
-//   weight:['100', '200', '300', '400', '500', '600', '700', '800', '900'],
-//   style:["normal"],
-//   subsets: ["latin"],
-// });
-
-
 const outfit = Outfit({
   variable: "--font-outfit",
   weight:['100', '200', '300', '500', '400', '600', '700', '800', '900'],
