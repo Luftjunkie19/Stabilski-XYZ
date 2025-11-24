@@ -1,39 +1,33 @@
-FROM node:latest
+FROM node:25.2.1-alpine3.21
+
 WORKDIR /repo
 
+COPY package*.json package-lock.json ./
 
-# copy root manifests
-COPY package.json turbo.json ./
-
-# copy workspace folders (must match your repo)
-COPY apps ./apps
-COPY packages ./packages
-
-# install deps
 RUN npm ci
 
-RUN ["rm", "-rf", ".next"]
+RUN npm install -g npm@11.6.3
 
-RUN ["rm", "-rf", ".cache"]
+COPY apps/frontend ./apps/frontend
 
-RUN ["rm", "-rf", "node_modules"]
-
-
-# build only the frontend app
-RUN npm install --force
+COPY packages ./packages
 
 WORKDIR /repo/apps/frontend
 
-RUN ["rm", "-rf", ".next"]
+RUN rm -rf node_modules
 
-RUN ["rm", "-rf", ".cache"]
+RUN rm -rf .next
 
-RUN ["rm", "-rf", "node_modules"]
+RUN rm -rf .turbo
 
-RUN npm i
+RUN npm i --force
 
-RUN npm run build
-# runtime: start frontend only
-ENV NODE_ENV=production
+RUN npm i react-dom --force
+
+RUN npm ci 
+
+RUN npx next build
+
 EXPOSE 3000
+
 CMD ["npm", "start"]

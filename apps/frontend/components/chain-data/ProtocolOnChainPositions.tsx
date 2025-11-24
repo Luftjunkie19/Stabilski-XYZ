@@ -17,13 +17,13 @@ function ProtocolOnChainPositions({ collateralManagerAddress, vaultManagerAddres
 
 const UserPostions=()=>{
 return <>
-{(collateralTokens as unknown as ethereumAddress[] && depositors as unknown as ethereumAddress[] && (depositors as unknown as ethereumAddress[]).length > 0  &&  (collateralTokens as unknown as ethereumAddress[]).length > 0 && (collateralTokens as unknown as ethereumAddress[]).map((tokenAddr:ethereumAddress)=>(
-<ListOfPositions key={crypto.randomUUID()} 
+{(collateralTokens as unknown as ethereumAddress[]).map((tokenAddr:ethereumAddress, index)=>(
+<ListOfPositions key={index} 
 collateralManagerAddress={collateralManagerAddress} 
 depositors={depositors as ethereumAddress[]} 
 vaultManagerAddress={vaultManagerAddress}
  tokenAddr={tokenAddr as ethereumAddress}/>)
-))}
+)}
 </>
 
 }
@@ -57,7 +57,9 @@ vaultManagerAddress={vaultManagerAddress}
      <p className='text-xs font-semibold'>Deposit some tokens and feel the real power of Stabilski !</p>
     </div>}
 
+{collateralTokens as unknown as ethereumAddress[] && depositors as unknown as ethereumAddress[] && (depositors as unknown as ethereumAddress[]).length > 0  &&  (collateralTokens as unknown as ethereumAddress[]).length > 0 && 
 <UserPostions/>
+}
 
 </div>
   )

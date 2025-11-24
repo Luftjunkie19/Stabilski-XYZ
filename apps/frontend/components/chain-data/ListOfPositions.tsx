@@ -12,13 +12,13 @@ type Props = {
 
 function ListOfPositions({collateralManagerAddress, vaultManagerAddress, depositors, tokenAddr}: Props) {
   return (
- 
- (depositors as unknown as ethereumAddress[]).map((depositor:ethereumAddress)=> <VaultTokenPosition 
+ <>
+ { (depositors as unknown as ethereumAddress[]).map((depositor:ethereumAddress)=> <VaultTokenPosition 
    collateralManagerAddress={collateralManagerAddress as ethereumAddress} 
-   vaultManagerAddress={vaultManagerAddress} key={crypto.randomUUID()} 
+   vaultManagerAddress={vaultManagerAddress} key={tokenAddr} 
    depositor={depositor as ethereumAddress} 
-   tokenAddress={tokenAddr as ethereumAddress}/>)
- 
+   tokenAddress={tokenAddr as ethereumAddress}/>)}
+ </>
   )
 }
 
