@@ -19,9 +19,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_ACCESS_TOKEN }}
 
+      - name: Create .env
+        run: cat > apps/frontend/.env <<EOF
+          NEXT_PUBLIC_ALCHEMY_ID=${{ secrets.NEXT_PUBLIC_ALCHEMY_ID }}
+          NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=${{ secrets.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
+          EOF
+        
       - name: Install monorepo deps
         run: npm install --frozen-lockfile
         working-directory: ./apps/frontend
+
 
       - name: Build web app
         run: npm run build
