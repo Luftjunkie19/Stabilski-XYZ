@@ -27,6 +27,10 @@ jobs:
         working-directory: ./apps/frontend
 
       - name: Build and push image
+        env:
+         NEXT_PUBLIC_ALCHEMY_ID: ${{ secrets.NEXT_PUBLIC_ALCHEMY_ID }}
+         NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
+         PAT_ACCESS_TOKEN: ${{secrets.PAT_ACCESS_TOKEN}}
         uses: docker/build-push-action@v4
         with:
           context: ./apps/frontend
