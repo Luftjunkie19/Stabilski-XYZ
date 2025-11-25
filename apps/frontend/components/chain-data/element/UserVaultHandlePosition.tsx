@@ -48,6 +48,7 @@ function UserVaultHandlePosition({vaultManagerAddress, depositor, tokenAddress}:
   abi: vaultManagerAbi,
   eventName: 'DebtRepaid',
   onLogs: (logs) => {
+console.log(logs);
     toast.success(`
 Debt repaid successfully for ${depositor} PLST on ${tokenAddress} vault!
     `);
