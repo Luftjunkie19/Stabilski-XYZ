@@ -23,24 +23,20 @@ jobs:
         working-directory: ./apps/frontend
 
       - name: Build web app
-        env:
-         NEXT_PUBLIC_ALCHEMY_ID: ${{ secrets.NEXT_PUBLIC_ALCHEMY_ID }}
-         NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
-         PAT_ACCESS_TOKEN: ${{secrets.PAT_ACCESS_TOKEN}}
         run: npm run build
         working-directory: ./apps/frontend
 
       - name: Build and push image
-        env:
-         NEXT_PUBLIC_ALCHEMY_ID: ${{ secrets.NEXT_PUBLIC_ALCHEMY_ID }}
-         NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
-         PAT_ACCESS_TOKEN: ${{secrets.PAT_ACCESS_TOKEN}}
         uses: docker/build-push-action@v4
         with:
           context: ./apps/frontend
           file: ./apps/frontend/Dockerfile
           push: true
           tags: ghcr.io/luftjunkie19/stabilski-nextjs-app:latest
+          build-args: |
+            NEXT_PUBLIC_ALCHEMY_ID=${{ secrets.NEXT_PUBLIC_ALCHEMY_ID }}
+            NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=${{ secrets.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
+
 
       - name: Trigger Render deploy
         run: |
