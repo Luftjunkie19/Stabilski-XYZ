@@ -1,7 +1,7 @@
 'use client';
 import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import { ethereumAddress, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ApprovalInterface, ethereumAddress, EventType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
 import { toast } from 'sonner';
 import Image from "next/image";
@@ -73,8 +73,6 @@ toast.error('Vault is not yet liquidateable.')
 
     const commitLiquidation= ()=>{
         if((isLiquidatable as unknown as boolean) && (isLiquidatable as unknown as boolean) === true){  
-            console.log(isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean));
-
             writeContract({
                 chainId,
                 address: vaultManagerAddress,
@@ -104,14 +102,10 @@ toast.error('Vault is not yet liquidateable.')
             owner:address,
             spender: currentChainVaultManagerAddress
         },
-        'onError':(error)=>{
-            toast.error(error.message);
-        },
         onLogs:(logs)=>{
-            console.log(logs);
-            toast.success('Stabilski Tokens Approved Correctly !')
+            toast.success(`Stabilski Tokens Approved Correctly (${(logs[0] as EventType<ApprovalInterface>).args?.value}) !`)
         }
-    })
+    });
 
     
     if(vaultInfo as unknown as vaultInfoReturnType && (vaultInfo as unknown as vaultInfoReturnType)[2] !== "0x0000000000000000000000000000000000000000" ){

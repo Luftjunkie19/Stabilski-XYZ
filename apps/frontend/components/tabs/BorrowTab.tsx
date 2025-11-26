@@ -15,14 +15,13 @@ import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, eth
 import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
-import { ethereumAddress, singleResultType } from '@/lib/types/onChainData/OnChainDataTypes';
+import { CollateralDeposited, ethereumAddress, EventType, singleResultType } from '@/lib/types/onChainData/OnChainDataTypes';
 
 
 function BorrowTab() {
 
   useSwitchChain({mutation:{
     onSuccess:(data)=>{
-      console.log(data);
       setToken(undefined);
       setAmount(0);
       setMaximumAmount(0);
@@ -168,8 +167,6 @@ const {chainId, address}=useAccount();
 
 const borrowPolishStableCoin= ()=>{
   try{
-  
-
     writeContract({
     abi:vaultManagerAbi,
     address: currentChainVaultManagerAddress as `0x${string}`,
@@ -178,7 +175,7 @@ const borrowPolishStableCoin= ()=>{
     chainId
 });
 
-  toast.loading('Borrowing PLST...', {'dismissible':true, 'duration':5});
+  toast.loading('Borrowing PLST...');
   }catch(err){
 console.log(err);
 toast.error('Something went wrong');
@@ -193,15 +190,16 @@ useWatchContractEvent({
   eventName:'StabilskiTokenMinted',
   chainId:chainId,
 onLogs:(logs)=>{
-  console.log('logs array', logs);
-  toast.success(`You successfully borrowed ${Number((amount * 10 ** 18)) / 1e18} PLST`);
+  toast.success(`You successfully borrowed ${
+   Number((logs[0] as EventType<Omit<CollateralDeposited,'token'>
+    >).args?.amount)
+    / 1e18} PLST`);
 },
 args:{
   vaultOwner: address,
-  amount: amount * 10 ** 18,
+  amount: BigInt(amount * 10 ** 18),
 }
 });
-
 
 
 const TokensOptions = ()=>{
@@ -250,10 +248,7 @@ const TokensOptions = ()=>{
  if(maxBorrowableData){
    const selectedContractNumber=Number(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)].result as bigint / BigInt(1e18));
 
-console.log(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)]);
-
 const maxAmount = selectedContractNumber;
-console.log(maxAmount, 'maxAmount');
    setMaximumAmount(maxAmount);
  }
 
@@ -269,7 +264,6 @@ console.log(maxAmount, 'maxAmount');
   </div>
     <div className="h-1/2 py-1 px-3 items-center flex gap-3 flex-col">
  <p 
- onClick={()=>console.log(vaultContractInfo)}
  className="text-red-500 text-2xl tracking">Your can still borrow</p>
 <p>{maxBorrowableData as unknown as singleResultType<bigint>
  && vaultContractInfo as unknown as singleResultType<bigint>[]

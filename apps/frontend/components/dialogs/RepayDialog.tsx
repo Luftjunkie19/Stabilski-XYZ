@@ -200,7 +200,16 @@ const {writeContract}=useWriteContract();
     <SelectItem value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/>Wrapped Ethereum (WETH)</SelectItem>
     <SelectItem value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/>Wrapped Bitcoin (WBTC)</SelectItem>
     <SelectItem value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
-    </> :
+    </> : chainId && chainId === BASE_SEPOLIA_CHAINID ? 
+    <>
+       <SelectItem value={
+        BASE_SEPOLIA_WETH_ADDR
+       }> <FaEthereum className="text-zinc-500"/>Wrapped Ethereum (WETH)</SelectItem>
+    <SelectItem value={
+      BASE_SEPOLIA_LINK_ADDR
+    }><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
+    </>
+    :
     <>
      <SelectItem value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
     </>}
@@ -230,7 +239,6 @@ const {writeContract}=useWriteContract();
 }} className={`bg-blue-500 max-w-40 w-full cursor-pointer hover:bg-blue-800 hover:scale-95`}>Approve PLST</Button>
 
 <Button onClick={()=>{
-  console.log(token);
   writeContract({
     'abi':vaultManagerAbi,
     'address':chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,

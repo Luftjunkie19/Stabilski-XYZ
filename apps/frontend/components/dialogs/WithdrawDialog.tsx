@@ -5,7 +5,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } 
 import React, { useState } from 'react'
 import { DialogHeader } from '../ui/dialog'
 import { Button } from '../ui/button'
-import {  useAccount, useReadContracts, useWriteContract } from 'wagmi';
+import {  Config, useAccount, useReadContracts, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { Label } from '../ui/label';
@@ -14,8 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { SiChainlink } from 'react-icons/si';
 import { FaBitcoin, FaEthereum } from 'react-icons/fa6';
 import { stabilskiTokenBaseSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
-import { collateralInfoType, ethereumAddress, singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
+import { CollateralDeposited, collateralInfoType, ethereumAddress, EventType, singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import { Abi } from 'viem';
+import useBlockchainData from '@/lib/hooks/useBlockchainData';
+import { toast } from 'sonner';
+import { readContract } from '@wagmi/core'
+import { config } from '@/lib/Web3Provider';
 
 
 function WithdrawDialog() {
@@ -124,6 +128,11 @@ function WithdrawDialog() {
     ]
   });
 
+  const {
+    currentChainVaultManagerAddress
+  }=useBlockchainData();
+
+
   const {writeContract}=useWriteContract({
     'mutation':{
       'onSuccess':(data)=>{
@@ -131,6 +140,54 @@ function WithdrawDialog() {
       }
     }
   });
+
+  const withdrawCollateral= async ()=>{
+// const tokenAmount=BigInt(amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18));
+// const result = await readContract(config, {
+//   abi:vaultManagerAbi,
+//   address:currentChainVaultManagerAddress as ethereumAddress,
+//   functionName:'getIsHealthyAfterWithdrawal',
+//   args:[tokenAmount, token],
+//   chainId
+// });
+
+// console.log(result);
+
+// if(!result){
+//   toast.error('This amount cannot be withdrawn, due to undercollaterlization after withdrawal');
+//   return;
+// }
+
+writeContract({
+  abi:vaultManagerAbi,
+  args:[token, amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)],
+  functionName:'withdrawCollateral',
+  address: currentChainVaultManagerAddress as ethereumAddress,
+  chainId
+});
+}
+
+
+      useWatchContractEvent({
+          address:currentChainVaultManagerAddress as ethereumAddress,
+          abi:vaultManagerAbi,
+          eventName:'CollateralWithdrawn',
+          'args':{
+              owner:address,
+              spender: currentChainVaultManagerAddress
+          },
+          onLogs:(logs)=>{
+            const eventLog = logs[0] as EventType<CollateralDeposited>;
+
+          toast.success(`Collateral successfully withdrawn  ${
+          ( Number(
+          eventLog.args?.amount
+           ) / (eventLog.args?.token !== SEPOLIA_ETH_WBTC_ADDR ? 1e18 : 1e8)).toFixed(4)} ${eventLog.args?.token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : eventLog.args?.token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : eventLog.args?.token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : eventLog.args?.token === BASE_SEPOLIA_WETH_ADDR ? 'WETH' : 'LINK'  
+           }`);
+          }
+      })
+  
+
 
 
 return (
@@ -151,7 +208,7 @@ return (
   <div className="w-full flex flex-col gap-1">
     <Label>Amount</Label>
     <Input value={amount} onChange={(e) =>setAmount(Number(e.target.value))} type="number" min={0} 
-   step={0.00001}
+   step={0.001}
     max={maximumAmount}
     className="w-full"/>
   </div>
@@ -175,27 +232,31 @@ return (
     <SelectItem value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/>Wrapped Ethereum (WETH)</SelectItem>
     <SelectItem value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/>Wrapped Bitcoin (WBTC)</SelectItem>
     <SelectItem value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
-    </> :
-    <>
-     <SelectItem value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
-    </>}
+    </> : chainId && chainId === BASE_SEPOLIA_CHAINID ? 
+        <>
+           <SelectItem value={
+            BASE_SEPOLIA_WETH_ADDR
+           }> <FaEthereum className="text-zinc-500"/>Wrapped Ethereum (WETH)</SelectItem>
+        <SelectItem value={
+          BASE_SEPOLIA_LINK_ADDR
+        }><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
+        </>
+        :
+        <>
+         <SelectItem value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
+        </>}
   </SelectContent>
 </Select>
 </div>
 
 
 
-</div>
-<Button onClick={()=>{
 
-writeContract({
-  abi:vaultManagerAbi,
-  args:[token, amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)],
-  functionName:'withdrawCollateral',
-  address: chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
-  chainId
-});
-}} className='bg-red-500 hover:bg-red-800 hover:scale-95 cursor-pointer max-w-2/3 w-full self-center'>Withdraw</Button>
+
+</div>
+<Button onClick={
+  withdrawCollateral
+} className='bg-red-500 hover:bg-red-800 hover:scale-95 cursor-pointer max-w-2/3 w-full self-center'>Withdraw</Button>
 
 
   </DialogContent>
