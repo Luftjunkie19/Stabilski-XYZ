@@ -5,7 +5,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } 
 import React, { useState } from 'react'
 import { DialogHeader } from '../ui/dialog'
 import { Button } from '../ui/button'
-import {  Config, useAccount, useReadContracts, useWatchContractEvent, useWriteContract } from 'wagmi';
+import {  useAccount, useReadContracts, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { Label } from '../ui/label';
@@ -18,7 +18,7 @@ import { CollateralDeposited, collateralInfoType, ethereumAddress, EventType, si
 import { Abi } from 'viem';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { toast } from 'sonner';
-import { readContract } from '@wagmi/core'
+import { readContract } from '@wagmi/core';
 import { config } from '@/lib/Web3Provider';
 
 
@@ -142,21 +142,21 @@ function WithdrawDialog() {
   });
 
   const withdrawCollateral= async ()=>{
-// const tokenAmount=BigInt(amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18));
-// const result = await readContract(config, {
-//   abi:vaultManagerAbi,
-//   address:currentChainVaultManagerAddress as ethereumAddress,
-//   functionName:'getIsHealthyAfterWithdrawal',
-//   args:[tokenAmount, token],
-//   chainId
-// });
+const tokenAmount=BigInt(amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18));
+const result = await readContract(config, {
+  abi:vaultManagerAbi,
+  address:currentChainVaultManagerAddress as ethereumAddress,
+  functionName:'getIsHealthyAfterWithdrawal',
+  args:[tokenAmount, token],
+  chainId
+});
 
-// console.log(result);
+console.log(result);
 
-// if(!result){
-//   toast.error('This amount cannot be withdrawn, due to undercollaterlization after withdrawal');
-//   return;
-// }
+if(!result){
+  toast.error('This amount cannot be withdrawn, due to undercollaterlization after withdrawal');
+  return;
+}
 
 writeContract({
   abi:vaultManagerAbi,

@@ -3,9 +3,8 @@ import React from 'react'
 import stabilskiLogo from "../../../public/Logox512.png"
 import { motion } from 'motion/react';
 
-type Props = {}
 
-function StabilskiHero({}: Props) {
+function StabilskiHero() {
   return (
     <div className='max-w-5xl w-full flex-wrap justify-center sm:justify-between items-center flex gap-8'>
         <motion.div initial={{transform:'translateX(-100%) scale(0.5)', opacity:0, transitionDuration:'1s'}} whileInView={{transform:'translateX(0%) scale(1)', opacity:1, transitionDuration:'1s'}} className='w-52 h-52' >

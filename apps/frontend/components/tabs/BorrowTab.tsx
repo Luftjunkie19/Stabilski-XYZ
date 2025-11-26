@@ -21,7 +21,7 @@ import { CollateralDeposited, ethereumAddress, EventType, singleResultType } fro
 function BorrowTab() {
 
   useSwitchChain({mutation:{
-    onSuccess:(data)=>{
+    onSuccess:()=>{
       setToken(undefined);
       setAmount(0);
       setMaximumAmount(0);
