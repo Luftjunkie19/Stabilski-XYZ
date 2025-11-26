@@ -357,7 +357,7 @@ const UserCollaterals=()=>{
   return (
 <div className="w-full flex items-center justify-center flex-wrap gap-4">
   {collateralTokenPriceData &&  vaultManagerAddress &&  
-        <div className="flex flex-col gap-3 overflow-y-auto max-w-md w-full bg-white border-red-500 borde shadow-md shadow-black p-4 rounded-lg h-64">
+        <div className="flex flex-col gap-3 overflow-y-auto max-w-md border-red-500 border w-full bg-white border-red-500 borde shadow-md shadow-black p-4 rounded-lg h-64">
 <CollateralTokenPriceOnChainData/>
 
 

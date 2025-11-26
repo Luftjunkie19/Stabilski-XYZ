@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { CollateralDeposited, ethereumAddress, EventType, singleResultType } from '@/lib/types/onChainData/OnChainDataTypes';
+import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 
 
 function BorrowTab() {
@@ -30,6 +31,7 @@ function BorrowTab() {
 
 const {writeContract}=useWriteContract({
 });
+const {handleKeyDown, handlePaste, handleBlur, handleChange}=usePreventInvalidInput();
 
  const [amount, setAmount] = useState<number>(0);
   const [token, setToken] = useState<ethereumAddress | undefined>(undefined);
@@ -242,7 +244,11 @@ const TokensOptions = ()=>{
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
   <Label className="text-xl text-red-500">You Borrow</Label>
 <div className="flex items-center gap-4">
-  <Input onChange={(e) =>setAmount(Number(e.target.value))} type="number" step={0.01} min={0} max={maximumAmount} className="w-full"/>
+  <Input 
+  onPaste={handlePaste} 
+  onKeyDown={handleKeyDown} 
+  onBlur={(e)=>{handleBlur(e.target.value, setAmount)}}
+  onChange={(e)=>handleChange(e, setAmount)}type="number" step={0.01} min={0} max={maximumAmount} className="w-full"/>
  <Select onValueChange={(value)=>{
  setToken(value as `0x${string}`);
  if(maxBorrowableData){

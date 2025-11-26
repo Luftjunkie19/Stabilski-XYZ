@@ -24,12 +24,13 @@ import { ccipInformationRetrieverAbi, stabilskiTokenPoolAbi } from '@/lib/smart-
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { ApprovalInterface, BurnedInterface, ethereumAddress, EventType } from '@/lib/types/onChainData/OnChainDataTypes';
 import Link from 'next/link';
+import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 
 function BridgeTab() {
 const chainSelectorArbitrumSepolia = BigInt('3478487238524512106');
 const chainSelectorSepoliaEth = BigInt('16015286601757825753');
 const chainSelectorBaseSepolia= BigInt('10344971235874465080');
-
+const {handleKeyDown, handlePaste, handleBlur, handleChange}=usePreventInvalidInput();
 const {chainId, address}=useAccount();
 const [tokenAmountToSend, setTokenAmountToSend] = useState<number>(0);
 const [destinationChainSelector, setDestinationChainSelector]=useState<string>();
@@ -245,7 +246,11 @@ const SelectOptions= ()=>{
 <div className="flex items-center gap-4">
 <div className="w-full flex-col gap-2">
   <Label>Amount</Label>
-    <Input onChange={(e) => setTokenAmountToSend(Number(e.target.value))} type="number" step={0.001} min={0} max={Number(data)/1e18} className="w-full"/>
+    <Input 
+    onBlur={(e)=>handleBlur(e.target.value, setTokenAmountToSend)}
+       onPaste={handlePaste} 
+  onKeyDown={handleKeyDown} 
+    onChange={(e) => handleChange(e, setTokenAmountToSend)} type="number" step={0.001} min={0} max={Number(data)/1e18} className="w-full"/>
 </div>
 
 </div>
