@@ -48,7 +48,7 @@ vaultManagerAddress={vaultManagerAddress}
   
 
   return (
-  <div onClick={()=>console.log(collateralTokens, depositors)} className="flex flex-col gap-2 max-w-lg w-full bg-white border-red-500 border shadow-md shadow-black overflow-y-auto overflow-x-hidden p-3 rounded-lg h-64">
+  <div className="flex flex-col gap-2 max-w-lg w-full bg-white border-red-500 border shadow-md shadow-black overflow-y-auto overflow-x-hidden p-3 rounded-lg h-64">
     <p className='text-lg text-red-500'>Users Positions</p>
 {depositors as unknown as string[] && (depositors as unknown as string[]).length === 0 && <div className='w-full flex flex-col gap-4 justify-center items-center h-full'>
     

@@ -311,7 +311,6 @@ const CollateralTokenPriceOnChainData=()=>{
 
 const UserCollaterals=()=>{
   switch(chainId){
-
     case SEPOLIA_ETH_CHAINID:
       return (<>
 
@@ -341,14 +340,14 @@ const UserCollaterals=()=>{
       return (<>
       {vaultTokensOnchainData && <div  className="w-full flex-wrap flex items-center gap-6">
 <div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {vaultTokensOnchainData[1] && vaultTokensOnchainData[1].result as unknown as bigint   && Number(vaultTokensOnchainData[1].result)  && (Number(vaultTokensOnchainData[1].result)/ 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
-<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultTokensOnchainData[1] && vaultTokensOnchainData[0].result as unknown as bigint && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultTokensOnchainData[0]&& vaultTokensOnchainData[0].result as unknown as bigint && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>}
       </>)
 
      case ARBITRUM_SEPOLIA_CHAINID:
       return (<>
       {vaultTokensOnchainData && <div  className="w-full flex-wrap  flex items-center gap-6">
-<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultTokensOnchainData[2] && vaultTokensOnchainData[0].result as unknown as bigint && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultTokensOnchainData[0] && vaultTokensOnchainData[0].result as unknown as bigint && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>}
       </>)
 
@@ -357,13 +356,13 @@ const UserCollaterals=()=>{
 
   return (
 <div className="w-full flex items-center justify-center flex-wrap gap-4">
-        <div className="flex flex-col gap-3 overflow-y-auto max-w-md w-full bg-white border-red-500 border-1 shadow-md shadow-black p-4 rounded-lg h-64">
-  {collateralTokenPriceData && 
+  {collateralTokenPriceData &&  vaultManagerAddress &&  
+        <div className="flex flex-col gap-3 overflow-y-auto max-w-md w-full bg-white border-red-500 borde shadow-md shadow-black p-4 rounded-lg h-64">
 <CollateralTokenPriceOnChainData/>
-}
 
 
-{chainId && vaultTokensOnchainData &&
+
+{chainId && vaultTokensOnchainData && 
 <div className="flex flex-col  gap-1">
 <p className='text-red-500'>Your Collateral</p>
 <UserCollaterals/>
@@ -388,7 +387,7 @@ const UserCollaterals=()=>{
 <p className="text-sm text-zinc-500 sm:text-base tracking">USD/PLN <span className='text-red-500 font-bold'>{oraclePrice as unknown as bigint && (Number(oraclePrice) / 1e4).toFixed(4)} PLN</span></p>
 
 </div>
-
+}
 {vaultManagerAddress && currentCollateralManagerAddress && <>
 <ProtocolOnChainPositions chainId={chainId as number} vaultManagerAddress={vaultManagerAddress as ethereumAddress} collateralManagerAddress={currentCollateralManagerAddress as ethereumAddress} />
 

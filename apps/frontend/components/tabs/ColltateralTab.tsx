@@ -16,7 +16,7 @@ import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenBa
 import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
-import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import { CollateralDeposited, ethereumAddress, EventType } from '@/lib/types/onChainData/OnChainDataTypes';
 
 
 function ColltateralTab() {
@@ -43,45 +43,17 @@ function ColltateralTab() {
 
     const currentAbi = getTokenAbi(token as `0x${string}`);
 
-
-     useWatchContractEvent({
-    address: token,
-    abi: currentAbi,
-    eventName: 'Approval',
-    'onError':(error)=>{
-      console.error('Error watching contract event:', error);
-    
-    },
-  'onLogs':(logs)=>{
-    console.log('New logs!', logs);
-    setApproved(true);
-    toast.success('Stabilski Tokens Approved Successfully');
-  },
-  args:{
-    owner: address,
+    const currentTokenArgs= token === BASE_SEPOLIA_WETH_ADDR || token === SEPOLIA_ETH_WETH_ADDR ? 
+     {
+    src:address,
+    guy: currentChainVaultManagerAddress
   }
-  });
+  :
+  {
+    owner:address,
+    spender: currentChainVaultManagerAddress,
+  }
 
-  useWatchContractEvent({
-    address: currentChainVaultManagerAddress as `0x${string}`,
-    abi: vaultManagerAbi,
-    eventName: 'CollateralDeposited',
-    'onError':(error)=>{
-      console.error('Error watching contract event:', error);
-    },
-  'onLogs':(logs)=>{
-    console.log('Collateral tabs logs', logs);
-    toast.success(`Collateral successfully deposited ${
- ( Number(
- amount
-  ) / (token !== SEPOLIA_ETH_WBTC_ADDR ? 1e18 : 1e8)).toFixed(4)} ${token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : 'LINK'}`);
-  },
-  args:{
-    vaultOwner: address,
-    token: token,
-  },
-  'enabled': amount > 0 && token !== undefined && address !== undefined && chainId !== undefined,
-  });
 
     const arrayOfContracts=useMemo(()=>{
      return [
@@ -365,6 +337,73 @@ case ARBITRUM_SEPOLIA_CHAINID:
 
 }
 
+const collaterlizePosition=()=>{
+    writeContract({
+    'abi':vaultManagerAbi,
+    'address':currentChainVaultManagerAddress as ethereumAddress,
+    'functionName':'depositCollateral',
+    'args':[token],
+  });
+}
+
+const approveCollateral=()=>{
+if(token){
+  console.log(arrayOfContracts.find(contract => contract.address === token));
+    writeContract({
+    'abi':arrayOfContracts.find(contract => contract.address === token)!.abi,
+    'address':arrayOfContracts.find(contract => contract.address === token)!.address as ethereumAddress,
+    'functionName':'approve',
+    'args':[currentChainVaultManagerAddress, amount * 1e18],
+  }, {
+    onSettled(data, error) {
+      if (error) {
+        console.error('Error approving collateral:', error);
+        toast.error(`Error approving collateral:${error.message}`);
+      } else {
+        console.log('Collateral approved successfully:', data);
+        toast.loading('Approving collateral.....');
+      }
+    },
+  })
+}
+}
+
+
+useWatchContractEvent({
+    address: token,
+    abi: currentAbi,
+    eventName: 'Approval',
+  'onLogs':(logs)=>{
+    console.log('New logs!', logs);
+    setApproved(true);
+    toast.success('Stabilski Tokens Approved Successfully');
+  },
+  args:currentTokenArgs
+  });
+
+  useWatchContractEvent({
+    address: currentChainVaultManagerAddress as `0x${string}`,
+    abi: vaultManagerAbi,
+    eventName: 'CollateralDeposited',
+  'onLogs':(logs)=>{
+    const eventLog= logs[0] as EventType<CollateralDeposited>;
+    toast.success(`Collateral successfully deposited ${
+ ( Number(
+ eventLog.args?.amount
+  ) / (eventLog.args?.token !== SEPOLIA_ETH_WBTC_ADDR ? 1e18 : 1e8)).toFixed(4)} ${eventLog.args?.token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : eventLog.args?.token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : eventLog.args?.token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : eventLog.args?.token === BASE_SEPOLIA_WETH_ADDR ? 'WETH' : 'LINK'  
+  }`);
+
+  setApproved(false);
+  setAmount(0);
+  setMaximumAmount(0);
+  setToken(undefined);
+  },
+  args:{
+    vaultOwner: address,
+    token: token,
+  },
+  'enabled': amount > 0 && token !== undefined && address !== undefined && chainId !== undefined,
+  });
 
   return (
     <TabsContent value="collateral" className="flex flex-col gap-4 max-w-7xl w-full">
@@ -376,7 +415,6 @@ case ARBITRUM_SEPOLIA_CHAINID:
   <Input step={0.01} onChange={(e)=>setAmount(Number(e.target.value))} type="number" min={0} max={maximumAmount}  className="w-full"/>
  <Select value={token} onValueChange={(value) => {
 setToken(value as `0x${string}`);
-console.log(data);
 if(data && data[arrayOfContracts.findIndex(contract => contract.address === value)].result){
 
   const maxToBorrow= Number(data[arrayOfContracts.findIndex(contract => contract.address === value)].result) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18);
@@ -407,62 +445,9 @@ if(data && data[arrayOfContracts.findIndex(contract => contract.address === valu
 </Card>
 
 <div className="flex flex-wrap w-full gap-2 justify-center">
-<Button onClick={()=>{
-if(token){
-    writeContract({
-    'abi':arrayOfContracts.find(contract => contract.address === token)!.abi,
-    'address':arrayOfContracts.find(contract => contract.address === token)!.address as `0x${string}`,
-    'functionName':'approve',
-    'args':[chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : chainId === ARBITRUM_SEPOLIA_CHAINID ? arbitrumSepoliaVaultManagerAddress : baseSepoliaVaultManagerAddress, amount * 1e18],
-  }, {
-    onSettled(data, error) {
-      if (error) {
-        console.error('Error approving collateral:', error);
-        toast.error('Error approving collateral');
-      } else {
-        console.log('Collateral approved successfully:', data);
-        toast.loading('Approving collateral.....',{ 'duration': 2.5, dismissible:true });
-      }
-    },
-  })
-}
-}} className="p-6 transition-all shadow-sm shadow-black hover:bg-blue-900 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-blue-500">Approve Collateral</Button>
+<Button onClick={approveCollateral} className="p-6 transition-all shadow-sm shadow-black hover:bg-blue-900 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-blue-500">Approve Collateral</Button>
   
-<Button disabled={!approved} onClick={()=>{
-if(chainId === SEPOLIA_ETH_CHAINID && token && amount){
-    writeContract({
-    'abi':vaultManagerAbi,
-    'address':ethSepoliaVaultManagerAddress,
-    'functionName':'depositCollateral',
-    'args':[token],
-  });
-  return;
-}
-
-if(chainId === ARBITRUM_SEPOLIA_CHAINID && token && amount){
-  writeContract({
-      'abi':vaultManagerAbi,
-      'address':arbitrumSepoliaVaultManagerAddress,
-      'functionName':'depositCollateral',
-      'args':[token],
-    });
-return;
-}
-
-if(token && amount && chainId === BASE_SEPOLIA_CHAINID){
-  writeContract({
-      'abi':vaultManagerAbi,
-      'address':baseSepoliaVaultManagerAddress,
-      'functionName':'depositCollateral',
-      'args':[token,],
-    });
-}
-
-
-
-
-
-}} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-red-500">Put Collateral</Button>
+<Button disabled={!approved} onClick={collaterlizePosition} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-red-500">Put Collateral</Button>
 </div>
 
 <OnChainDataContainer/>

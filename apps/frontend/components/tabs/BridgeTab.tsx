@@ -22,7 +22,7 @@ import { readContract } from '@wagmi/core'
 import { toast } from 'sonner';
 import { ccipInformationRetrieverAbi, stabilskiTokenPoolAbi } from '@/lib/smart-contracts-abi/ccip-routers/StabilskiTokenCCIPNeededData';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
-import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ApprovalInterface, BurnedInterface, ethereumAddress, EventType } from '@/lib/types/onChainData/OnChainDataTypes';
 import Link from 'next/link';
 
 function BridgeTab() {
@@ -37,7 +37,6 @@ const [approved, setApproved]=useState<boolean>(false);
 
   const [sourceChainTx, setSourceChainTx]=useState<ethereumAddress>();
   const [destinationPoolAddress, setDestinationPoolAddress]=useState<ethereumAddress>();
-  // const [destinationRouterAddress, setDestinationRouterAddress]=useState<ethereumAddress>();
 
 const {currentStabilskiContractAddress, getCurrentRouter, getCurrentCcipRetriever, getCurrentPoolAddress, getPoolAddressByChainSelector}=useBlockchainData();
 
@@ -56,7 +55,7 @@ const currentRetriever = getCurrentCcipRetriever();
 const currentPoolAddr= getCurrentPoolAddress();
 
 const amountToBeTransfered = useMemo(()=>{
-return (Number(data) / 1e18) - tokenAmountToSend;
+return (Number(data ?? 0) / 1e18) - tokenAmountToSend;
 },[tokenAmountToSend, data])
 
 const approveStabilskiTokens = async () => {
@@ -76,16 +75,6 @@ if(tokenAmountToSend === 0){
   toast.error('Amount to send cross-chain cannot be equal 0');
   return;
 }
-
-
-  const isArbitrumSepoliaSupported = await readContract(config, {
-    abi:routerAbi,
-    address: currentRouter,
-    functionName:"isChainSupported",
-    args:[destinationChainSelector]
-  });
-
-console.log(isArbitrumSepoliaSupported, 'Is arbitrum supported by eth sepolia router');
 
 const turnedTokenAmountToSend= BigInt(tokenAmountToSend * 1e18);
 
@@ -118,8 +107,6 @@ const allowanceStabilskiToken= await readContract(config, {
     args:[address, currentRouter]
 });
 
-console.log('Allowance', allowanceStabilskiToken)
-
   const getFee = await readContract(config, {
     abi:ccipInformationRetrieverAbi,
     address: currentRetriever as `0x${string}`,
@@ -133,11 +120,6 @@ console.log('Allowance', allowanceStabilskiToken)
     functionName:"getCcipMessage",
     args:[address, allowanceStabilskiToken]
   });
-
-  console.log(getFee, 'Fee to be paid');
-
-  console.log(getCcipMessage, 'CCIP Message');
-
   const destPoolAddr = getPoolAddressByChainSelector(destinationChainSelector);
 
   setDestinationPoolAddress(destPoolAddr);
@@ -209,18 +191,17 @@ const SelectOptions= ()=>{
     address: currentStabilskiContractAddress as ethereumAddress,
     abi: stabilskiTokenABI,
     eventName: 'Approval',
-    'onError':(error)=>{
-      console.error('Error watching contract event:', error);
-    
-    },
   'onLogs':(logs)=>{
-    console.log('New logs!', logs);
+    console.log('New logs!', logs[0] as EventType<ApprovalInterface>);
     setApproved(true);
-    toast.success('Stabilski Tokens Approved Successfully');
+    toast.success(`Stabilski Tokens Approved Successfully (${
+     ( Number((logs[0] as EventType<ApprovalInterface>).args?.value) / 1e18).toFixed(3)
+      }) PLST`);
   },
   args:{
     owner: address,
-  }
+  },
+   'strict':true,
   });
 
   useWatchContractEvent({
@@ -228,11 +209,10 @@ const SelectOptions= ()=>{
     abi: stabilskiTokenPoolAbi,
     'eventName':'Burned',
     args:{
-      from: currentPoolAddr
+      sender: address,
     },
    'onLogs':(logs)=>{
-    console.log(logs, 'Logs from Transfer');
-    toast.success('Successful Transfer to Burner (Destination Chain)');
+    toast.success(`Successful Transfer to Burner (Destination Chain) ${(Number((logs[0] as EventType<BurnedInterface>).args?.amount)/1e18).toFixed(2)}`);
    },
    'strict':true,
   });
@@ -252,6 +232,7 @@ const SelectOptions= ()=>{
     setApproved(false);
     setSourceChainTx(undefined);
    },
+    'strict':true,
   
   });
 
@@ -270,7 +251,7 @@ const SelectOptions= ()=>{
 </div>
 
 <div className="">
-    <p>Balance: {amountToBeTransfered} <span className='text-red-500'>PLST</span></p>
+    <p>Balance: {amountToBeTransfered.toFixed(4)} <span className='text-red-500'>PLST</span></p>
 </div>
   </div>
     <div className="h-1/2 w-full py-1 px-3 flex gap-3 flex-col">
@@ -310,17 +291,12 @@ const SelectOptions= ()=>{
   <Button className='p-3 max-w-52 w-full cursor-pointer hover:bg-gray-800'
 onClick={()=>{
 navigator.clipboard.writeText(sourceChainTx);
-toast.success("Successfully copied tx-hash", {
-  'classNames':{'toast':'bg-red-500'}});
+toast.success("Successfully copied tx-hash");
 }}
 >
   Copy Tx Hash
 </Button>
 
-
-<div className="max-w-xs flex items-center p-2 w-full h-16 rounded-lg bg-gray-800/70 border-3 border-red-500 relative top-0 left-0 before:absolute before:top-0 before:left-0 before:w-full before:rounded-full before:h-72 before:bg-red-600 before:blur-3xl overflow-hidden">
-<p className='text-sm z-10 text-white'>Hello this is my popup ! </p>
-</div>
 
    </div>
    
