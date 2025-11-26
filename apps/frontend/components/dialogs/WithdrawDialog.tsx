@@ -137,27 +137,12 @@ function WithdrawDialog() {
     'mutation':{
       'onSuccess':(data)=>{
         console.log(data);
-      }
+      },
+      
     }
   });
 
   const withdrawCollateral= async ()=>{
-const tokenAmount=BigInt(amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18));
-const result = await readContract(config, {
-  abi:vaultManagerAbi,
-  address:currentChainVaultManagerAddress as ethereumAddress,
-  functionName:'getIsHealthyAfterWithdrawal',
-  args:[tokenAmount, token],
-  chainId
-});
-
-console.log(result);
-
-if(!result){
-  toast.error('This amount cannot be withdrawn, due to undercollaterlization after withdrawal');
-  return;
-}
-
 writeContract({
   abi:vaultManagerAbi,
   args:[token, amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)],
