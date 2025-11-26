@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { CollateralDeposited, ethereumAddress, EventType } from '@/lib/types/onChainData/OnChainDataTypes';
+import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 
 
 function ColltateralTab() {
@@ -30,6 +31,7 @@ function ColltateralTab() {
       }
     }});
 
+  const {handlePaste, handleKeyDown, handleBlur, handleChange}=usePreventInvalidInput();
   const [amount, setAmount] = useState<number>(0);
   const [token, setToken] = useState<`0x${string}` | undefined>(undefined);
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
@@ -405,6 +407,7 @@ useWatchContractEvent({
   'enabled': amount > 0 && token !== undefined && address !== undefined && chainId !== undefined,
   });
 
+
   return (
     <TabsContent value="collateral" className="flex flex-col gap-4 max-w-7xl w-full">
 
@@ -412,7 +415,12 @@ useWatchContractEvent({
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
   <Label className="text-xl text-red-500">You Give</Label>
 <div className="flex items-center gap-4">
-  <Input step={0.01} onChange={(e)=>setAmount(Number(e.target.value))} type="number" min={0} max={maximumAmount}  className="w-full"/>
+  <Input step={0.01} value={amount} inputMode='decimal' 
+   onPaste={handlePaste} 
+  onKeyDown={handleKeyDown} 
+  onBlur={(e)=>{handleBlur(e.target.value, setAmount)}}
+  onChange={(e)=>handleChange(e, setAmount)} type="number" min={0} 
+  max={maximumAmount}  className="w-full"/>
  <Select value={token} onValueChange={(value) => {
 setToken(value as `0x${string}`);
 if(data && data[arrayOfContracts.findIndex(contract => contract.address === value)].result){

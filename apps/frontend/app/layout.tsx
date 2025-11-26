@@ -32,7 +32,9 @@ export default function RootLayout({
         className={`${outfit.variable} antialiased`}
         >
         <Navbar/>
-        <Toaster />
+        <Toaster style={{
+          background:'red'
+        }} />
        
         {children}
       </body>
