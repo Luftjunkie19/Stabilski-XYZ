@@ -5,14 +5,16 @@ import { Button } from '../ui/button'
 import { DialogHeader,Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Input } from '../ui/input';
-import { useAccount,  useReadContracts, useWriteContract } from 'wagmi';
+import { useAccount,  useReadContract,  useReadContracts, useWriteContract } from 'wagmi';
 import { SEPOLIA_ETH_WETH_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_LINK_ADDR, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { FaEthereum, FaBitcoin } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
 import { Label } from '../ui/label';
 import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenBaseSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import { singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ethereumAddress, singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
+import useBlockchainData from '@/lib/hooks/useBlockchainData';
+import { toast } from 'sonner';
 
 
 
@@ -23,22 +25,7 @@ function RepayDialog() {
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
 const { address, chainId }=useAccount();
 
- const arrayOfContracts=[
-   {
-         'abi':stabilskiTokenABI,
-        'address':stabilskiTokenEthSepoliaAddress,
-        'functionName':'balanceOf',
-        'args':[address],
-        chainId:SEPOLIA_ETH_CHAINID
-    },
-        {
-         'abi':stabilskiTokenABI,
-        'address':stabilskiTokenArbitrumSepoliaAddress,
-        'functionName':'balanceOf',
-        'args':[address],
-        chainId:ARBITRUM_SEPOLIA_CHAINID
-    },
-    ];
+const {currentChainVaultManagerAddress, currentStabilskiContractAddress}=useBlockchainData();
 
     const vaultInfoContracts=[
           {
@@ -85,29 +72,13 @@ const { address, chainId }=useAccount();
     },
     ]
 
-    const {data:stabilskiBalances}=useReadContracts({contracts:[
-   {
+    const {data:stabilskiBalance}=useReadContract({
          'abi':stabilskiTokenABI,
-        'address':stabilskiTokenEthSepoliaAddress,
+        'address':currentStabilskiContractAddress as ethereumAddress,
         'functionName':'balanceOf',
         'args':[address],
-        chainId:SEPOLIA_ETH_CHAINID
-    },
-        {
-         'abi':stabilskiTokenABI,
-        'address':stabilskiTokenArbitrumSepoliaAddress,
-        'functionName':'balanceOf',
-        'args':[address],
-        chainId:ARBITRUM_SEPOLIA_CHAINID
-    },
-      {
-         'abi':stabilskiTokenABI,
-        'address':stabilskiTokenBaseSepoliaAddress,
-        'functionName':'balanceOf',
-        'args':[address],
-        chainId:BASE_SEPOLIA_CHAINID
-    }
-    ]});
+        chainId
+    });
 
     const {data:vaultInfo}=useReadContracts(
   {
@@ -152,14 +123,20 @@ const { address, chainId }=useAccount();
       'address':baseSepoliaVaultManagerAddress,
       'functionName':'getVaultInfo',
       'args':[address, BASE_SEPOLIA_WETH_ADDR],
-      chainId:ARBITRUM_SEPOLIA_CHAINID,
+      chainId:BASE_SEPOLIA_CHAINID
     },
 
     ]
   }
   );
 
-const {writeContract}=useWriteContract();
+const {writeContract}=useWriteContract({
+  mutation:{
+    onError:(error)=>{
+      toast.error(`${error.message}`);
+    }
+  }
+});
 
 
 
@@ -186,9 +163,13 @@ const {writeContract}=useWriteContract();
 <div className="max-w-24 w-full flex flex-col gap-1">
   <Label>Vault</Label>
    <Select onValueChange={(value)=>{
+    console.log(value);
   setToken(value as `0x${string}`);
   if(value  && vaultInfoContracts.findIndex((info)=>info.args[1] === value) !== -1  && (vaultInfo as unknown as vaultInfoReturnType) && ((vaultInfo as unknown as vaultInfoReturnType)[vaultInfoContracts.findIndex((info)=>info.args[1] === value)])) {
-    setMaximumAmount(Number(((vaultInfo as unknown as vaultInfoReturnType)[vaultInfoContracts.findIndex((info)=>info.args[1] === value)] as unknown as singleResultType<vaultInfoReturnType>).result[1]) / 1e18);
+const indexOfTheContract=vaultInfoContracts.findIndex((info)=>info.args[1] === value);
+console.log(indexOfTheContract,Number(((vaultInfo as unknown as vaultInfoReturnType)[indexOfTheContract] as unknown as singleResultType<vaultInfoReturnType>).result[1]));
+
+setMaximumAmount(Number(((vaultInfo as unknown as vaultInfoReturnType)[indexOfTheContract] as unknown as singleResultType<vaultInfoReturnType>).result[1]) / 1e18);
   }
 
  }}>
@@ -219,7 +200,7 @@ const {writeContract}=useWriteContract();
 
 
 </div>
-{stabilskiBalances as unknown as singleResultType<bigint>[] && arrayOfContracts.findIndex((contract) => contract.chainId === chainId) !== -1 && <div className='self-end text-sm flex items-center gap-1'>
+{stabilskiBalance as unknown as bigint && <div className='self-end text-sm flex items-center gap-1'>
     <Label>Available PLST</Label>
     <p className='text-red-500 font-bold'>{maximumAmount - amount}</p>
   </div>}
@@ -229,10 +210,10 @@ const {writeContract}=useWriteContract();
   <Button onClick={()=>{
   writeContract({
     'abi':stabilskiTokenABI,
-    'address':chainId === SEPOLIA_ETH_CHAINID ? stabilskiTokenEthSepoliaAddress : stabilskiTokenArbitrumSepoliaAddress,
+    'address':currentStabilskiContractAddress as ethereumAddress,
     'functionName':'approve',
-    'args':[chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress, amount * 
-      (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)
+    'args':[currentChainVaultManagerAddress, (amount * 
+      (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18))
     ],
     chainId
   });
@@ -241,7 +222,7 @@ const {writeContract}=useWriteContract();
 <Button onClick={()=>{
   writeContract({
     'abi':vaultManagerAbi,
-    'address':chainId === SEPOLIA_ETH_CHAINID ? ethSepoliaVaultManagerAddress : arbitrumSepoliaVaultManagerAddress,
+    'address':currentChainVaultManagerAddress as ethereumAddress,
     'functionName':'repayPLST',
     'args':[token],
     chainId

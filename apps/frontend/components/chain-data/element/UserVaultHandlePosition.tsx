@@ -50,7 +50,7 @@ function UserVaultHandlePosition({vaultManagerAddress, depositor, tokenAddress}:
   onLogs: (logs) => {
 const eventLogs= logs.sort((a, b)=> Number(b.blockNumber) - Number(a.blockNumber)) as EventType<CollateralDeposited>[];
     toast.success(`
-Debt repaid (${(Number(eventLogs[0].args?.amount)/1e18).toFixed(4)}) successfully for ${eventLogs[0].args?.vaultOwner} PLST on ${eventLogs[0].args?.token} vault!
+Debt repaid (${(Number(eventLogs[0].args?.amount)/1e18).toFixed(4)} PLST) successfully for ${eventLogs[0].args?.vaultOwner} PLST on ${eventLogs[0].args?.token} vault!
     `);
   },
   args:{
