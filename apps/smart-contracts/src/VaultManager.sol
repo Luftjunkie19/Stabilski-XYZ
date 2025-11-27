@@ -47,13 +47,16 @@ contract VaultManager is ReentrancyGuard {
     uint256 constant decimalPointsNormalizer= 1e18;
     uint256 constant bitcoinDecimalPoints = 1e8;
     uint8 constant liquidationBuffer= 85;
+    uint256 constant minCollateralRatioPercentage=125e16; // 125%
     address immutable bitcoinAddress;
-
+    address public constant zeroAddress=address(0);
+    address private immutable liquidationFeesReceiver;
 
 constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralManager, address _bitcoinAddress) {
     usdPlnOracle = USDPLNOracleInterface(_usdPlnOracle);
     stabilskiToken = StabilskiTokenInterface(_stabilskiToken);
     collateralManager = CollateralManagerInterface(_collateralManager);
+    liquidationFeesReceiver= msg.sender;
     if(block.chainid == 11155111 && _bitcoinAddress != address(0)) {
        bitcoinAddress= _bitcoinAddress;
     }
@@ -62,7 +65,7 @@ constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralM
 
 modifier onlyEnabledCollateral(address tokenAddress) {
     (address priceFeed, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(tokenAddress);
-    if (priceFeed == address(0) || minCollateralRatio < 125e16) {
+    if (priceFeed == zeroAddress || minCollateralRatio < minCollateralRatioPercentage) {
         revert InvalidVault();
     }
     _;
@@ -71,7 +74,7 @@ modifier onlyEnabledCollateral(address tokenAddress) {
 
 modifier onlyWhitelistedCollateral(address tokenAddress) {
     (address priceFeed, uint256 minCollateralRatio, bool enabled,,) = collateralManager.getCollateralInfo(tokenAddress);
-    if (priceFeed == address(0) || enabled == false || minCollateralRatio < 125e16) {
+    if (priceFeed == zeroAddress || enabled == false || minCollateralRatio < minCollateralRatioPercentage) {
         revert InvalidVault();
     }
     _;
@@ -197,7 +200,7 @@ function withdrawCollateral(address token, uint256 amount) external nonReentrant
 // The function is supposed to liquidate the vault
 function liquidateVault(address vaultOwner, address token) external nonReentrant NoReadyForLiquidation(vaultOwner, token) {
 
-    if(vaults[vaultOwner][token].debt == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || vaults[vaultOwner][token].collateralAmount == 0) {
+    if(vaults[vaultOwner][token].debt == 0 || vaults[vaultOwner][token].collateralTypeToken == zeroAddress || vaults[vaultOwner][token].collateralAmount == 0) {
         revert InvalidVault();
     }
 
@@ -245,6 +248,7 @@ uint256 debtAmountFromCollateral = (debtInUSD * decimalPoints) / collateralPrice
     }
 
     IERC20(vaults[vaultOwner][token].collateralTypeToken).safeTransfer(msg.sender, debtAmountFromCollateral + bountyCollateral);
+    IERC20(vaults[vaultOwner][token].collateralTypeToken).safeTransfer(liquidationFeesReceiver, punishmentFromCollateral);
 
 
 uint256 originalDebt = vaults[vaultOwner][token].debt;
@@ -310,7 +314,7 @@ function isLiquidatable(address vaultOwner, address token) public view returns (
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
 
     // Apply a 15% liquidation threshold buffer
-    uint256 liquidationThreshold = (minCollateralRatio * liquidationBuffer) / 100;
+    uint256 liquidationThreshold = (minCollateralRatio * liquidationBuffer) / percentageConverter;
 
     return healthFactor < liquidationThreshold;
 }

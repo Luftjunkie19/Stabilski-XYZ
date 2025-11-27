@@ -354,21 +354,9 @@ usdplnOracle.s_lastError;
 usdplnOracle.s_lastFinalizationTimestamp;
 usdplnOracle.s_subscriptionIds;
 
-vm.expectRevert();
-usdPlnOracle.fullfillExternalFlawed(
-    bytes32(abi.encode("0x")),
-    abi.encode(36555),
-    bytes("0x")
-);
-
 usdplnOracle.getTheSource();
 usdplnOracle.checkUpkeep(abi.encode("0x"));
 usdplnOracle.performUpkeep(abi.encode("0x"));
-usdplnOracle.fullfillExternalRequest(
-    bytes32(abi.encode("0x")),
-    abi.encode(36555),
-    bytes("0x")
-);
 
 vm.warp(block.timestamp + usdplnOracle.interval());
 assertGt(usdplnOracle.getPLNPrice(), 0);

@@ -11,7 +11,7 @@ function StabilskiHero() {
         <Image src={stabilskiLogo} alt='' width={128} height={128} className='w-52 h-52'/>
         </motion.div>
 
-        <motion.div  initial={{transform:'translateX(100%) scale(0.5)','transitionDelay': '1s', animationDelay:'1s', opacity:0, transitionDuration:'1s'}} whileInView={{transform:'translateX(0%) scale(1)', opacity:1, transitionDuration:'1s', 'transitionDelay': '1s', animationDelay:'1s'}} className="flex flex-col gap-3 max-w-xl">
+        <motion.div  initial={{transform:'translateX(100%) scale(0.5)','transitionDelay': '1s', animationDelay:'1s', opacity:0, transitionDuration:'1s'}} whileInView={{transform:'translateX(0%) scale(1)', opacity:1, transitionDuration:'1s', 'transitionDelay': '1s', animationDelay:'1s'}} className="flex text-white flex-col gap-3 max-w-xl">
             <p className='text-2xl font-bold'>Stabilski — Borrow PLST, the on‑chain Polish złoty</p>
             <p>Provide crypto collateral to borrow PLST, a PLN‑pegged stable token. Instantly mint PLST, manage positions securely, and transfer funds across chains via built‑in bridges.</p>
             <ul className='flex flex-col gap-2 list-disc'>

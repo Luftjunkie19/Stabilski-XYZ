@@ -10,11 +10,11 @@ import { SEPOLIA_ETH_WETH_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_LINK_ADDR, AR
 import { FaEthereum, FaBitcoin } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
 import { Label } from '../ui/label';
-import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenBaseSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
+import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { ethereumAddress, singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
-import { toast } from 'sonner';
+import useToastContent from '@/lib/hooks/useToastContent';
 
 
 
@@ -26,6 +26,8 @@ function RepayDialog() {
 const { address, chainId }=useAccount();
 
 const {currentChainVaultManagerAddress, currentStabilskiContractAddress}=useBlockchainData();
+
+const {sendToastContent}=useToastContent();
 
     const vaultInfoContracts=[
           {
@@ -133,7 +135,11 @@ const {currentChainVaultManagerAddress, currentStabilskiContractAddress}=useBloc
 const {writeContract}=useWriteContract({
   mutation:{
     onError:(error)=>{
-      toast.error(`${error.message}`);
+      sendToastContent({
+        toastText: error.message,
+        icon: '❌',
+        type: 'error'
+      });
     }
   }
 });
@@ -146,7 +152,7 @@ const {writeContract}=useWriteContract({
   <DialogTrigger className={`bg-blue-500 cursor-pointer hover:bg-blue-800 hover:scale-95 p-2 text-white text-sm transition-all rounded-md`}>
  Repay
   </DialogTrigger>
-  <DialogContent className='flex flex-col gap-4 items-center w-full '>
+  <DialogContent className='flex flex-col bg-neutral-800 border-red-500 text-white gap-4 items-center w-full '>
     <DialogHeader>
       <DialogTitle>Repay Your Debt</DialogTitle>
       <DialogDescription>
@@ -176,23 +182,23 @@ setMaximumAmount(Number(((vaultInfo as unknown as vaultInfoReturnType)[indexOfTh
   <SelectTrigger className="max-w-24">
     <SelectValue placeholder="Vault" />
   </SelectTrigger>
-  <SelectContent className="max-w-64 w-full bg-white shadow-sm shadow-black rounded-lg">
+  <SelectContent className="max-w-64 w-full border-red-500 bg-neutral-800 shadow-sm shadow-black rounded-lg">
    {chainId && chainId === SEPOLIA_ETH_CHAINID ? <>
-    <SelectItem value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/>Wrapped Ethereum (WETH)</SelectItem>
-    <SelectItem value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/>Wrapped Bitcoin (WBTC)</SelectItem>
-    <SelectItem value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
+    <SelectItem className='focus:bg-neutral-600 focus:text-white text-white' value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/>Wrapped Ethereum (WETH)</SelectItem>
+    <SelectItem className='focus:bg-neutral-600 focus:text-white text-white' value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/>Wrapped Bitcoin (WBTC)</SelectItem>
+    <SelectItem className='focus:bg-neutral-600 focus:text-white text-white' value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
     </> : chainId && chainId === BASE_SEPOLIA_CHAINID ? 
     <>
-       <SelectItem value={
+       <SelectItem className='focus:bg-neutral-600 focus:text-white text-white' value={
         BASE_SEPOLIA_WETH_ADDR
        }> <FaEthereum className="text-zinc-500"/>Wrapped Ethereum (WETH)</SelectItem>
-    <SelectItem value={
+    <SelectItem className='focus:bg-neutral-600 focus:text-white text-white' value={
       BASE_SEPOLIA_LINK_ADDR
     }><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
     </>
     :
     <>
-     <SelectItem value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
+     <SelectItem className='focus:bg-neutral-600 focus:text-white text-white' value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
     </>}
   </SelectContent>
 </Select>
@@ -200,9 +206,17 @@ setMaximumAmount(Number(((vaultInfo as unknown as vaultInfoReturnType)[indexOfTh
 
 
 </div>
-{stabilskiBalance as unknown as bigint && <div className='self-end text-sm flex items-center gap-1'>
-    <Label>Available PLST</Label>
-    <p className='text-red-500 font-bold'>{maximumAmount - amount}</p>
+{stabilskiBalance as unknown as bigint &&<div className='flex items-center gap-6 self-end'>
+
+   <div className='self-end text-sm flex items-center gap-2'>
+    <Label>Balance</Label>
+    <p className='text-red-500 font-semibold'>{(Number(stabilskiBalance)/1e18).toFixed(2)} PLST</p>
+  </div>
+
+ <div className='self-end text-sm flex items-center gap-2'>
+    <Label>Debt</Label>
+    <p className='text-red-500 font-bold'>{(maximumAmount - amount).toFixed(2)} PLST</p>
+  </div>  
   </div>}
 
 

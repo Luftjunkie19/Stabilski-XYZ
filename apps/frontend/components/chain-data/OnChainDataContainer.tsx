@@ -14,6 +14,7 @@ import ProtocolOnChainPositions from './ProtocolOnChainPositions';
 import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenBaseSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { Abi } from 'viem';
+import PriceSkeleton from '../skeletons/PriceSkeleton';
 
 function OnChainDataContainer() {
   const {chainId, address}=useAccount();
@@ -208,7 +209,7 @@ const collateralPriceOnChainContracts=chainCollateralContracts();
 
 
 
-  const {data:vaultTokensOnchainData}=useReadContracts({
+  const {data:vaultTokensOnchainData, isLoading:vaultTokensOnchainLoading}=useReadContracts({
             contracts:vaultManagerContracts as readonly {
     abi?: Abi | undefined;
     functionName?: string | undefined;
@@ -218,7 +219,7 @@ const collateralPriceOnChainContracts=chainCollateralContracts();
 }[]
         });
         
-  const {data:collateralTokenPriceData}=useReadContracts({contracts:collateralPriceOnChainContracts as 
+  const {data:collateralTokenPriceData, isLoading:collateralTokenPriceLoading}=useReadContracts({contracts:collateralPriceOnChainContracts as 
     readonly {
     abi?: Abi | undefined;
     functionName?: string | undefined;
@@ -228,7 +229,7 @@ const collateralPriceOnChainContracts=chainCollateralContracts();
 }[]
   });
 
-  const {data:balancePLST} = useReadContract(
+  const {data:balancePLST, isLoading:balancePLSTLoading} = useReadContract(
             {
           abi:stabilskiTokenABI,
           address: tokenAddress,
@@ -238,7 +239,7 @@ const collateralPriceOnChainContracts=chainCollateralContracts();
             }
         );
 
-  const {data:oraclePrice}=useReadContract({
+  const {data:oraclePrice, isLoading:oraclePriceLoading}=useReadContract({
           abi:usdplnOracleABI,
           address: oracleAddress,
           functionName:'getPLNPrice',
@@ -252,7 +253,27 @@ const CollateralTokenPriceOnChainData=()=>{
     case SEPOLIA_ETH_CHAINID:
       return (
       <>
-      {collateralTokenPriceData && 
+      {collateralTokenPriceLoading && 
+    <div className="flex flex-col gap-2 w-full h-full">
+  <p className='text-red-500'>Crypto Prices (USD)</p>
+<div className="w-full flex flex-wrap items-center gap-6">
+<div className='flex text-sm items-center gap-1'>
+  <FaBitcoin className='text-orange-500 text-base'/> 
+<PriceSkeleton/>
+</div>
+<div className='flex text-sm items-center gap-1'><FaEthereum className='text-zinc-500 text-base'/> 
+<PriceSkeleton/>
+</div>
+<div className='flex text-sm items-center gap-1'><SiChainlink className='text-blue-500 text-base'/> 
+<PriceSkeleton/>
+</div>
+
+</div>
+
+</div>
+      }
+
+      {!collateralTokenPriceLoading && collateralTokenPriceData && 
     <div className="flex flex-col gap-2 w-full h-full">
   <p className='text-red-500'>Crypto Prices (USD)</p>
 <div className="w-full flex flex-wrap items-center gap-6">
@@ -275,7 +296,19 @@ const CollateralTokenPriceOnChainData=()=>{
 
     case ARBITRUM_SEPOLIA_CHAINID:
       return (<>
-      {collateralTokenPriceData &&  <div className="flex flex-col gap-2 w-full h-full">
+
+{collateralTokenPriceLoading && <div className="flex flex-col gap-2 w-full h-full">
+  <p className='text-red-500'>Crypto Prices (USD)</p>
+<div className="w-full flex flex-wrap items-center gap-6">
+<div className='flex text-sm items-center gap-1'><SiChainlink className='text-blue-500 text-base'/> 
+<PriceSkeleton/>
+</div>
+</div>
+
+</div>}
+
+
+      {!collateralTokenPriceLoading && collateralTokenPriceData &&  <div className="flex flex-col gap-2 w-full h-full">
   <p className='text-red-500'>Crypto Prices (USD)</p>
 <div className="w-full flex flex-wrap items-center gap-6">
 <div className='flex text-sm items-center gap-1'><SiChainlink className='text-blue-500 text-base'/> 
@@ -288,7 +321,24 @@ const CollateralTokenPriceOnChainData=()=>{
 
     case BASE_SEPOLIA_CHAINID:
       return (<>
-        {collateralTokenPriceData &&    <div className="flex flex-col gap-2 w-full h-full">
+    {collateralTokenPriceLoading &&    <div className="flex flex-col gap-2 w-full h-full">
+  <p className='text-red-500'>Crypto Prices (USD)</p>
+<div className="w-full flex flex-wrap items-center gap-6">
+<div className='flex text-sm items-center gap-1'>
+<SiChainlink className='text-blue-500 text-base'/> 
+<PriceSkeleton/>
+</div>
+<div className='flex text-sm items-center gap-1'>
+<FaEthereum className='text-blue-800 text-base'/> 
+<PriceSkeleton/>
+</div>
+
+
+</div>
+
+</div>}
+
+        {!collateralTokenPriceLoading && collateralTokenPriceData &&    <div className="flex flex-col gap-2 w-full h-full">
   <p className='text-red-500'>Crypto Prices (USD)</p>
 <div className="w-full flex flex-wrap items-center gap-6">
 <div className='flex text-sm items-center gap-1'>
@@ -313,8 +363,27 @@ const UserCollaterals=()=>{
   switch(chainId){
     case SEPOLIA_ETH_CHAINID:
       return (<>
+{vaultTokensOnchainLoading && <div  className="w-full flex items-center flex-wrap gap-6">
+<div className='flex items-center gap-1'>
+  <FaBitcoin className='text-orange-500'/> 
+<PriceSkeleton/>
+ <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} />
+</div>
+<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> 
+<PriceSkeleton/>
+ <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} />
+ </div>
+<div className='flex items-center gap-1'>
+  <SiChainlink className='text-blue-500'/>
+  <p className='text-sm sm:text-base'>
+<PriceSkeleton/>
+  </p>
+  <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} />
+  </div>
+</div>}
 
-      {vaultTokensOnchainData && <div  className="w-full flex items-center flex-wrap gap-6">
+
+      {!vaultTokensOnchainLoading &&  vaultTokensOnchainData && <div  className="w-full flex items-center flex-wrap gap-6">
 <div className='flex items-center gap-1'>
   <FaBitcoin className='text-orange-500'/> 
   <p className='text-sm sm:text-base'>{vaultTokensOnchainData[0] && vaultTokensOnchainData[0].result as unknown as bigint && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result) / 1e18).toFixed(2)}</p>
@@ -338,7 +407,13 @@ const UserCollaterals=()=>{
 
     case BASE_SEPOLIA_CHAINID:
       return (<>
-      {vaultTokensOnchainData && <div  className="w-full flex-wrap flex items-center gap-6">
+    {vaultTokensOnchainLoading && <div  className="w-full flex-wrap flex items-center gap-6">
+<div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> <PriceSkeleton/>  <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> <PriceSkeleton/> <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
+</div>}
+
+
+      {!vaultTokensOnchainLoading && vaultTokensOnchainData && <div  className="w-full flex-wrap flex items-center gap-6">
 <div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {vaultTokensOnchainData[1] && vaultTokensOnchainData[1].result as unknown as bigint   && Number(vaultTokensOnchainData[1].result)  && (Number(vaultTokensOnchainData[1].result)/ 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultTokensOnchainData[0]&& vaultTokensOnchainData[0].result as unknown as bigint && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>}
@@ -346,7 +421,11 @@ const UserCollaterals=()=>{
 
      case ARBITRUM_SEPOLIA_CHAINID:
       return (<>
-      {vaultTokensOnchainData && <div  className="w-full flex-wrap  flex items-center gap-6">
+      {vaultTokensOnchainLoading && <div  className="w-full flex-wrap  flex items-center gap-6">
+<div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> <PriceSkeleton/> <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
+</div>}
+
+      {!vaultTokensOnchainLoading && vaultTokensOnchainData && <div  className="w-full flex-wrap  flex items-center gap-6">
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultTokensOnchainData[0] && vaultTokensOnchainData[0].result as unknown as bigint && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>}
       </>)
@@ -356,22 +435,23 @@ const UserCollaterals=()=>{
 
   return (
 <div className="w-full flex items-center justify-center flex-wrap gap-4">
-  {collateralTokenPriceData &&  vaultManagerAddress &&  
-        <div className="flex flex-col gap-3 overflow-y-auto max-w-md border-red-500 border w-full bg-white border-red-500 borde shadow-md shadow-black p-4 rounded-lg h-64">
+   
+        <div className="flex flex-col gap-3 overflow-y-auto max-w-md border w-full bg-neutral-800 text-white border-red-500 shadow-md shadow-black p-4 rounded-lg h-64">
 <CollateralTokenPriceOnChainData/>
 
 
 
-{chainId && vaultTokensOnchainData && 
 <div className="flex flex-col  gap-1">
 <p className='text-red-500'>Your Collateral</p>
 <UserCollaterals/>
 </div>
-}
+
 
 
 <p className='py-2 flex md:items-center flex-col md:flex-row items-start gap-2'>
-  Your PLST Balance: {balancePLST as unknown as bigint
+  Your PLST Balance
+  {balancePLSTLoading && <PriceSkeleton/>}
+  {!balancePLSTLoading && balancePLST as unknown as bigint
    && <span
    className='text-red-500
    flex items-center gap-1
@@ -384,10 +464,12 @@ const UserCollaterals=()=>{
    }
 </p>
 
-<p className="text-sm text-zinc-500 sm:text-base tracking">USD/PLN <span className='text-red-500 font-bold'>{oraclePrice as unknown as bigint && (Number(oraclePrice) / 1e4).toFixed(4)} PLN</span></p>
+<p className="text-sm text-white sm:text-base tracking">USD/PLN <span className='text-red-500 font-bold'>
+{oraclePriceLoading && <PriceSkeleton/>}
+  {!oraclePriceLoading && oraclePrice as unknown as bigint && (Number(oraclePrice) / 1e4).toFixed(4)} PLN</span></p>
 
 </div>
-}
+
 {vaultManagerAddress && currentCollateralManagerAddress && <>
 <ProtocolOnChainPositions chainId={chainId as number} vaultManagerAddress={vaultManagerAddress as ethereumAddress} collateralManagerAddress={currentCollateralManagerAddress as ethereumAddress} />
 
