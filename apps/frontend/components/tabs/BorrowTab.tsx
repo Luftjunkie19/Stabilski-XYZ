@@ -12,11 +12,14 @@ import { Input } from '../ui/input'
 import { useAccount, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
 import {  ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ABI, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ABI, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import { toast } from 'sonner';
+
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { CollateralDeposited, ethereumAddress, EventType, singleResultType } from '@/lib/types/onChainData/OnChainDataTypes';
 import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
+import useToastContent from '@/lib/hooks/useToastContent';
+
+
 
 
 function BorrowTab() {
@@ -32,6 +35,8 @@ function BorrowTab() {
 const {writeContract}=useWriteContract({
 });
 const {handleKeyDown, handlePaste, handleBlur, handleChange}=usePreventInvalidInput();
+
+const { sendToastContent}=useToastContent();
 
  const [amount, setAmount] = useState<number>(0);
   const [token, setToken] = useState<ethereumAddress | undefined>(undefined);
@@ -169,7 +174,7 @@ const {chainId, address}=useAccount();
 
 const borrowPolishStableCoin= ()=>{
   try{
-    writeContract({
+  const txHash = writeContract({
     abi:vaultManagerAbi,
     address: currentChainVaultManagerAddress as `0x${string}`,
     functionName:'mintPLST',
@@ -177,12 +182,20 @@ const borrowPolishStableCoin= ()=>{
     chainId
 });
 
-  toast.loading('Borrowing PLST...');
+
+
+sendToastContent({toastText:'Borrowing PLST...',
+    icon:'⏳'
+});
+
   }catch(err){
 console.log(err);
-toast.error('Something went wrong');
-  }
+sendToastContent({toastText:'Something went wrong',
+icon:'❌',
+type:'error'
+});
   
+}
 }
 
 
@@ -192,10 +205,14 @@ useWatchContractEvent({
   eventName:'StabilskiTokenMinted',
   chainId:chainId,
 onLogs:(logs)=>{
-  toast.success(`You successfully borrowed ${
+  sendToastContent({
+    toastText:`You successfully borrowed ${
    Number((logs[0] as EventType<Omit<CollateralDeposited,'token'>
     >).args?.amount)
-    / 1e18} PLST`);
+    / 1e18} PLST`,
+    icon:'✅',
+    type:'success'
+  })
 },
 args:{
   vaultOwner: address,
@@ -209,22 +226,22 @@ const TokensOptions = ()=>{
     case SEPOLIA_ETH_CHAINID:
       return(<>
  
-        <SelectItem className="flex items-center gap-2 p-1" value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
-    <SelectItem className="flex items-center gap-2 p-1"  value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/> <span className="text-sm">Wrapped Bitcoin (WBTC)</span></SelectItem>
-    <SelectItem className="flex items-center gap-2 p-1"  value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" /> <span className="text-sm">Chainlink (LINK)</span></SelectItem>
+        <SelectItem className="flex text-white focus:bg-neutral-800 focus:text-white hover:bg-neutral-900 items-center gap-2 p-1" value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
+    <SelectItem className="flex text-white focus:bg-neutral-800 focus:text-white hover:bg-neutral-900 items-center gap-2 p-1"  value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/> <span className="text-sm">Wrapped Bitcoin (WBTC)</span></SelectItem>
+    <SelectItem className="flex text-white focus:bg-neutral-800 focus:text-white hover:bg-neutral-900 items-center gap-2 p-1"  value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" /> <span className="text-sm">Chainlink (LINK)</span></SelectItem>
 
 </>);
 
     case ARBITRUM_SEPOLIA_CHAINID:
       return (  <>
-     <SelectItem className="flex items-center gap-2 p-1" value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" /> <span className="text-sm">Chainlink (LINK)</span></SelectItem>
+     <SelectItem className="flex text-white focus:bg-neutral-800 focus:text-white hover:bg-neutral-900 items-center gap-2 p-1" value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" /> <span className="text-sm">Chainlink (LINK)</span></SelectItem>
     </>);
 
     case BASE_SEPOLIA_CHAINID:
       return (
   <>
-    <SelectItem className="flex items-center gap-2 p-1"  value={BASE_SEPOLIA_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
-     <SelectItem className="flex items-center gap-2 p-1"  value={BASE_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />  <span className="text-sm">Chainlink (LINK)</span></SelectItem>
+    <SelectItem className="flex text-white items-center focus:bg-neutral-800 hover:bg-neutral-900 focus:text-white gap-2 p-1"  value={BASE_SEPOLIA_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
+     <SelectItem className="flex text-white items-center focus:bg-neutral-800 hover:bg-neutral-900 focus:text-white gap-2 p-1"  value={BASE_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />  <span className="text-sm">Chainlink (LINK)</span></SelectItem>
     </>
 
       );
@@ -240,15 +257,15 @@ const TokensOptions = ()=>{
   return (
       <TabsContent value="borrow" className="flex flex-col gap-4 max-w-7xl w-full">
       
-<Card className=" w-full max-w-xl self-center shadow-sm border-red-500 border shadow-black h-96">
-  <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
-  <Label className="text-xl text-red-500">You Borrow</Label>
+<Card className=" w-full max-w-xl bg-neutral-800 self-center shadow-sm border-red-500 border shadow-black h-96">
+  <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-2 flex-col">
+  <Label className="text-lg text-red-500">You Borrow</Label>
 <div className="flex items-center gap-4">
   <Input 
   onPaste={handlePaste} 
   onKeyDown={handleKeyDown} 
   onBlur={(e)=>{handleBlur(e.target.value, setAmount)}}
-  onChange={(e)=>handleChange(e, setAmount)}type="number" step={0.01} min={0} max={maximumAmount} className="w-full"/>
+  onChange={(e)=>handleChange(e, setAmount)}type="number" step={0.01} min={0} max={maximumAmount} className="w-full text-white"/>
  <Select onValueChange={(value)=>{
  setToken(value as `0x${string}`);
  if(maxBorrowableData){
@@ -259,10 +276,10 @@ const maxAmount = selectedContractNumber;
  }
 
  }}>
-  <SelectTrigger className="w-44">
+  <SelectTrigger className="w-44 text-white">
     <SelectValue placeholder="Vaults" />
   </SelectTrigger>
-  <SelectContent className="w-64 relative flex flex-col gap-3 bg-white shadow-sm shadow-black rounded-lg">
+  <SelectContent className="w-64 relative border-red-500 flex flex-col gap-3 bg-neutral-800 p-1 shadow-sm shadow-black rounded-lg">
 <TokensOptions/>
   </SelectContent>
 </Select>
@@ -270,8 +287,8 @@ const maxAmount = selectedContractNumber;
   </div>
     <div className="h-1/2 py-1 px-3 items-center flex gap-3 flex-col">
  <p 
- className="text-red-500 text-2xl tracking">Your can still borrow</p>
-<p>{maxBorrowableData as unknown as singleResultType<bigint>
+ className="text-red-500 text-2xl font-semibold tracking">Your can still borrow</p>
+<p className='text-white flex items-center gap-2'>{maxBorrowableData as unknown as singleResultType<bigint>
  && vaultContractInfo as unknown as singleResultType<bigint>[]
 && token && arrayOfContracts.find((contract) => contract.address === token) || arrayOfContracts.findIndex((contract) => contract.address === token) !== -1   ?  (((Number((maxBorrowableData as unknown as 
 singleResultType<bigint>[]
@@ -292,5 +309,6 @@ className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-poi
   </TabsContent>
   )
 }
+
 
 export default BorrowTab

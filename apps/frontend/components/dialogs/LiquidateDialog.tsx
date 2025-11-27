@@ -20,7 +20,7 @@ function LiquidateDialog({isLiquidatable, approvePLST, commitLiquidation, vaultD
   <DialogTrigger className={` p-2 rounded-lg text-sm text-white ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ?  'bg-red-500 cursor-pointer' : 'bg-red-800 cursor-not-allowed'}  hover:bg-red-800 hover:scale-95`} disabled={isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) === false ? true : false}>
  Liquidate
   </DialogTrigger>
-  <DialogContent className='flex flex-col gap-4 w-full '>
+  <DialogContent className='flex bg-neutral-800 border-red-500 text-white flex-col gap-4 w-full '>
     <DialogHeader>
       <DialogTitle className='text-red-500 text-lg'>Liquidate Position</DialogTitle>
     <DialogDescription className='text-sm'>

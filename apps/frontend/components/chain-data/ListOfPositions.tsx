@@ -15,7 +15,7 @@ function ListOfPositions({collateralManagerAddress, vaultManagerAddress, deposit
  <>
  { (depositors as unknown as ethereumAddress[]).map((depositor:ethereumAddress)=> <VaultTokenPosition 
    collateralManagerAddress={collateralManagerAddress as ethereumAddress} 
-   vaultManagerAddress={vaultManagerAddress} key={tokenAddr} 
+   vaultManagerAddress={vaultManagerAddress} key={crypto.randomUUID()} 
    depositor={depositor as ethereumAddress} 
    tokenAddress={tokenAddr as ethereumAddress}/>)}
  </>

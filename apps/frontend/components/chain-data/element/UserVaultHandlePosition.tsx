@@ -3,12 +3,12 @@ import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { CollateralDeposited, ethereumAddress, EventType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
 import { GiPayMoney, GiReceiveMoney } from 'react-icons/gi';
-import { toast } from 'sonner';
 import { useReadContract, useWatchContractEvent } from 'wagmi';
 import Image from "next/image";
 import stabilskiStableCoin from '@/public/Logox32.png'
 import RepayDialog from '@/components/dialogs/RepayDialog';
 import WithdrawDialog from '@/components/dialogs/WithdrawDialog';
+import useToastContent from '@/lib/hooks/useToastContent';
 
 type Props = {vaultManagerAddress:ethereumAddress, depositor:ethereumAddress, tokenAddress:ethereumAddress,}
 
@@ -41,7 +41,7 @@ function UserVaultHandlePosition({vaultManagerAddress, depositor, tokenAddress}:
         args:[depositor, tokenAddress],
     });
 
-
+const { sendToastContent}=useToastContent();
 
     useWatchContractEvent({
   address: vaultManagerAddress,
@@ -49,9 +49,12 @@ function UserVaultHandlePosition({vaultManagerAddress, depositor, tokenAddress}:
   eventName: 'DebtRepaid',
   onLogs: (logs) => {
 const eventLogs= logs.sort((a, b)=> Number(b.blockNumber) - Number(a.blockNumber)) as EventType<CollateralDeposited>[];
-    toast.success(`
-Debt repaid (${(Number(eventLogs[0].args?.amount)/1e18).toFixed(4)} PLST) successfully for ${eventLogs[0].args?.vaultOwner} PLST on ${eventLogs[0].args?.token} vault!
-    `);
+    sendToastContent({toastText:`
+    🎉 Debt Repaid: ${ (Number(eventLogs[0].args?.amount as bigint)/1e18).toFixed(2)} PLST by ${eventLogs[0].args?.vaultOwner.slice(0,6)}...
+    `, icon:'✅', type:'success'
+});
+
+
   },
   args:{
     vaultOwner: depositor,
@@ -67,22 +70,22 @@ Debt repaid (${(Number(eventLogs[0].args?.amount)/1e18).toFixed(4)} PLST) succes
         return (
             <>
             {vaultInfo as unknown as vaultInfoReturnType && (vaultInfo as vaultInfoReturnType)[2] !== "0x0000000000000000000000000000000000000000" &&
-        <div className={`w-full ${vaultInfo as vaultInfoReturnType && (vaultInfo as vaultInfoReturnType)[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row px-2 gap-1 flex sm:items-center justify-between`}>
+        <div className={`w-full bg-neutral-700 p-2 rounded-md border border-red-500 ${vaultInfo as vaultInfoReturnType && (vaultInfo as vaultInfoReturnType)[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row px-2 gap-1 flex sm:items-center justify-between`}>
     <div className="w-full">
-        <p className='hidden md:block'>{depositor.slice(0, 21)}...</p>
-    <p className='block md:hidden'>{depositor.slice(0, 10)}...</p>
+        <p className='hidden text-white md:block'>{depositor.slice(0, 21)}...</p>
+    <p className='block text-white md:hidden'>{depositor.slice(0, 10)}...</p>
     <div className="flex items-center gap-2 flex-wrap">
     <div className="flex items-center">
-        <GiPayMoney className='mr-1' />
-        <p className='text-sm'><span className='text-red-500'>
+        <GiPayMoney className='mr-1 text-red-500' />
+        <p className='text-sm'><span className='text-white'>
             {collateralValue as unknown as bigint && (Number((collateralValue as unknown as bigint))/1e18).toFixed(2)}
             </span> </p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-6 h-6'/>
     </div>
 
         <div className="flex items-center gap-1">
-       <GiReceiveMoney className='mr-1' />
-        <p className='text-sm'><span>{(Number((vaultInfo as unknown as vaultInfoReturnType)[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>
+       <GiReceiveMoney className='mr-1 text-green-500' />
+        <p className='text-sm text-white'><span>{(Number((vaultInfo as unknown as vaultInfoReturnType)[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-7 h-7'/>
     </div>
     <p className={` text-sm ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ? 'text-red-500' : 'text-green-500' }`}>

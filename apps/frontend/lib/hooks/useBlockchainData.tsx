@@ -137,11 +137,25 @@ function useBlockchainData() {
            }
 
 
+           const getCurrentBlockchainScanner=()=>{
+            switch(chainId){
+                case SEPOLIA_ETH_CHAINID:
+                    return 'https://sepolia.etherscan.io/'
+
+                case ARBITRUM_SEPOLIA_CHAINID:
+                    return 'https://sepolia.arbiscan.io/'
+                
+                case BASE_SEPOLIA_CHAINID:
+                    return 'https://https://sepolia.basescan.org/'
+            }
+           }
+
+           const currentBlockchainScanner=getCurrentBlockchainScanner();
 
 return {
     getTokenAbi, currentChainVaultManagerAddress, currentOraclePriceAddress,
     getPoolAddressByChainSelector,getCurrentPoolAddress,
-    currentStabilskiContractAddress, getCurrentRouter, 
+    currentStabilskiContractAddress, getCurrentRouter, currentBlockchainScanner,
     getCurrentCcipRetriever}     
 
 

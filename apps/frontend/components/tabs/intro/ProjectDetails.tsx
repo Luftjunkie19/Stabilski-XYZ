@@ -1,11 +1,21 @@
-import Link from 'next/link';
 import React from 'react'
 import { FaBitcoin, FaEthereum } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
-import { toast } from 'sonner';
-import { BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
+import { ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
+import useToastContent from '@/lib/hooks/useToastContent';
+import ContractAddress, { ContractsType } from './elements/ContractAddress';
 
 function ProjectDetails() {
+
+  const contracts:(ContractsType & {network:'eth' | 'arb' | 'base' })[]=[
+    {address:SEPOLIA_ETH_WETH_ADDR, Icon:FaEthereum, iconStyles:'text-gray-500 text-xl', label:'WETH', network:'eth'},
+    {address:SEPOLIA_ETH_WBTC_ADDR, Icon:FaBitcoin, iconStyles:'text-orange-400 text-2xl', label:'WBTC', network:'eth'},
+    {address:SEPOLIA_ETH_LINK_ADDR, Icon:SiChainlink, iconStyles:'text-blue-500 text-2xl', label:'LINK', network:'eth'},
+    {address:ARBITRUM_SEPOLIA_LINK_ADDR, Icon:SiChainlink, iconStyles:'text-blue-500 text-2xl', label:'LINK', network:'arb'},
+    {address:BASE_SEPOLIA_LINK_ADDR, Icon:SiChainlink, iconStyles:'text-blue-500 text-2xl', label:'LINK', network:'base'},
+    {address:BASE_SEPOLIA_WETH_ADDR, Icon:FaEthereum, iconStyles:'text-blue-700 text-2xl', label:'WETH', network:'base'},
+  ]
+  
   return (
         <div className="flex flex-col gap-2">
 
@@ -21,24 +31,7 @@ function ProjectDetails() {
  text-shadow-sm text-shadow-black/25
  '>Sepolia Ethereum</p>
   <div className="flex flex-wrap gap-2">
-    <div onClick={()=>{
-      navigator.clipboard.writeText(`${SEPOLIA_ETH_WETH_ADDR}`);
-      toast.success('Address Copied to clipboard');
-    }}  className="flex cursor-pointer justify-between transition-all max-w-32 w-full hover:scale-95 gap-2 items-center p-2 rounded-lg bg-white border-black border shadow-sm shadow-black">
-      <FaEthereum className='text-gray-500 text-xl'/>
-      <p>WETH</p>
-    </div>
-    <Link href={`https://faucets.chain.link/`} target='_blank' className="flex cursor-pointer transition-all justify-between max-w-32 w-full hover:scale-95 gap-2 items-center p-2 rounded-lg bg-white border-black border shadow-sm shadow-black">
-      <SiChainlink className='text-blue-500 text-2xl'/>
-      <p>LINK</p>
-    </Link>
-    <div onClick={()=>{
-    navigator.clipboard.writeText(`${SEPOLIA_ETH_WBTC_ADDR}`);
-    toast.success('Address Copied to clipboard');
-    }} className="flex cursor-pointer transition-all max-w-32 w-full justify-between hover:scale-95 gap-2 items-center p-2 rounded-lg bg-white border-black border shadow-sm shadow-black">
-      <FaBitcoin className='text-orange-400 text-2xl'/>
-      <p>BTC</p>
-    </div>
+    {contracts.filter(c=>c.network==='eth').map((contract, index)=>(<ContractAddress key={index} {...contract}/>))}
   </div>
   </div>
 
@@ -48,12 +41,7 @@ function ProjectDetails() {
   Sepolia Arbitrum
  </p>
   <div className="flex flex-wrap gap-2">
-    
-    <Link href={`https://faucets.chain.link/`} target='_blank' className="flex cursor-pointer transition-all justify-between max-w-32 w-full hover:scale-95 gap-2 items-center p-2 rounded-lg bg-white border-black border shadow-sm shadow-black">
-      <SiChainlink className='text-blue-500 text-2xl'/>
-      <p>LINK </p>
-    </Link>
-    
+    {contracts.filter(c=>c.network==='arb').map((contract, index)=>(<ContractAddress key={index} {...contract}/>))}
   </div>
   </div>
 
@@ -64,23 +52,7 @@ function ProjectDetails() {
   Sepolia Base
  </p>
   <div className="flex flex-wrap gap-2">
-    
-    <Link href={`https://faucets.chain.link/`} target='_blank' className="flex cursor-pointer transition-all justify-between max-w-32 w-full hover:scale-95 gap-2 items-center p-2 rounded-lg bg-white border-black border shadow-sm shadow-black">
-      <SiChainlink className='text-blue-500 text-2xl'/>
-      <p>LINK</p>
-    </Link>
-
-        <div
-        onClick={()=>{
-          navigator.clipboard.writeText(BASE_SEPOLIA_WETH_ADDR)
-       toast.success('WETH address copied successfully (BASE)')
-        }}
-        className="flex cursor-pointer transition-all justify-between max-w-32 w-full hover:scale-95 gap-2 items-center p-2 rounded-lg bg-white border-black border shadow-sm shadow-black">
-      <FaEthereum 
-      className='text-blue-700 text-2xl'/>
-      <p>WETH</p>
-    </div>
-    
+    {contracts.filter(c=>c.network==='base').map((contract, index)=>(<ContractAddress key={index} {...contract}/>))}
   </div>
   </div>
 

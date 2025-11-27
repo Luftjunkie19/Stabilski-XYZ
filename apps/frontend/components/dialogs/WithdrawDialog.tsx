@@ -5,7 +5,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } 
 import React, { useState } from 'react'
 import { DialogHeader } from '../ui/dialog'
 import { Button } from '../ui/button'
-import {  useAccount, useReadContracts, useWatchContractEvent, useWriteContract } from 'wagmi';
+import {  useAccount, useReadContract, useReadContracts, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { Label } from '../ui/label';
@@ -13,13 +13,13 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { SiChainlink } from 'react-icons/si';
 import { FaBitcoin, FaEthereum } from 'react-icons/fa6';
-import { stabilskiTokenBaseSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
 import { CollateralDeposited, collateralInfoType, ethereumAddress, EventType, singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import { Abi } from 'viem';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
-import { toast } from 'sonner';
-import { readContract } from '@wagmi/core';
-import { config } from '@/lib/Web3Provider';
+import useToastContent from '@/lib/hooks/useToastContent';
+import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
+import { stabilskiTokenBaseSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
+import { stabilskiTokenArbitrumSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
 
 
 function WithdrawDialog() {
@@ -28,6 +28,7 @@ function WithdrawDialog() {
   const [token, setToken] = useState<`0x${string}` | undefined>(undefined);
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
 
+  const {handleBlur, handleChange, handleKeyDown, handlePaste}=usePreventInvalidInput();
   const vaultInfoContracts=[
             {
         'abi':vaultManagerAbi,
@@ -86,8 +87,38 @@ function WithdrawDialog() {
   }
   );
 
-  const {data:collateralInfos}=useReadContracts({
+  
+  const {
+    currentChainVaultManagerAddress,
+  
+  }=useBlockchainData();
+
+
+  const {isLoading, data}=useReadContract({
+    'abi':vaultManagerAbi,
+    'address':currentChainVaultManagerAddress as ethereumAddress,
+    'functionName':'getIsHealthyAfterWithdrawal',
+    'args':[BigInt(amount * 1e18), token as ethereumAddress],
+    chainId,
+    query:{
+      enabled: amount > 0 && token && token.length === 42
+    }
+  });
+
+    const {isLoading:healthFactorLoading, data:healthFactor}=useReadContract({
+    'abi':vaultManagerAbi,
+    'address':currentChainVaultManagerAddress as ethereumAddress,
+    'functionName':'getIsHealthyAfterWithdrawal',
+    'args':[address, token as ethereumAddress],
+    chainId,
+    query:{
+      enabled: address && token && token.length === 42
+    }
+  });
+
+ const {data:collateralInfos}=useReadContracts({
     contracts:[
+
       {
         'abi':stabilskiTokenCollateralManagerAbi,
         'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
@@ -95,6 +126,7 @@ function WithdrawDialog() {
         'args':[SEPOLIA_ETH_WETH_ADDR],
         chainId:SEPOLIA_ETH_CHAINID,
       },
+
          {
         'abi':stabilskiTokenCollateralManagerAbi,
         'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
@@ -102,6 +134,7 @@ function WithdrawDialog() {
         'args':[SEPOLIA_ETH_WBTC_ADDR],
         chainId:SEPOLIA_ETH_CHAINID,
       },
+
          {
         'abi':stabilskiTokenCollateralManagerAbi,
         'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
@@ -111,11 +144,20 @@ function WithdrawDialog() {
       },
          {
         'abi':stabilskiTokenCollateralManagerAbi,
+        'address':stabilskiTokenArbitrumSepoliaAddress,
+        'functionName':'getCollateralInfo',
+        'args':[ARBITRUM_SEPOLIA_LINK_ADDR],
+        chainId:ARBITRUM_SEPOLIA_CHAINID,
+      },
+
+         {
+        'abi':stabilskiTokenCollateralManagerAbi,
         'address':stabilskiTokenBaseSepoliaCollateralManagerAddress,
         'functionName':'getCollateralInfo',
         'args':[BASE_SEPOLIA_LINK_ADDR],
         chainId:BASE_SEPOLIA_CHAINID
       },
+
          {
         'abi':stabilskiTokenCollateralManagerAbi,
         'address':stabilskiTokenBaseSepoliaCollateralManagerAddress,
@@ -128,10 +170,6 @@ function WithdrawDialog() {
     ]
   });
 
-  const {
-    currentChainVaultManagerAddress
-  }=useBlockchainData();
-
 
   const {writeContract}=useWriteContract({
     'mutation':{
@@ -141,6 +179,8 @@ function WithdrawDialog() {
       
     }
   });
+
+  const {sendToastContent}=useToastContent();
 
   const withdrawCollateral= async ()=>{
 writeContract({
@@ -164,11 +204,15 @@ writeContract({
           onLogs:(logs)=>{
             const eventLog = logs[0] as EventType<CollateralDeposited>;
 
-          toast.success(`Collateral successfully withdrawn  ${
+          sendToastContent({
+            toastText:`Collateral successfully withdrawn  ${
           ( Number(
           eventLog.args?.amount
            ) / (eventLog.args?.token !== SEPOLIA_ETH_WBTC_ADDR ? 1e18 : 1e8)).toFixed(4)} ${eventLog.args?.token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : eventLog.args?.token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : eventLog.args?.token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : eventLog.args?.token === BASE_SEPOLIA_WETH_ADDR ? 'WETH' : 'LINK'  
-           }`);
+           }`,
+            icon:'✅',
+            type:'success'
+          });
           }
       })
   
@@ -177,10 +221,10 @@ writeContract({
 
 return (
 <Dialog>
-  <DialogTrigger className={`bg-red-500 cursor-pointer transition-all rounded-md text-sm text-white p-2   hover:bg-red-800 hover:scale-95`} >
+  <DialogTrigger className={`bg-red-500 cursor-pointer transition-all rounded-md text-sm text-white p-2  hover:bg-red-800 hover:scale-95`} >
     Withdraw
   </DialogTrigger>
-  <DialogContent className='flex flex-col gap-4 w-full'>
+  <DialogContent className='flex border-red-500 h-80 justify-between bg-neutral-800 text-white flex-col gap-4 w-full'>
     <DialogHeader>
       <DialogTitle>Withdraw Your Collateral</DialogTitle>
       <DialogDescription>
@@ -189,15 +233,15 @@ return (
     </DialogHeader>
 
 
-<div className="flex items-center gap-2 w-full">
+<div className="flex flex-col sm:flex-row items-center gap-2 w-full">
   <div className="w-full flex flex-col gap-1">
     <Label>Amount</Label>
-    <Input value={amount} onChange={(e) =>setAmount(Number(e.target.value))} type="number" min={0} 
+    <Input onKeyDown={handleKeyDown} onPaste={handlePaste} onBlur={(e)=>handleBlur(e.target.value, setAmount)} value={amount} onChange={(e) =>handleChange(e, setAmount)} type="number" min={0} 
    step={0.001}
     max={maximumAmount}
-    className="w-full"/>
+    className="w-full max-w-xs"/>
   </div>
-<div className="max-w-24 w-full flex flex-col gap-1">
+<div className="sm:max-w-24 w-full flex flex-col gap-1">
   <Label>Vault</Label>
    <Select onValueChange={(value)=>{
   setToken(value as `0x${string}`);
@@ -209,39 +253,42 @@ return (
   setMaximumAmount(maxWithdrawAmount);
 
  }}>
-  <SelectTrigger className="max-w-24">
+  <SelectTrigger className="sm:max-w-24 max-w-xs w-full">
     <SelectValue placeholder="Vault" />
   </SelectTrigger>
-  <SelectContent className="max-w-64 w-full bg-white shadow-md backdrop-blur-2xl shadow-black border-red-500 border-2  rounded-lg relative top-0 left-0 before:content-[''] before:absolute before:left-0 before:bottom-0 before:w-full before:h-1/2 before:rounded-t-full before:blur-2xl before:bg-red-500">
+  <SelectContent className="max-w-64 w-full bg-neutral-800 shadow-md backdrop-blur-2xl shadow-black border-red-500 border-2 rounded-lg relative top-0 left-0 before:content-[''] before:absolute before:left-0 before:bottom-0 before:w-full before:h-1/2 before:rounded-t-full before:blur-2xl before:bg-red-500">
    {chainId && chainId === SEPOLIA_ETH_CHAINID ? <>
-    <SelectItem value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/>Wrapped Ethereum (WETH)</SelectItem>
-    <SelectItem value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/>Wrapped Bitcoin (WBTC)</SelectItem>
-    <SelectItem value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
+    <SelectItem className='text-white' value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/>Wrapped Ethereum (WETH)</SelectItem>
+    <SelectItem className='text-white' value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/>Wrapped Bitcoin (WBTC)</SelectItem>
+    <SelectItem className='text-white' value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
     </> : chainId && chainId === BASE_SEPOLIA_CHAINID ? 
         <>
-           <SelectItem value={
+           <SelectItem className='text-white' value={
             BASE_SEPOLIA_WETH_ADDR
            }> <FaEthereum className="text-zinc-500"/>Wrapped Ethereum (WETH)</SelectItem>
-        <SelectItem value={
+        <SelectItem className='text-white' value={
           BASE_SEPOLIA_LINK_ADDR
         }><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
         </>
         :
         <>
-         <SelectItem value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
+         <SelectItem className='text-white' value={ARBITRUM_SEPOLIA_LINK_ADDR}><SiChainlink className="text-blue-500" />Chainlink (LINK)</SelectItem>
         </>}
   </SelectContent>
 </Select>
 </div>
 
 
-
-
+{healthFactor as bigint && <p>{Number(healthFactor)}</p>}
+{data as boolean && <p className='text-green-600 italic text-sm'>After withdrawal, your vault will not remain healthy.</p>}
 
 </div>
-<Button onClick={
+
+<p>{JSON.stringify(data)}</p>
+
+<Button disabled={data as boolean ?? false} onClick={
   withdrawCollateral
-} className='bg-red-500 hover:bg-red-800 hover:scale-95 cursor-pointer max-w-2/3 w-full self-center'>Withdraw</Button>
+} className='bg-red-500 disabled:bg-red-900 hover:bg-red-800 hover:scale-95 cursor-pointer max-w-2/3 w-full self-center'>Withdraw</Button>
 
 
   </DialogContent>

@@ -4,7 +4,7 @@ import { Outfit
 import "./globals.css";
 import { Web3Provider } from "@/lib/Web3Provider";
 import Navbar from "@/components/ui/Navbar";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -32,9 +32,7 @@ export default function RootLayout({
         className={`${outfit.variable} antialiased`}
         >
         <Navbar/>
-        <Toaster style={{
-          background:'red'
-        }} />
+        <Toaster />
        
         {children}
       </body>

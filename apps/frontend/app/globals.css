@@ -379,6 +379,7 @@ IBM Plex Mono
 body{
   overflow-x: hidden;
   font-family: 'outfit', sans-serif;
+  background: #0e0d0d;
 }
 
 body::after {
@@ -392,7 +393,7 @@ body::after {
   opacity: 0.9;
   border-top-left-radius: 50%;
   border-top-right-radius:50%;
-  background-color: #ff3f3f;
+  background-color: #ebebeb;
 animation: magicBlur 15s  infinite 0s alternate;
 }
 
@@ -430,3 +431,4 @@ body::before {
 div::-webkit-scrollbar {
   display: none;
 }
+

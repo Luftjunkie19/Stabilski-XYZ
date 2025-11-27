@@ -3,12 +3,12 @@ import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { ApprovalInterface, ethereumAddress, EventType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
-import { toast } from 'sonner';
 import Image from "next/image";
 import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
 import stabilskiStableCoin from "@/public/Logox32.png"
 import LiquidateDialog from '@/components/dialogs/LiquidateDialog';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
+import useToastContent from '@/lib/hooks/useToastContent';
 
 type Props = {
   depositor:ethereumAddress,
@@ -48,11 +48,16 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress}: Prop
         args:[depositor, tokenAddress],
     });
 
+    const {getToastContent, sendToastContent}=useToastContent();
 
     const approvePLST=()=>{
-
-        if(depositor === address){
-            toast.error('Bro cmon, you cannot liquidate yourself XD');
+try {
+            if(depositor === address){
+            sendToastContent({
+                toastText:'Bro cmon, you cannot liquidate yourself XD',
+                icon:'❌',
+                type:'error'
+            });
             return;
         }
 
@@ -67,12 +72,28 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress}: Prop
     return;
 }
 
-toast.error('Vault is not yet liquidateable.')
+sendToastContent({
+    toastText:'Vault is not liquidatable',
+    icon:'❌',
+    type:'error'
+});
+
+
+
+} catch (error) {
+    console.log(error);
+    sendToastContent({
+    toastText:'An error occurred during approval.',
+    icon:'❌',
+    type:'error'
+});
+}
 
     }
 
     const commitLiquidation= ()=>{
-        if((isLiquidatable as unknown as boolean) && (isLiquidatable as unknown as boolean) === true){  
+    try{
+            if((isLiquidatable as unknown as boolean) && (isLiquidatable as unknown as boolean) === true){  
             writeContract({
                 chainId,
                 address: vaultManagerAddress,
@@ -82,7 +103,19 @@ toast.error('Vault is not yet liquidateable.')
             });
             return;
         }
-        toast.error("Vault is not liquidatable");
+sendToastContent({
+    toastText:'Vault is not liquidatable',
+    icon:'❌',
+    type:'error'
+});
+    }catch(error){
+        console.log(error);
+        sendToastContent({
+            toastText:'An error occurred during liquidation.',
+            icon:'❌',
+            type:'error'
+        });
+    }
     }
 
     const {currentStabilskiContractAddress, currentChainVaultManagerAddress}=useBlockchainData();
@@ -103,7 +136,12 @@ toast.error('Vault is not yet liquidateable.')
             spender: currentChainVaultManagerAddress
         },
         onLogs:(logs)=>{
-            toast.success(`Stabilski Tokens Approved Correctly (${(logs[0] as EventType<ApprovalInterface>).args?.value}) !`)
+            
+            sendToastContent({
+                toastText:`Stabilski Tokens Approved Correctly (${(logs[0] as EventType<ApprovalInterface>).args?.value}) !`,
+                icon:'✅',
+                type:'success'
+            });
         }
     });
 
@@ -113,10 +151,10 @@ toast.error('Vault is not yet liquidateable.')
             <>
             {vaultInfo as unknown as vaultInfoReturnType && (vaultInfo as unknown as vaultInfoReturnType)[2] !== "0x0000000000000000000000000000000000000000" &&
         <div
-        className={`w-full ${vaultInfo as unknown as vaultInfoReturnType && (vaultInfo as unknown as vaultInfoReturnType)[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row items-center sm:justify-between`}>
+        className={`w-full bg-neutral-700 p-2 rounded-md border-red-500 border ${vaultInfo as unknown as vaultInfoReturnType && (vaultInfo as unknown as vaultInfoReturnType)[2] === "0x0000000000000000000000000000000000000000" ? 'hidden' : 'flex'} flex-col sm:flex-row items-center sm:justify-between`}>
     <div className="w-full">
-        <p className='hidden md:block'>{depositor.slice(0, 21)}...</p>
-    <p className='block md:hidden'>{depositor.slice(0, 10)}...</p>
+        <p className='hidden text-white md:block'>{depositor.slice(0, 21)}...</p>
+    <p className='block text-white md:hidden'>{depositor.slice(0, 10)}...</p>
     <div className="flex items-center gap-2">
     <div className="flex items-center ">
         <p className='text-sm'><span className='text-red-500'>
@@ -137,7 +175,7 @@ toast.error('Vault is not yet liquidateable.')
     <div className='flex justify-between sm:flex-col items-end w-full'>
     
     <div className="flex items-center">
-        <p className='text-sm'><span>{(Number((vaultInfo as unknown as vaultInfoReturnType)[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>
+        <p className={`text-sm ${isLiquidatable as unknown as boolean ? 'text-red-500' : 'text-white'}`}><span>{(Number((vaultInfo as unknown as vaultInfoReturnType)[1] as unknown as bigint)/1e18).toFixed(2)}</span></p>
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-8 h-8'/>
     </div>
 
