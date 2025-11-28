@@ -137,6 +137,24 @@ function toggleCollateral(address token) external onlyController onlyExistingCol
    collateralTypes[token].isActive = !collateralTypes[token].isActive;
 }
 
+function getTokenPriceFromPriceFeed(address priceFeedAddress) public view  returns (uint256){
+    AggregatorV3Interface priceFeedInterface = AggregatorV3Interface(priceFeedAddress);
+       (
+        /* uint80 roundId */,
+        int256 answer,
+        /*uint256 startedAt*/,
+        uint256 updatedAt,
+        /*uint80 answeredInRound*/
+    ) = priceFeedInterface.latestRoundData();
+
+    if(answer <= 0 || updatedAt == 0){
+        revert TokenPriceNotAvailable();
+    }
+
+    uint8 decimals = priceFeedInterface.decimals();
+    return (uint256(answer) * 1e18) / (10 ** decimals);
+}
+
 function getTokenPrice(address token) public view onlyActiveCollateral(token) returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(collateralTypes[token].priceFeed);
            (
@@ -167,4 +185,3 @@ function getTheCollateralManagerOwner() public view returns (address){
 }
 
 }
-

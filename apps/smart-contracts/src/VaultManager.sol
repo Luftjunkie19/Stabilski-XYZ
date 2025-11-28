@@ -52,11 +52,11 @@ contract VaultManager is ReentrancyGuard {
     address public constant zeroAddress=address(0);
     address private immutable liquidationFeesReceiver;
 
-constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralManager, address _bitcoinAddress) {
+constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralManager, address _bitcoinAddress, address feeReceiver) {
     usdPlnOracle = USDPLNOracleInterface(_usdPlnOracle);
     stabilskiToken = StabilskiTokenInterface(_stabilskiToken);
     collateralManager = CollateralManagerInterface(_collateralManager);
-    liquidationFeesReceiver= msg.sender;
+    liquidationFeesReceiver= feeReceiver;
     if(block.chainid == 11155111 && _bitcoinAddress != address(0)) {
        bitcoinAddress= _bitcoinAddress;
     }
@@ -194,9 +194,6 @@ function withdrawCollateral(address token, uint256 amount) external nonReentrant
 }
 
 
-
-
-
 // The function is supposed to liquidate the vault
 function liquidateVault(address vaultOwner, address token) external nonReentrant NoReadyForLiquidation(vaultOwner, token) {
 
@@ -280,6 +277,21 @@ if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token]
 }
 
 
+// Commented out if goes to prodution (only to test liquidation scenarios)
+function getVaultFlawedHealthFactor(address vaultOwner, address token) public view returns (uint256) {
+
+    uint256 collateralAmountInPLN = _getCollateralValue(vaultOwner, token);
+
+    (, uint256 minCollateralRatio,,,)= collateralManager.getCollateralInfo(token);
+
+    uint256 debtAmount = vaults[vaultOwner][token].debt;
+
+if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || debtAmount == 0) return type(uint256).max;
+
+    return  (((collateralAmountInPLN * decimalPointsNormalizer / debtAmount) * 1e18) / minCollateralRatio) ; 
+}
+
+
 
 
 
@@ -310,7 +322,7 @@ if(token != bitcoinAddress && block.chainid == 11155111){
 
 
 function isLiquidatable(address vaultOwner, address token) public view returns (bool) {
-    uint256 healthFactor = getVaultHealthFactor(vaultOwner, token);
+    uint256 healthFactor = getVaultFlawedHealthFactor(vaultOwner, token);
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
 
     // Apply a 15% liquidation threshold buffer
