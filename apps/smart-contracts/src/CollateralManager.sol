@@ -182,6 +182,11 @@ function getCollateralTokens() public view returns (address[] memory) {
 
 function getTheCollateralManagerOwner() public view returns (address){
     return collateralManagerOwner;
+<<<<<<< HEAD
+=======
+}
+
+>>>>>>> main/main
 }
 
 }

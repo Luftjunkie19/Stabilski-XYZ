@@ -34,8 +34,12 @@ address immutable ethUsdPriceFeedAddress;
 
 
 
+<<<<<<< HEAD
 constructor(address stabilskiSourceAddress, address routerAddress,
  address feesReceiver, address usdPlnOracleAddress, address collateralManagerAddress,
+=======
+constructor(address stabilskiSourceAddress, address routerAddress, address feesReceiver, address usdPlnOracleAddress, address collateralManagerAddress,
+>>>>>>> main/main
     address _ethUsdPriceFeedAddress) {
     router = IRouterClient(routerAddress);
     sourceStabilskiToken = StabilskiToken(stabilskiSourceAddress);
@@ -76,7 +80,11 @@ uint256 feesToPay = router.getFee(destinationSelector, ccipMessage);
 uint256 plnUsdRate = usdPlnOracle.getPLNPrice(); 
 
 // 2/ Get ETHUSD rate from CollateralManager
+<<<<<<< HEAD
 uint256 ethUsdPrice = collateralManager.getTokenPriceFromPriceFeed(ethUsdPriceFeedAddress);
+=======
+uint256 ethUsdPrice = collateralManager.getTokenPrice(ethUsdPriceFeedAddress);
+>>>>>>> main/main
 
 // 3. Calculate USD amount to be sent from sent PLN amount
 uint256 usdAmount = (amountToSend * usdPlnRateDecimalPoints) / plnUsdRate;
@@ -94,6 +102,7 @@ return (feesToPay, protocolFeesToPay);
 
 function sendCcipMessage(address receiverAddress, uint256 amountToSend, uint64 destinationSelector) external payable returns (bytes32) {
 
+<<<<<<< HEAD
 uint256 allowance = sourceStabilskiToken.allowance(msg.sender, address(this));
 
 
@@ -113,6 +122,8 @@ if(!approved){
     revert FailedTransferToProtocol();
 }
 
+=======
+>>>>>>> main/main
 Client.EVM2AnyMessage memory ccipMessage = getCcipMessage(receiverAddress, amountToSend);
 
 (uint256 networkFees, uint256 protocolFees)= getCcipTotalFees(receiverAddress, amountToSend, destinationSelector);

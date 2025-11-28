@@ -52,11 +52,19 @@ contract VaultManager is ReentrancyGuard {
     address public constant zeroAddress=address(0);
     address private immutable liquidationFeesReceiver;
 
+<<<<<<< HEAD
 constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralManager, address _bitcoinAddress, address feeReceiver) {
     usdPlnOracle = USDPLNOracleInterface(_usdPlnOracle);
     stabilskiToken = StabilskiTokenInterface(_stabilskiToken);
     collateralManager = CollateralManagerInterface(_collateralManager);
     liquidationFeesReceiver= feeReceiver;
+=======
+constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralManager, address _bitcoinAddress) {
+    usdPlnOracle = USDPLNOracleInterface(_usdPlnOracle);
+    stabilskiToken = StabilskiTokenInterface(_stabilskiToken);
+    collateralManager = CollateralManagerInterface(_collateralManager);
+    liquidationFeesReceiver= msg.sender;
+>>>>>>> main/main
     if(block.chainid == 11155111 && _bitcoinAddress != address(0)) {
        bitcoinAddress= _bitcoinAddress;
     }
@@ -194,6 +202,9 @@ function withdrawCollateral(address token, uint256 amount) external nonReentrant
 }
 
 
+
+
+
 // The function is supposed to liquidate the vault
 function liquidateVault(address vaultOwner, address token) external nonReentrant NoReadyForLiquidation(vaultOwner, token) {
 
@@ -277,6 +288,7 @@ if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token]
 }
 
 
+<<<<<<< HEAD
 // Commented out if goes to prodution (only to test liquidation scenarios)
 function getVaultFlawedHealthFactor(address vaultOwner, address token) public view returns (uint256) {
 
@@ -292,6 +304,8 @@ if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token]
 }
 
 
+=======
+>>>>>>> main/main
 
 
 
