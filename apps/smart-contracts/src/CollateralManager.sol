@@ -143,13 +143,10 @@ function getTokenPriceFromPriceFeed(address priceFeedAddress) public view  retur
         /* uint80 roundId */,
         int256 answer,
         /*uint256 startedAt*/,
-        uint256 updatedAt,
+    ,
         /*uint80 answeredInRound*/
     ) = priceFeedInterface.latestRoundData();
 
-    if(answer <= 0 || updatedAt == 0){
-        revert TokenPriceNotAvailable();
-    }
 
     uint8 decimals = priceFeedInterface.decimals();
     return (uint256(answer) * 1e18) / (10 ** decimals);
@@ -161,7 +158,7 @@ function getTokenPrice(address token) public view onlyActiveCollateral(token) re
             /* uint80 roundId */,
             int256 answer,
             /*uint256 startedAt*/,
-            uint256 updatedAt,
+            ,
             /*uint80 answeredInRound*/
         ) = priceFeed.latestRoundData();
 
@@ -182,11 +179,6 @@ function getCollateralTokens() public view returns (address[] memory) {
 
 function getTheCollateralManagerOwner() public view returns (address){
     return collateralManagerOwner;
-<<<<<<< HEAD
-=======
-}
-
->>>>>>> main/main
 }
 
 }

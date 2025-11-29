@@ -52,19 +52,11 @@ contract VaultManager is ReentrancyGuard {
     address public constant zeroAddress=address(0);
     address private immutable liquidationFeesReceiver;
 
-<<<<<<< HEAD
 constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralManager, address _bitcoinAddress, address feeReceiver) {
     usdPlnOracle = USDPLNOracleInterface(_usdPlnOracle);
     stabilskiToken = StabilskiTokenInterface(_stabilskiToken);
     collateralManager = CollateralManagerInterface(_collateralManager);
     liquidationFeesReceiver= feeReceiver;
-=======
-constructor(address _usdPlnOracle, address _stabilskiToken, address _collateralManager, address _bitcoinAddress) {
-    usdPlnOracle = USDPLNOracleInterface(_usdPlnOracle);
-    stabilskiToken = StabilskiTokenInterface(_stabilskiToken);
-    collateralManager = CollateralManagerInterface(_collateralManager);
-    liquidationFeesReceiver= msg.sender;
->>>>>>> main/main
     if(block.chainid == 11155111 && _bitcoinAddress != address(0)) {
        bitcoinAddress= _bitcoinAddress;
     }
@@ -216,7 +208,7 @@ function liquidateVault(address vaultOwner, address token) external nonReentrant
 
   uint256 allowedAmount = stabilskiToken.allowance(msg.sender, address(this));
 
-  if(debtAmount > allowedAmount) {
+  if(debtAmount != allowedAmount) {
         revert NotEnoughPLST();
     }
 
@@ -237,8 +229,7 @@ uint256 debtInUSD = (debtAmount * decimalPointsForUsdPlnRate) / usdPlnOracle.get
 // Step 2: Convert USD to collateral
 uint256 collateralPrice = collateralManager.getTokenPrice(vaults[vaultOwner][token].collateralTypeToken); 
 
-uint256 decimalPoints;
-decimalPoints = (token != address(bitcoinAddress)) ? decimalPointsNormalizer : bitcoinDecimalPoints;
+uint256 decimalPoints=(token != address(bitcoinAddress)) ? decimalPointsNormalizer : bitcoinDecimalPoints;
 
 
 // Step 3: Take amount debt and convert it to collateral amount
@@ -288,42 +279,37 @@ if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token]
 }
 
 
-<<<<<<< HEAD
 // Commented out if goes to prodution (only to test liquidation scenarios)
-function getVaultFlawedHealthFactor(address vaultOwner, address token) public view returns (uint256) {
+// function getVaultFlawedHealthFactor(address vaultOwner, address token) public view returns (uint256) {
 
-    uint256 collateralAmountInPLN = _getCollateralValue(vaultOwner, token);
+//     uint256 collateralAmountInPLN = _getCollateralValue(vaultOwner, token);
 
-    (, uint256 minCollateralRatio,,,)= collateralManager.getCollateralInfo(token);
+//     (, uint256 minCollateralRatio,,,)= collateralManager.getCollateralInfo(token);
 
-    uint256 debtAmount = vaults[vaultOwner][token].debt;
+//     uint256 debtAmount = vaults[vaultOwner][token].debt;
 
-if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || debtAmount == 0) return type(uint256).max;
+// if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || debtAmount == 0) return type(uint256).max;
 
-    return  (((collateralAmountInPLN * decimalPointsNormalizer / debtAmount) * 1e18) / minCollateralRatio) ; 
-}
-
-
-=======
->>>>>>> main/main
+//     return  (((collateralAmountInPLN * decimalPointsNormalizer / debtAmount) * 1e18) / minCollateralRatio) ; 
+// }
 
 
 
 function getIsHealthyAfterWithdrawal(uint256 amount, address token) public onlyWhitelistedCollateral(token) view returns (bool) {
+
+    if(vaults[msg.sender][token].collateralAmount < amount){
+        return false;
+    }
+
      uint256 collateralAmountAfterWithdrawal = vaults[msg.sender][token].collateralAmount - amount;
 
     (, uint256 minCollateralRatio,,,)=collateralManager.getCollateralInfo(vaults[msg.sender][token].collateralTypeToken);
  
-uint256 decimalPoints;
+uint256 decimalPoints=(token == bitcoinAddress && bitcoinAddress != address(0)) ? bitcoinDecimalPoints : decimalPointsNormalizer;
 
-if(token != bitcoinAddress && block.chainid == 11155111){
-    decimalPoints = decimalPointsNormalizer;
-}else{
-    decimalPoints = bitcoinDecimalPoints;
-}
 
     uint256 collateralAmount = (collateralAmountAfterWithdrawal * collateralManager.getTokenPrice(token)) / decimalPoints;
-    uint256 collateralAmountUSDtoPLN = collateralAmount * usdPlnOracle.getPLNPrice() / decimalPointsForUsdPlnRate;
+    uint256 collateralAmountUSDtoPLN = (collateralAmount * usdPlnOracle.getPLNPrice()) / decimalPointsForUsdPlnRate;
 
     uint256 debtAmount = vaults[msg.sender][token].debt;
 
@@ -336,7 +322,7 @@ if(token != bitcoinAddress && block.chainid == 11155111){
 
 
 function isLiquidatable(address vaultOwner, address token) public view returns (bool) {
-    uint256 healthFactor = getVaultFlawedHealthFactor(vaultOwner, token);
+    uint256 healthFactor = getVaultHealthFactor(vaultOwner, token);
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(token);
 
     // Apply a 15% liquidation threshold buffer

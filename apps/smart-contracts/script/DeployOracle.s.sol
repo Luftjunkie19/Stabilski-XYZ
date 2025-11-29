@@ -1,27 +1,27 @@
-// SDPX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+// // SDPX-License-Identifier: MIT
+// pragma solidity ^0.8.24;
 
-import {USDPLNOracle} from "../src/USDPLNOracle.sol";
-import {Script} from "../lib/forge-std/src/Script.sol";
-contract DeployReceiverAndSender is Script  {
+// import {USDPLNOracle} from "../src/USDPLNOracle.sol";
+// import {Script} from "../lib/forge-std/src/Script.sol";
+// contract DeployReceiverAndSender is Script  {
 
-function run() public returns (USDPLNOracle usdplnOracle) {
-    vm.startBroadcast();
-if(block.chainid == vm.envUint("ARBITRUM_TESTNET_CHAINID")) {
-    usdplnOracle = new USDPLNOracle(vm.envAddress("ARBITRUM_FUNCTIONS_ROUTER"), vm.envBytes32("ARBITRUM_DON_ID"), 529);
-}
+// function run() public returns (USDPLNOracle usdplnOracle) {
+//     vm.startBroadcast();
+// if(block.chainid == vm.envUint("ARBITRUM_TESTNET_CHAINID")) {
+//     usdplnOracle = new USDPLNOracle(vm.envAddress("ARBITRUM_FUNCTIONS_ROUTER"), vm.envBytes32("ARBITRUM_DON_ID"), 529);
+// }
 
-if(block.chainid == vm.envUint("ETH_SEPOLIA_CHAINID")) {
-    usdplnOracle = new USDPLNOracle(vm.envAddress("ETH_FUNCTIONS_ROUTER"), vm.envBytes32("ETH_DON_ID"), 5765);
-}
+// if(block.chainid == vm.envUint("ETH_SEPOLIA_CHAINID")) {
+//     usdplnOracle = new USDPLNOracle(vm.envAddress("ETH_FUNCTIONS_ROUTER"), vm.envBytes32("ETH_DON_ID"), 5765);
+// }
 
-if(block.chainid == vm.envUint("BASE_TESTNET_CHAINID")) {
-    usdplnOracle = new USDPLNOracle(vm.envAddress("BASE_FUNCTIONS_ROUTER"), vm.envBytes32("BASE_DON_ID"), 511);
-}
+// if(block.chainid == vm.envUint("BASE_TESTNET_CHAINID")) {
+//     usdplnOracle = new USDPLNOracle(vm.envAddress("BASE_FUNCTIONS_ROUTER"), vm.envBytes32("BASE_DON_ID"), 511);
+// }
 
-    vm.stopBroadcast();
-    return (usdplnOracle);
+//     vm.stopBroadcast();
+//     return (usdplnOracle);
 
-}
+// }
 
-}
+// }
