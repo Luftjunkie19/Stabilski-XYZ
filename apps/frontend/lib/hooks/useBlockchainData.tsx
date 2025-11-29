@@ -4,8 +4,8 @@ import { ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_A
 import { ethSepoliaVaultManagerAddress, arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress } from '../smart-contracts-abi/VaultManager';
 import { usdplnOracleArbitrumSepoliaAddress, usdPlnOracleBaseSepoliaAddress, usdplnOracleEthSepoliaAddress } from '../smart-contracts-abi/USDPLNOracle';
 import { stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenBaseSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '../smart-contracts-abi/StabilskiToken';
-import { arbitrumSepoliaRouter, baseSepoliaRouter, ethereumSepoliaRouter } from '../smart-contracts-abi/ccip-routers/Router';
-import { ccipInformationRetrieverSepoliaEthAddress, ccipInformationRetrieverSepoliaArbAddress, ccipInformationRetrieverSepoliaBaseAddress, chainSelectorBaseSepolia, stabilskiTokenPoolBaseSepolia, chainSelectorArbitrumSepolia, chainSelectorSepoliaEth, stabilskiTokenPoolArbSepolia, stabilskiTokenPoolEthSepolia } from '../smart-contracts-abi/ccip-routers/StabilskiTokenCCIPNeededData';
+import { arbitrumSepoliaRouter, baseSepoliaRouter, ethereumSepoliaRouter } from '../smart-contracts-abi/ccip/Router';
+import { ccipInformationRetrieverSepoliaEthAddress, ccipInformationRetrieverSepoliaArbAddress, ccipInformationRetrieverSepoliaBaseAddress, chainSelectorBaseSepolia, stabilskiTokenPoolBaseSepolia, chainSelectorArbitrumSepolia, chainSelectorSepoliaEth, stabilskiTokenPoolArbSepolia, stabilskiTokenPoolEthSepolia } from '../smart-contracts-abi/ccip/StabilskiTokenCCIPNeededData';
 
 function useBlockchainData() {
  const chainId = useChainId();

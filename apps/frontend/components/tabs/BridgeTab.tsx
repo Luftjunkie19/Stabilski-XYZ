@@ -15,18 +15,19 @@ import { FaEthereum } from 'react-icons/fa6';
 import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { ARBITRUM_SEPOLIA_CHAINID, BASE_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
-import { routerAbi } from '@/lib/smart-contracts-abi/ccip-routers/Router';
+import { routerAbi } from '@/lib/smart-contracts-abi/ccip/Router';
 import { config } from '@/lib/Web3Provider';
 import { readContract } from '@wagmi/core'
 
 
-import { ccipInformationRetrieverAbi, stabilskiTokenPoolAbi } from '@/lib/smart-contracts-abi/ccip-routers/StabilskiTokenCCIPNeededData';
+import { ccipInformationRetrieverAbi, stabilskiTokenPoolAbi } from '@/lib/smart-contracts-abi/ccip/StabilskiTokenCCIPNeededData';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { ApprovalInterface, BurnedInterface, ethereumAddress, EventType } from '@/lib/types/onChainData/OnChainDataTypes';
 import Link from 'next/link';
 import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
 import { Skeleton } from '../ui/skeleton';
+import PriceSkeleton from '../skeletons/PriceSkeleton';
 
 function BridgeTab() {
 const chainSelectorArbitrumSepolia = BigInt('3478487238524512106');
@@ -43,7 +44,7 @@ const [approved, setApproved]=useState<boolean>(false);
 
 const {currentStabilskiContractAddress, getCurrentRouter, getCurrentCcipRetriever, getCurrentPoolAddress, getPoolAddressByChainSelector, currentBlockchainScanner}=useBlockchainData();
 
-const {getToastContent, sendToastContent}= useToastContent();
+const {sendToastContent}= useToastContent();
 
 
 
@@ -53,7 +54,7 @@ const currentRouter= getCurrentRouter();
 const currentRetriever = getCurrentCcipRetriever();
 const currentPoolAddr= getCurrentPoolAddress();
 
-const {data}=useReadContract({
+const {data, isLoading, isRefetching, isError}=useReadContract({
     abi:stabilskiTokenABI,
     address: currentStabilskiContractAddress as `0x${string}`,
     functionName: 'balanceOf',
@@ -62,10 +63,10 @@ const {data}=useReadContract({
 });
 
 
-const {data:feeData, isLoading:isFeeDataLoading}=useReadContract({
+const {data:feeData, isLoading:isFeeDataLoading, isRefetching:isFeeDataRefetching, isError:isFeeDataError}=useReadContract({
    abi:ccipInformationRetrieverAbi,
     address: currentRetriever as `0x${string}`,
-    functionName:"getCCIPMessageFee",
+    functionName:"getCcipTotalFees",
     args:[address, BigInt(tokenAmountToSend * 1e18), destinationChainSelector],
     'query':{
       enabled: typeof address === 'string' && typeof destinationChainSelector === 'string' && tokenAmountToSend > 0,
@@ -147,30 +148,26 @@ const allowanceStabilskiToken= await readContract(config, {
     args:[address, currentRouter]
 });
 
-  const getFee = await readContract(config, {
+  const getFees = await readContract(config, {
     abi:ccipInformationRetrieverAbi,
     address: currentRetriever as `0x${string}`,
     functionName:"getCCIPMessageFee",
     args:[address, allowanceStabilskiToken, destinationChainSelector]
   });
 
-   const getCcipMessage = await readContract(config, {
-    abi:ccipInformationRetrieverAbi,
-    address: currentRetriever as `0x${string}`,
-    functionName:"getCcipMessage",
-    args:[address, allowanceStabilskiToken]
-  });
+  const totalFees = (getFees as unknown as bigint[])[0]  + (getFees as unknown as bigint[])[1];
+  
   const destPoolAddr = getPoolAddressByChainSelector(destinationChainSelector);
 
   setDestinationPoolAddress(destPoolAddr);
 
   const txData = await writeContractAsync({
     abi:routerAbi,
-    address: currentRouter as `0x${string}`,
-    functionName:"ccipSend",
-    args:[destinationChainSelector, getCcipMessage],
+    address: currentRetriever as `0x${string}`,
+    functionName:"sendCcipMessage",
+    args:[address, destinationChainSelector, amountToBeTransfered],
     chainId,
-    value: getFee as bigint
+    value: totalFees as bigint
   });
 
 
@@ -310,8 +307,16 @@ const SelectOptions= ()=>{
 
 </div>
 
-<div className="">
-    <p className='text-white'>Balance: {amountToBeTransfered.toFixed(4)} <span className='text-red-500 font-bold'>PLST</span></p>
+<div className="flex items-center gap-1">
+    <p className='text-white'>Balance
+      {isLoading || isRefetching && <PriceSkeleton/>}
+      </p>
+      {isError && <span className='text-sm text-red-500'>{"Error occured whilst fetching Balance"}}</span> }
+      {(data as unknown as bigint) && <span className='text-white font-bold'>{amountToBeTransfered.toFixed(4)}</span>} 
+      {!isError &&
+      <span className='text-red-500 font-bold'>PLST</span>
+      }
+  
 </div>
   </div>
     <div className="h-1/2 w-full py-1 px-3 flex gap-3 flex-col">
@@ -329,22 +334,33 @@ const SelectOptions= ()=>{
 </Select>
   </div>
 
-{isFeeDataLoading || feeData as bigint &&
+
+
      <div className="p-3 border-t border-red-500 flex flex-col w-full gap-2">
       <p className='text-lg font-bold text-red-500'>Fees Summary</p>
+{isFeeDataError && <p className='text-red-500 text-sm font-semibold'>Error occured while loading fees.</p>}
+   
       <div className="w-full flex flex-col gap-2 justify-center items-center">
-        {(isFeeDataLoading || feeData as bigint) && 
+        {(isFeeDataLoading || isFeeDataRefetching || (feeData as bigint[])) && <>
     <div className='flex text-white items-center gap-4 p-3 bg-neutral-700/20 rounded-md justify-between max-w-4/5 w-full'>
 <p className='text-sm font-light'>Bridge Fee</p>
-      {isFeeDataLoading && !feeData && <Skeleton className='bg-gray-500 w-24 h-6 rounded-sm'/>} 
-      {!isFeeDataLoading && feeData as bigint && <span className='text-red-500 text-sm font-bold'>{(Number(feeData) / 1e18).toFixed(6)} <span className='text-white pl-1'>ETH</span></span>}
+      {(isFeeDataLoading || isFeeDataRefetching) && !feeData && <Skeleton className='bg-gray-500 w-24 h-6 rounded-sm'/>} 
+      {!isFeeDataLoading && !isFeeDataRefetching && feeData as bigint[] && <span className='text-red-500 text-sm font-bold'>{(Number((feeData as bigint[])[0]) / 1e18).toFixed(6)} <span className='text-white pl-1'>ETH</span></span>}
     </div>
+
+     <div className='flex text-white items-center gap-4 p-3 bg-neutral-700/20 rounded-md justify-between max-w-4/5 w-full'>
+<p className='text-sm font-light'>Protocol Fee</p>
+      {(isFeeDataLoading || isFeeDataRefetching) && !feeData && <Skeleton className='bg-gray-500 w-24 h-6 rounded-sm'/>} 
+      {!isFeeDataLoading && !isFeeDataRefetching && feeData as bigint[] && <span className='text-red-500 text-sm font-bold'>{(Number((feeData as bigint[])[1]) / 1e18).toFixed(6)} <span className='text-white pl-1'>ETH</span></span>}
+    </div>
+        
+        </>
         }
   
 
       </div>
     </div>
-}
+
 
 
     </Card>
