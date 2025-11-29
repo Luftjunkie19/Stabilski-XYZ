@@ -1,30 +1,30 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+// // SPDX-License-Identifier: MIT
+// pragma solidity ^0.8.24;
 
-import {InformationCCIPRetriever} from '../../../src/ccip/CcipInfromationRetriever.sol';
+// import {InformationCCIPRetriever} from '../../../src/ccip/CcipInfromationRetriever.sol';
 
-import {Script} from '../../../lib/forge-std/src/Script.sol';
+// import {Script} from '../../../lib/forge-std/src/Script.sol';
 
-contract DeployTestCcipRetriever is Script {
+// contract DeployTestCcipRetriever is Script {
 
-function run(address stabilskiSourceAddress, address routerAddress, address feeReceiver, address usdPlnOracleAddress, address collateralManagerAddress, address ethUsdPriceFeed) external returns (InformationCCIPRetriever){
+// function run(address stabilskiSourceAddress, address routerAddress, address feeReceiver, address usdPlnOracleAddress, address collateralManagerAddress, address ethUsdPriceFeed) external returns (InformationCCIPRetriever){
 
-InformationCCIPRetriever ccipRetriever;
+// InformationCCIPRetriever ccipRetriever;
 
-vm.startBroadcast();
+// vm.startBroadcast();
 
-ccipRetriever = new InformationCCIPRetriever(
-stabilskiSourceAddress,
-routerAddress,
-feeReceiver,
-usdPlnOracleAddress,
-collateralManagerAddress,
-ethUsdPriceFeed);
+// ccipRetriever = new InformationCCIPRetriever(
+// stabilskiSourceAddress,
+// routerAddress,
+// feeReceiver,
+// usdPlnOracleAddress,
+// collateralManagerAddress,
+// ethUsdPriceFeed);
 
-vm.stopBroadcast();
+// vm.stopBroadcast();
 
-return ccipRetriever;
+// return ccipRetriever;
 
-}
+// }
 
-}
+// }

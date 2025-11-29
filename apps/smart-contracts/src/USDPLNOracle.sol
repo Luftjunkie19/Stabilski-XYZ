@@ -87,7 +87,7 @@ modifier onlyValidPLNUSDRate() {
     }
 
  function performUpkeep(bytes calldata /* performData */) external override {
-        if ((block.timestamp - lastTimeStamp) > interval) {
+        if ((block.timestamp - lastTimeStamp) >= interval) {
             lastTimeStamp = block.timestamp;
             sendRequest(); // Call the sendRequest function to initiate the request
         }

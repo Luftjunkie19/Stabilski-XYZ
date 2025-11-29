@@ -459,9 +459,16 @@ vm.assume(amountToBorrow > 1e15 && amountToBorrow < sepoliaWETHMockToken.balance
 
 vm.startPrank(borrower);
 
+uint256 healthFactorMax=vaultManager.getVaultHealthFactor(borrower, address(sepoliaWETHMockToken));
+// uint256 healthFactorMax2=vaultManager.getVaultFlawedHealthFactor(borrower, address(sepoliaWETHMockToken));
+
+// assertEq(healthFactorMax, healthFactorMax2);
+
+
 // Approve the amount of weth and deposit it
 sepoliaWETHMockToken.approve(address(vaultManager), amountToBorrow);
 vaultManager.depositCollateral(address(sepoliaWETHMockToken));
+
 
 assertEq(stabilskiToken.balanceOf(borrower), 0);
 
@@ -714,6 +721,8 @@ vm.startPrank(borrower);
 sepoliaWBTCMockToken.approve(address(vaultManager), amountToBorrow);
 vaultManager.depositCollateral(address(sepoliaWBTCMockToken));
 
+uint256 valueOfCollateral = vaultManager.getCollateralValue(borrower, address(sepoliaWBTCMockToken));
+
 // Get case if no debt is taken
 vaultManager.getIsHealthyAfterWithdrawal(amountToBorrow, address(sepoliaWBTCMockToken));
 
@@ -781,6 +790,14 @@ vm.stopPrank();
 
 vm.startPrank(borrower);
 vaultManager.mintPLST(address(sepoliaWBTCMockToken), vaultManager.getMaxBorrowableStabilskiTokens(borrower, address(sepoliaWBTCMockToken)));
+
+vm.stopPrank();
+
+
+vm.startPrank(borrower);
+(uint256 collateralAmount3,,,)=vaultManager.getVaultInfo(borrower, address(sepoliaWBTCMockToken));
+vm.expectRevert();
+vaultManager.withdrawCollateral(address(sepoliaWBTCMockToken), collateralAmount3);
 vm.stopPrank();
 
 vm.startPrank(liquidator);

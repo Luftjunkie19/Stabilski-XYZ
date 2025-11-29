@@ -102,7 +102,7 @@ modifier NoReadyForLiquidation(address vaultOwner, address tokenAddress) {
 
 modifier CannotWithdrawCollateral(address vaultOwner, address tokenAddress) {
     (, uint256 minCollateralRatio,,,) = collateralManager.getCollateralInfo(tokenAddress);
-if(getVaultHealthFactor(msg.sender, tokenAddress) < minCollateralRatio) {
+if(getVaultHealthFactor(vaultOwner, tokenAddress) < minCollateralRatio) {
     revert UnderCollateralized();
 }
 _;
@@ -290,7 +290,7 @@ if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token]
 
 // if (vaults[vaultOwner][token].collateralAmount == 0 || vaults[vaultOwner][token].collateralTypeToken == address(0) || debtAmount == 0) return type(uint256).max;
 
-//     return  (((collateralAmountInPLN * decimalPointsNormalizer / debtAmount) * 1e18) / minCollateralRatio) ; 
+//     return  ((((collateralAmountInPLN * decimalPointsNormalizer) / debtAmount) * 1e18) / minCollateralRatio) ; 
 // }
 
 
