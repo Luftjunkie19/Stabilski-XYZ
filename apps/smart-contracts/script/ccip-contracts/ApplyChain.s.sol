@@ -66,8 +66,8 @@ BurnMintTokenPool tokenPool = BurnMintTokenPool(sourceTokenPool);
             remotePoolAddress: abi.encode(address(firstRemoteTokenPool)),
             allowed:true,
             remoteTokenAddress: abi.encode(firstRemoteToken),
-            outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: type(uint128).max}),
-            inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: type(uint128).max})
+            outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 1e18}),
+            inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 1e18})
         });
 
           chains[1] = TokenPool.ChainUpdate({
@@ -75,8 +75,8 @@ BurnMintTokenPool tokenPool = BurnMintTokenPool(sourceTokenPool);
             remotePoolAddress: abi.encode(address(secondRemoteTokenPool)),
             allowed:true,
             remoteTokenAddress: abi.encode(secondRemoteToken),
-            outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: type(uint128).max}),
-            inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: type(uint128).max})
+            outboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 1e18}),
+            inboundRateLimiterConfig: RateLimiter.Config({isEnabled: true, capacity: 1e24, rate: 1e18})
         });
         
         
