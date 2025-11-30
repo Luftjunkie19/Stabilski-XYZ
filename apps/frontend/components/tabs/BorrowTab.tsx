@@ -19,7 +19,6 @@ import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 
 
@@ -47,11 +46,10 @@ const {chainId, address}=useAccount();
    const borrowPlstType = z.object({
     amount: z.number().gt(0, {'error':'The amount deposited must be greater than 0'}).max(maximumAmount, {error:'Deposited amount cannot surpass '}),
     collateralAddress: z.string().startsWith('0x', {message:"The selected token address hasn't been "}).length(42, {'message':'You selected invalid collateral token.'})
-  });
+  }).required();
 
  const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.infer<typeof borrowPlstType>>({
-  mode:'all',
-  resolver:zodResolver(borrowPlstType)
+  mode:'all'
  });
 
    const {errors}=formState;

@@ -29,8 +29,8 @@ import useToastContent from '@/lib/hooks/useToastContent';
 import { Skeleton } from '../ui/skeleton';
 import PriceSkeleton from '../skeletons/PriceSkeleton';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod'; // or 'zod/v4'
+
 
 function BridgeTab() {
 const chainSelectorArbitrumSepolia = BigInt('3478487238524512106');
@@ -39,9 +39,9 @@ const chainSelectorBaseSepolia= BigInt('10344971235874465080');
 const {handleKeyDown, handlePaste, handleBlur, handleChange}=usePreventInvalidInput();
 const {chainId, address}=useAccount();
 const [approved, setApproved]=useState<boolean>(false);
+const [sourceChainTx, setSourceChainTx]=useState<ethereumAddress>();
+const [destinationPoolAddress, setDestinationPoolAddress]=useState<ethereumAddress>();
 const {currentStabilskiContractAddress, getCurrentRouter, getCurrentCcipRetriever, getCurrentPoolAddress, getPoolAddressByChainSelector, currentBlockchainScanner}=useBlockchainData();
-  const [sourceChainTx, setSourceChainTx]=useState<ethereumAddress>();
-  const [destinationPoolAddress, setDestinationPoolAddress]=useState<ethereumAddress>();
 
 const {data, isLoading, isRefetching, isError}=useReadContract({
     abi:stabilskiTokenABI,
@@ -56,13 +56,14 @@ const maxAmountToBeTransferred= useMemo(()=>{
 },[data])
 
   const bridgePLST = z.object({
-    amount: z.number().gt(0, {'error':'The amount deposited must be greater than 0'}).max(maxAmountToBeTransferred, {error:'Deposited amount cannot surpass '}),
+    amount: z.number().gt(0, 
+      {'error':'The amount deposited must be greater than 0'}).max(maxAmountToBeTransferred, {error:'Deposited amount cannot surpass '}),
     destinationChainSelector: z.bigint({'message':'Wrong Type provided'})
-  });
+  }).required();
+
 const {sendToastContent}= useToastContent();
 
-const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.infer<typeof bridgePLST>>({'mode':'all',
-resolver: zodResolver(bridgePLST)
+const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.infer<typeof bridgePLST>>({'mode':'all'
   });
 
   const {errors}=formState;

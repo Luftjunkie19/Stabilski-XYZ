@@ -19,7 +19,6 @@ import { CollateralDeposited, ethereumAddress, EventType } from '@/lib/types/onC
 import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
 import * as z from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 import {useForm, SubmitHandler} from "react-hook-form";
 
 function ColltateralTab() {
@@ -38,11 +37,9 @@ function ColltateralTab() {
     const depositCollateral = z.object({
     amount: z.number().gt(0, {'error':'The amount deposited must be greater than 0'}).max(maximumAmount, {error:'Deposited amount cannot surpass '}),
     depositCollateralAddress: z.string().startsWith('0x', {message:"The selected token address hasn't been "}).length(42, {'message':'You selected invalid collateral token.'})
-  });
+  }).required();
 
   const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.infer<typeof depositCollateral>>({'mode':'all', 
-    resolver: zodResolver(depositCollateral),
-
   });
 
   const {errors}=formState;
