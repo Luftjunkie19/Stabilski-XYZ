@@ -1,14 +1,16 @@
 
-import { useChainId } from 'wagmi'
+import { useAccount, useChainId } from 'wagmi'
 import { ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ABI, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ABI, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '../CollateralContractAddresses';
-import { ethSepoliaVaultManagerAddress, arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress } from '../smart-contracts-abi/VaultManager';
+import { ethSepoliaVaultManagerAddress, arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, vaultManagerAbi } from '../smart-contracts-abi/VaultManager';
 import { usdplnOracleArbitrumSepoliaAddress, usdPlnOracleBaseSepoliaAddress, usdplnOracleEthSepoliaAddress } from '../smart-contracts-abi/USDPLNOracle';
 import { stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenBaseSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '../smart-contracts-abi/StabilskiToken';
 import { arbitrumSepoliaRouter, baseSepoliaRouter, ethereumSepoliaRouter } from '../smart-contracts-abi/ccip/Router';
 import { ccipInformationRetrieverSepoliaEthAddress, ccipInformationRetrieverSepoliaArbAddress, ccipInformationRetrieverSepoliaBaseAddress, chainSelectorBaseSepolia, stabilskiTokenPoolBaseSepolia, chainSelectorArbitrumSepolia, chainSelectorSepoliaEth, stabilskiTokenPoolArbSepolia, stabilskiTokenPoolEthSepolia } from '../smart-contracts-abi/ccip/StabilskiTokenCCIPNeededData';
+import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenBaseSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '../smart-contracts-abi/CollateralManager';
 
 function useBlockchainData() {
  const chainId = useChainId();
+ const {address}=useAccount();
  
      const getTokenAbi=(token:string)=>{
        switch(token){
@@ -152,11 +154,220 @@ function useBlockchainData() {
 
            const currentBlockchainScanner=getCurrentBlockchainScanner();
 
+
+           
+           
+              const currentStabilskiCollateralManagerAddress=()=>{
+               switch(chainId){
+           
+                 case SEPOLIA_ETH_CHAINID:
+                   return stabilskiTokenSepoliaEthCollateralManagerAddress
+                 
+                 case ARBITRUM_SEPOLIA_CHAINID:
+                   return stabilskiTokenArbitrumSepoliaCollateralManagerAddress
+           
+                 case BASE_SEPOLIA_CHAINID:
+                   return stabilskiTokenSepoliaEthCollateralManagerAddress
+               }
+             }
+           
+              const chainVaultManagerContracts=()=>{
+             if(chainId === SEPOLIA_ETH_CHAINID){
+               return [
+                               {
+                                   'abi':vaultManagerAbi,
+                                   'address':currentChainVaultManagerAddress,
+                                   'functionName':'getCollateralValue',
+                                   'args':[address, SEPOLIA_ETH_WBTC_ADDR],
+                                   chainId:SEPOLIA_ETH_CHAINID
+                               },
+                               {
+                                   'abi':vaultManagerAbi,
+                                   'address':currentChainVaultManagerAddress,
+                                   'functionName':'getCollateralValue',
+                                   'args':[address, SEPOLIA_ETH_WETH_ADDR],
+                                   chainId:SEPOLIA_ETH_CHAINID
+                               },
+                               {
+                                 abi:vaultManagerAbi,
+                                 address:currentChainVaultManagerAddress,
+                                 functionName:'getCollateralValue',
+                                 args:[address, SEPOLIA_ETH_LINK_ADDR],
+                                 chainId:SEPOLIA_ETH_CHAINID
+                               }
+                               
+                           ];
+             
+             }
+             
+             if(chainId === BASE_SEPOLIA_CHAINID){
+               
+                     return [
+                                     {
+                                         'abi':vaultManagerAbi,
+                                         'address':currentChainVaultManagerAddress,
+                                         'functionName':'getCollateralValue',
+                                         'args':[address, BASE_SEPOLIA_LINK_ADDR],
+                                         chainId:BASE_SEPOLIA_CHAINID
+                                     },
+                                     {
+                                         'abi':vaultManagerAbi,
+                                         'address':currentChainVaultManagerAddress,
+                                         'functionName':'getCollateralValue',
+                                         'args':[address, BASE_SEPOLIA_WETH_ADDR],
+                                         chainId:BASE_SEPOLIA_CHAINID
+                                     }, 
+                                 ]
+             
+             }
+             
+             
+                   return [ {
+                                       'abi':vaultManagerAbi,
+                                       'address':currentChainVaultManagerAddress,
+                                       'functionName':'getCollateralValue',
+                                       'args':[address, ARBITRUM_SEPOLIA_LINK_ADDR],
+                                       chainId:ARBITRUM_SEPOLIA_CHAINID
+                                   }, 
+                               ]
+               
+             }
+             
+             const chainCollateralPriceContracts = ()=>{
+             switch(chainId){
+               case SEPOLIA_ETH_CHAINID:
+                 return [
+                    {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
+                         'functionName':'getTokenPrice',
+                         'args':[SEPOLIA_ETH_WBTC_ADDR],
+                         chainId:SEPOLIA_ETH_CHAINID
+                     },
+                         {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
+                         'functionName':'getTokenPrice',
+                         'args':[SEPOLIA_ETH_WETH_ADDR],
+                         chainId:SEPOLIA_ETH_CHAINID
+                     },
+                         {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
+                         'functionName':'getTokenPrice',
+                         'args':[SEPOLIA_ETH_LINK_ADDR],
+                         chainId:SEPOLIA_ETH_CHAINID
+                     }
+                     ]
+             
+                 case ARBITRUM_SEPOLIA_CHAINID:
+                   return [
+                    {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenArbitrumSepoliaCollateralManagerAddress,
+                         'functionName':'getTokenPrice',
+                         'args':[ARBITRUM_SEPOLIA_LINK_ADDR],
+                         chainId:ARBITRUM_SEPOLIA_CHAINID
+                     }
+                     ]
+             
+                   case BASE_SEPOLIA_CHAINID:
+                     return [
+                     {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenBaseSepoliaCollateralManagerAddress,
+                         'functionName':'getTokenPrice',
+                         'args':[BASE_SEPOLIA_LINK_ADDR],
+                         chainId:BASE_SEPOLIA_CHAINID
+                     },
+                       {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenBaseSepoliaCollateralManagerAddress,
+                         'functionName':'getTokenPrice',
+                         'args':[BASE_SEPOLIA_WETH_ADDR],
+                         chainId:BASE_SEPOLIA_CHAINID
+                     }
+                     ]
+             
+             }
+             
+             }
+
+             const chainCollateralInfoContracts = ()=>{
+             switch(chainId){
+               case SEPOLIA_ETH_CHAINID:
+                 return [
+                    {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
+                         'functionName':'getCollateralInfo',
+                         'args':[SEPOLIA_ETH_WBTC_ADDR],
+                         chainId:SEPOLIA_ETH_CHAINID
+                     },
+                         {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
+                         'functionName':'getCollateralInfo',
+                         'args':[SEPOLIA_ETH_WETH_ADDR],
+                         chainId:SEPOLIA_ETH_CHAINID
+                     },
+                         {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
+                         'functionName':'getCollateralInfo',
+                         'args':[SEPOLIA_ETH_LINK_ADDR],
+                         chainId:SEPOLIA_ETH_CHAINID
+                     }
+                     ]
+             
+                 case ARBITRUM_SEPOLIA_CHAINID:
+                   return [
+                    {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenArbitrumSepoliaCollateralManagerAddress,
+                         'functionName':'getCollateralInfo',
+                         'args':[ARBITRUM_SEPOLIA_LINK_ADDR],
+                         chainId:ARBITRUM_SEPOLIA_CHAINID
+                     }
+                     ]
+             
+                   case BASE_SEPOLIA_CHAINID:
+                     return [
+                     {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenBaseSepoliaCollateralManagerAddress,
+                         'functionName':'getCollateralInfo',
+                         'args':[BASE_SEPOLIA_LINK_ADDR],
+                         chainId:BASE_SEPOLIA_CHAINID
+                     },
+                       {
+                          'abi':stabilskiTokenCollateralManagerAbi,
+                         'address':stabilskiTokenBaseSepoliaCollateralManagerAddress,
+                         'functionName':'getCollateralInfo',
+                         'args':[BASE_SEPOLIA_WETH_ADDR],
+                         chainId:BASE_SEPOLIA_CHAINID
+                     }
+                     ]
+             
+             }
+             
+             }
+             
+
+
+             
+
+
+
+
 return {
     getTokenAbi, currentChainVaultManagerAddress, currentOraclePriceAddress,
     getPoolAddressByChainSelector,getCurrentPoolAddress,
     currentStabilskiContractAddress, getCurrentRouter, currentBlockchainScanner,
-    getCurrentCcipRetriever}     
+    getCurrentCcipRetriever, currentStabilskiCollateralManagerAddress,
+     chainVaultManagerContracts,chainCollateralPriceContracts,
+     chainCollateralInfoContracts
+  }     
 
 
 }

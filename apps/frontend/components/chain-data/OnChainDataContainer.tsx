@@ -1,8 +1,8 @@
 'use client';
-import { ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
-import { stabilskiTokenABI, stabilskiTokenArbitrumSepoliaAddress, stabilskiTokenBaseSepoliaAddress, stabilskiTokenEthSepoliaAddress } from '@/lib/smart-contracts-abi/StabilskiToken';
-import { usdplnOracleABI, usdplnOracleArbitrumSepoliaAddress, usdPlnOracleBaseSepoliaAddress, usdplnOracleEthSepoliaAddress } from '@/lib/smart-contracts-abi/USDPLNOracle';
-import { ethereumAddress } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ARBITRUM_SEPOLIA_CHAINID, BASE_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
+import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
+import { usdplnOracleABI } from '@/lib/smart-contracts-abi/USDPLNOracle';
+import { collateralInfoType, ethereumAddress, singleResultType } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
 import { FaBitcoin, FaEthereum } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
@@ -11,205 +11,33 @@ import  StabilskiStableCoin  from '@/public/Logox192.png';
 import Image from 'next/image'
 import UserVaults from './UserVaults';
 import ProtocolOnChainPositions from './ProtocolOnChainPositions';
-import { stabilskiTokenArbitrumSepoliaCollateralManagerAddress, stabilskiTokenBaseSepoliaCollateralManagerAddress, stabilskiTokenCollateralManagerAbi, stabilskiTokenSepoliaEthCollateralManagerAddress } from '@/lib/smart-contracts-abi/CollateralManager';
-import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { Abi } from 'viem';
 import PriceSkeleton from '../skeletons/PriceSkeleton';
+import useBlockchainData from '@/lib/hooks/useBlockchainData';
+import { MdCancel } from 'react-icons/md';
 
 function OnChainDataContainer() {
   const {chainId, address}=useAccount();
+  const {
+    currentChainVaultManagerAddress,
+    currentStabilskiContractAddress,
+    currentOraclePriceAddress,
+    currentStabilskiCollateralManagerAddress,
+    chainVaultManagerContracts,
+    chainCollateralPriceContracts,
+    chainCollateralInfoContracts
+  }=useBlockchainData();
 
-
-  const currentStabilskiTokenAddress=()=>{
-    switch(chainId){
-
-      case SEPOLIA_ETH_CHAINID:
-        return stabilskiTokenEthSepoliaAddress
-      
-      case ARBITRUM_SEPOLIA_CHAINID:
-        return stabilskiTokenArbitrumSepoliaAddress
-
-      case BASE_SEPOLIA_CHAINID:
-        return stabilskiTokenBaseSepoliaAddress
-    }
-  }
-
-   const currentStabilskiOracleAddress=()=>{
-    switch(chainId){
-
-      case SEPOLIA_ETH_CHAINID:
-        return usdplnOracleEthSepoliaAddress
-      
-      case ARBITRUM_SEPOLIA_CHAINID:
-        return usdplnOracleArbitrumSepoliaAddress
-
-      case BASE_SEPOLIA_CHAINID:
-        return usdPlnOracleBaseSepoliaAddress
-    }
-  }
-
-   const currentStabilskiCollateralManagerAddress=()=>{
-    switch(chainId){
-
-      case SEPOLIA_ETH_CHAINID:
-        return stabilskiTokenSepoliaEthCollateralManagerAddress
-      
-      case ARBITRUM_SEPOLIA_CHAINID:
-        return stabilskiTokenArbitrumSepoliaCollateralManagerAddress
-
-      case BASE_SEPOLIA_CHAINID:
-        return stabilskiTokenBaseSepoliaCollateralManagerAddress
-    }
-  }
-
-     const currentStabilskiVaultManagerAddress=()=>{
-    switch(chainId){
-
-      case SEPOLIA_ETH_CHAINID:
-        return ethSepoliaVaultManagerAddress
-      
-      case ARBITRUM_SEPOLIA_CHAINID:
-        return arbitrumSepoliaVaultManagerAddress
-
-      case BASE_SEPOLIA_CHAINID:
-        return baseSepoliaVaultManagerAddress
-    }
-  }
-
-
-  const tokenAddress = currentStabilskiTokenAddress();
-  const oracleAddress = currentStabilskiOracleAddress();
+  const tokenAddress = currentStabilskiContractAddress as ethereumAddress;
+  const oracleAddress = currentOraclePriceAddress as ethereumAddress;
   const currentCollateralManagerAddress=currentStabilskiCollateralManagerAddress();
-  const vaultManagerAddress= currentStabilskiVaultManagerAddress(); 
-
-  const chainVaultManagerContracts=()=>{
-if(chainId === SEPOLIA_ETH_CHAINID){
-  return [
-                  {
-                      'abi':vaultManagerAbi,
-                      'address':vaultManagerAddress,
-                      'functionName':'getCollateralValue',
-                      'args':[address, SEPOLIA_ETH_WBTC_ADDR],
-                      chainId:SEPOLIA_ETH_CHAINID
-                  },
-                  {
-                      'abi':vaultManagerAbi,
-                      'address':vaultManagerAddress,
-                      'functionName':'getCollateralValue',
-                      'args':[address, SEPOLIA_ETH_WETH_ADDR],
-                      chainId:SEPOLIA_ETH_CHAINID
-                  },
-                  {
-                    abi:vaultManagerAbi,
-                    address:vaultManagerAddress,
-                    functionName:'getCollateralValue',
-                    args:[address, SEPOLIA_ETH_LINK_ADDR],
-                    chainId:SEPOLIA_ETH_CHAINID
-                  }
-                  
-              ];
-
-}
-
-if(chainId === BASE_SEPOLIA_CHAINID){
-  
-        return [
-                        {
-                            'abi':vaultManagerAbi,
-                            'address':vaultManagerAddress,
-                            'functionName':'getCollateralValue',
-                            'args':[address, BASE_SEPOLIA_LINK_ADDR],
-                            chainId:BASE_SEPOLIA_CHAINID
-                        },
-                        {
-                            'abi':vaultManagerAbi,
-                            'address':vaultManagerAddress,
-                            'functionName':'getCollateralValue',
-                            'args':[address, BASE_SEPOLIA_WETH_ADDR],
-                            chainId:BASE_SEPOLIA_CHAINID
-                        }, 
-                    ]
-
-}
-
-
-      return [ {
-                          'abi':vaultManagerAbi,
-                          'address':vaultManagerAddress,
-                          'functionName':'getCollateralValue',
-                          'args':[address, ARBITRUM_SEPOLIA_LINK_ADDR],
-                          chainId:ARBITRUM_SEPOLIA_CHAINID
-                      }, 
-                  ]
-  
-}
+  const vaultManagerAddress= currentChainVaultManagerAddress
 const vaultManagerContracts=chainVaultManagerContracts();
-
-const chainCollateralContracts = ()=>{
-switch(chainId){
-  case SEPOLIA_ETH_CHAINID:
-    return [
-       {
-             'abi':stabilskiTokenCollateralManagerAbi,
-            'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
-            'functionName':'getTokenPrice',
-            'args':[SEPOLIA_ETH_WBTC_ADDR],
-            chainId:SEPOLIA_ETH_CHAINID
-        },
-            {
-             'abi':stabilskiTokenCollateralManagerAbi,
-            'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
-            'functionName':'getTokenPrice',
-            'args':[SEPOLIA_ETH_WETH_ADDR],
-            chainId:SEPOLIA_ETH_CHAINID
-        },
-            {
-             'abi':stabilskiTokenCollateralManagerAbi,
-            'address':stabilskiTokenSepoliaEthCollateralManagerAddress,
-            'functionName':'getTokenPrice',
-            'args':[SEPOLIA_ETH_LINK_ADDR],
-            chainId:SEPOLIA_ETH_CHAINID
-        }
-        ]
-
-    case ARBITRUM_SEPOLIA_CHAINID:
-      return [
-       {
-             'abi':stabilskiTokenCollateralManagerAbi,
-            'address':stabilskiTokenArbitrumSepoliaCollateralManagerAddress,
-            'functionName':'getTokenPrice',
-            'args':[ARBITRUM_SEPOLIA_LINK_ADDR],
-            chainId:ARBITRUM_SEPOLIA_CHAINID
-        }
-        ]
-
-      case BASE_SEPOLIA_CHAINID:
-        return [
-        {
-             'abi':stabilskiTokenCollateralManagerAbi,
-            'address':stabilskiTokenBaseSepoliaCollateralManagerAddress,
-            'functionName':'getTokenPrice',
-            'args':[BASE_SEPOLIA_LINK_ADDR],
-            chainId:BASE_SEPOLIA_CHAINID
-        },
-          {
-             'abi':stabilskiTokenCollateralManagerAbi,
-            'address':stabilskiTokenBaseSepoliaCollateralManagerAddress,
-            'functionName':'getTokenPrice',
-            'args':[BASE_SEPOLIA_WETH_ADDR],
-            chainId:BASE_SEPOLIA_CHAINID
-        }
-        ]
-
-}
-
-}
-
-const collateralPriceOnChainContracts=chainCollateralContracts();
+const collateralPriceOnChainContracts=chainCollateralPriceContracts();
+const collateralInfoContracts= chainCollateralInfoContracts();
 
 
-
-  const {data:vaultTokensOnchainData, isLoading:vaultTokensOnchainLoading}=useReadContracts({
+  const {data:vaultTokensOnchainData, isLoading:vaultTokensOnchainLoading, isRefetching:vaultTokenRefetching, isError}=useReadContracts({
             contracts:vaultManagerContracts as readonly {
     abi?: Abi | undefined;
     functionName?: string | undefined;
@@ -219,7 +47,8 @@ const collateralPriceOnChainContracts=chainCollateralContracts();
 }[]
         });
         
-  const {data:collateralTokenPriceData, isLoading:collateralTokenPriceLoading}=useReadContracts({contracts:collateralPriceOnChainContracts as 
+  const {data:collateralTokenPriceData, isLoading:collateralTokenPriceLoading, isRefetching:collateralTokenPriceRefetching,
+     isError:collateralPriceError, error:collateralErrorMsg}=useReadContracts({contracts:collateralPriceOnChainContracts as 
     readonly {
     abi?: Abi | undefined;
     functionName?: string | undefined;
@@ -229,7 +58,16 @@ const collateralPriceOnChainContracts=chainCollateralContracts();
 }[]
   });
 
-  const {data:balancePLST, isLoading:balancePLSTLoading} = useReadContract(
+  const {data:collateralInfos, isLoading:collateralInfosLoading, isRefetching:collateralInfosRefetching, isError:collateralInfosPriceError, error:collateralInfosErrorMsg }=useReadContracts({contracts:collateralInfoContracts as readonly {
+    abi?: Abi | undefined;
+    functionName?: string | undefined;
+    args?: readonly unknown[] | undefined;
+    address?: `0x${string}` | undefined;
+    chainId?: number | undefined;
+}[]});
+
+
+  const {data:balancePLST, isLoading:balancePLSTLoading, isRefetching:balancePLSTRefetching, isError:balancePLSTError, error:balancePLSTErrorMsg} = useReadContract(
             {
           abi:stabilskiTokenABI,
           address: tokenAddress,
@@ -239,7 +77,7 @@ const collateralPriceOnChainContracts=chainCollateralContracts();
             }
         );
 
-  const {data:oraclePrice, isLoading:oraclePriceLoading}=useReadContract({
+  const {data:oraclePrice, isLoading:oraclePriceLoading, isRefetching:oraclePriceRefetching, isError:oraclePriceError, error:oraclePriceErrorMsg}=useReadContract({
           abi:usdplnOracleABI,
           address: oracleAddress,
           functionName:'getPLNPrice',
@@ -253,9 +91,9 @@ const CollateralTokenPriceOnChainData=()=>{
     case SEPOLIA_ETH_CHAINID:
       return (
       <>
-      {collateralTokenPriceLoading && 
+      {collateralTokenPriceLoading || collateralTokenPriceRefetching &&
     <div className="flex flex-col gap-2 w-full h-full">
-  <p className='text-red-500'>Crypto Prices (USD)</p>
+  <p className='text-red-500'>Collateral Tokens</p>
 <div className="w-full flex flex-wrap items-center gap-6">
 <div className='flex text-sm items-center gap-1'>
   <FaBitcoin className='text-orange-500 text-base'/> 
@@ -273,20 +111,51 @@ const CollateralTokenPriceOnChainData=()=>{
 </div>
       }
 
-      {!collateralTokenPriceLoading && collateralTokenPriceData && 
+
+{collateralPriceError && <p className='text-red-500'>
+  {
+    collateralErrorMsg.message
+  }
+</p>
+}
+    
+
+      {!collateralTokenPriceLoading &&
+      !collateralTokenPriceRefetching
+      && collateralTokenPriceData && 
     <div className="flex flex-col gap-2 w-full h-full">
-  <p className='text-red-500'>Crypto Prices (USD)</p>
-<div className="w-full flex flex-wrap items-center gap-6">
-<div className='flex text-sm items-center gap-1'>
-  <FaBitcoin className='text-orange-500 text-base'/> 
-<p className='text-sm'>{collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(2)}</p>
+  <p className='text-red-500'>Collateral Tokens</p>
+<div className="w-full flex flex-col gap-4">
+
+<div className='flex p-2 rounded-lg justify-between bg-neutral-700 text-sm items-center gap-1'>
+
+<div className="flex items-center gap-1">
+    <FaBitcoin className='text-orange-500 text-base'/> 
+    <p>Wrapped BTC</p>
 </div>
-<div className='flex text-sm items-center gap-1'><FaEthereum className='text-zinc-500 text-base'/> 
-<p className='text-sm'>{(collateralTokenPriceData[1] && Number(collateralTokenPriceData[1].result)/ 1e18).toFixed(2)}</p>
+
+<p className='text-sm'>{collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(2)}$</p>
 </div>
-<div className='flex text-sm items-center gap-1'><SiChainlink className='text-blue-500 text-base'/> 
-<p>{collateralTokenPriceData[2] && (Number(collateralTokenPriceData[2].result) / 1e18).toFixed(2)}</p>
+
+<div className='flex p-2 rounded-lg justify-between bg-neutral-700 text-sm items-center gap-1'>
+ 
+ <div className="flex items-center gap-1">
+   <FaEthereum className='text-zinc-500 text-base'/> 
+   <p>Ethereum</p>
+ </div>
+
+<p className='text-sm'>{(collateralTokenPriceData[1] && Number(collateralTokenPriceData[1].result)/ 1e18).toFixed(2)}$</p>
 </div>
+<div className='flex p-2 rounded-lg justify-between bg-neutral-700 text-sm items-center gap-1'>
+<div className="flex items-center gap-1">
+  <SiChainlink className='text-blue-500 text-base'/> 
+  <p>Chainlink</p>
+</div>
+
+<p>{collateralTokenPriceData[2] && (Number(collateralTokenPriceData[2].result) / 1e18).toFixed(2)}$</p>
+
+</div>
+
 
 </div>
 
@@ -297,7 +166,8 @@ const CollateralTokenPriceOnChainData=()=>{
     case ARBITRUM_SEPOLIA_CHAINID:
       return (<>
 
-{collateralTokenPriceLoading && <div className="flex flex-col gap-2 w-full h-full">
+{collateralTokenPriceLoading || collateralTokenPriceRefetching
+ && <div className="flex flex-col gap-2 w-full h-full">
   <p className='text-red-500'>Crypto Prices (USD)</p>
 <div className="w-full flex flex-wrap items-center gap-6">
 <div className='flex text-sm items-center gap-1'><SiChainlink className='text-blue-500 text-base'/> 
@@ -308,11 +178,21 @@ const CollateralTokenPriceOnChainData=()=>{
 </div>}
 
 
-      {!collateralTokenPriceLoading && collateralTokenPriceData &&  <div className="flex flex-col gap-2 w-full h-full">
+{collateralPriceError && <p className='text-red-500'>
+  {
+    collateralErrorMsg.message
+  }
+</p>
+}
+
+
+      {!collateralTokenPriceLoading 
+     && !collateralTokenPriceRefetching
+      && collateralTokenPriceData &&  <div className="flex flex-col gap-2 w-full h-full">
   <p className='text-red-500'>Crypto Prices (USD)</p>
 <div className="w-full flex flex-wrap items-center gap-6">
 <div className='flex text-sm items-center gap-1'><SiChainlink className='text-blue-500 text-base'/> 
-<p>{collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(2)}</p>
+<p>{collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(2)}$</p>
 </div>
 </div>
 
@@ -343,11 +223,11 @@ const CollateralTokenPriceOnChainData=()=>{
 <div className="w-full flex flex-wrap items-center gap-6">
 <div className='flex text-sm items-center gap-1'>
 <SiChainlink className='text-blue-500 text-base'/> 
-<p className='text-sm'>{collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(2)}</p>
+<p className='text-sm'>{collateralTokenPriceData[0] && (Number(collateralTokenPriceData[0].result) / 1e18).toFixed(2)}$</p>
 </div>
 <div className='flex text-sm items-center gap-1'>
 <FaEthereum className='text-blue-800 text-base'/> 
-<p className='text-sm'>{(collateralTokenPriceData[1] && Number(collateralTokenPriceData[1].result)/ 1e18).toFixed(2)}</p>
+<p className='text-sm'>{(collateralTokenPriceData[1] && Number(collateralTokenPriceData[1].result)/ 1e18).toFixed(2)}$</p>
 </div>
 
 
@@ -359,11 +239,171 @@ const CollateralTokenPriceOnChainData=()=>{
   }
 }
 
+const CollateralizationRates=()=>{
+  switch(chainId){
+
+    case SEPOLIA_ETH_CHAINID:
+      return (
+      <>
+      {(collateralInfosLoading || collateralInfosRefetching) && !collateralInfosPriceError
+        && !collateralInfos && 
+    <div className="flex flex-col gap-2 w-full h-full">
+  <p className='text-red-500'>Collateralization Rate</p>
+<div className="w-full flex flex-wrap items-center gap-6">
+<div className='flex text-sm items-center gap-1'>
+  <FaBitcoin className='text-orange-500 text-base'/> 
+<PriceSkeleton/>
+</div>
+<div className='flex text-sm items-center gap-1'>
+  <FaEthereum className='text-zinc-500 text-base'/> 
+<PriceSkeleton/>
+</div>
+<div className='flex text-sm items-center gap-1'>
+  <SiChainlink className='text-blue-500 text-base'/> 
+<PriceSkeleton/>
+</div>
+
+</div>
+
+</div>
+      }
+
+      {collateralInfosPriceError && <p className='text-red-500 flex items-center gap-2'>
+        <MdCancel/>
+        Error occured while loading rates.</p>}
+
+      {!collateralTokenPriceLoading && !collateralInfosRefetching && !collateralInfosPriceError && collateralInfos &&
+    <div className="flex flex-col gap-2 w-full h-full">
+  <p className='text-red-500'>Collateralization Rate</p>
+<div className="w-full flex gap-4">
+
+<div className='flex p-2 text-sm items-center gap-1'>
+    <FaBitcoin className='text-orange-500 text-base'/> 
+
+
+
+<p className='text-sm'>{(collateralInfos as singleResultType<collateralInfoType>[])[0] && 
+collateralInfos[0].result as collateralInfoType &&
+(
+  Number((collateralInfos[0].result as collateralInfoType)[1]
+ ) / 1e16)}%</p>
+</div>
+
+<div className='flex p-2 text-sm items-center gap-1'>
+ 
+   <FaEthereum className='text-zinc-500 text-base'/> 
+
+
+<p className='text-sm'>{(collateralInfos[1]
+  && (collateralInfos[1].result as collateralInfoType)
+  && Number((collateralInfos[1].result as collateralInfoType)[1])/ 1e16)}%</p>
+</div>
+
+<div className='flex p-2 text-sm items-center gap-1'>
+
+  <SiChainlink className='text-blue-500 text-base'/> 
+ 
+
+<p>{collateralInfos[2] 
+  && (collateralInfos[2].result as collateralInfoType)
+&& (Number((collateralInfos[2].result as collateralInfoType)[1]) / 1e16)}%</p>
+
+</div>
+
+
+</div>
+
+</div>
+      }
+      </>)
+
+    case ARBITRUM_SEPOLIA_CHAINID:
+      return (<>
+
+{(collateralInfosLoading || collateralInfosRefetching) && !collateralInfosPriceError
+ && !collateralInfos && <div className="flex flex-col gap-2 w-full h-full">
+  <p className='text-red-500'>Collateralization Rate</p>
+<div className="w-full flex items-center gap-6">
+<div className='flex text-sm items-center gap-1'><SiChainlink className='text-blue-500 text-base'/> 
+<PriceSkeleton/>
+</div>
+</div>
+
+</div>}
+
+
+      {collateralInfosPriceError && <p className='text-red-500 flex items-center gap-2'>
+        <MdCancel/>
+        Error occured while loading rates.</p>}
+
+      {!collateralInfosLoading && !collateralInfosRefetching && collateralInfos && collateralInfos as singleResultType<collateralInfoType>[] &&  <div className="flex flex-col gap-2 w-full h-full">
+  <p className='text-red-500'>Collateralization Rate</p>
+<div className="w-full flex items-center gap-6">
+<div className='flex text-sm items-center gap-1'><SiChainlink className='text-blue-500 text-base'/> 
+<p>{collateralInfos[0] && (Number((collateralInfos[0] as singleResultType<collateralInfoType>).result[1]) / 1e16)}%</p>
+</div>
+</div>
+
+</div>}
+      </>)
+
+    case BASE_SEPOLIA_CHAINID:
+      return (<>
+    {(collateralInfosLoading || collateralInfosRefetching) && !collateralInfosPriceError && !collateralInfos && <div className="flex flex-col gap-2 w-full h-full">
+  <p className='text-red-500'>Collateralization Rate</p>
+<div className="w-full flex items-center gap-6">
+<div className='flex text-sm items-center gap-1'>
+<SiChainlink className='text-blue-500 text-base'/> 
+<PriceSkeleton/>
+</div>
+<div className='flex text-sm items-center gap-1'>
+<FaEthereum className='text-blue-800 text-base'/> 
+<PriceSkeleton/>
+</div>
+
+
+</div>
+
+</div>}
+
+
+
+      {collateralInfosPriceError && <p className='text-red-500 flex items-center gap-2'>
+        <MdCancel/>
+        Error occured while loading rates.</p>
+        }
+
+        {!collateralInfosLoading && !collateralInfosRefetching && !collateralInfosPriceError && collateralInfos &&    <div className="flex flex-col gap-2 w-full h-full">
+  <p className='text-red-500'>Collateralization Rate</p>
+<div className="w-full flex items-center gap-6">
+<div className='flex text-sm items-center gap-1'>
+<SiChainlink className='text-blue-500 text-base'/> 
+<p className='text-sm'>{collateralInfos[0] && (Number((
+collateralInfos[0] as singleResultType<collateralInfoType>).result[1]
+) / 1e16)}%</p>
+</div>
+<div className='flex text-sm items-center gap-1'>
+<FaEthereum className='text-blue-800 text-base'/> 
+<p className='text-sm'>{(collateralInfos[1] && Number(
+  (collateralInfos[1] as singleResultType<collateralInfoType>)
+  .result[1])/ 1e16)}%</p>
+</div>
+
+
+</div>
+
+</div>}
+      </>)
+
+  }
+
+}
+
 const UserCollaterals=()=>{
   switch(chainId){
     case SEPOLIA_ETH_CHAINID:
       return (<>
-{vaultTokensOnchainLoading && <div  className="w-full flex items-center flex-wrap gap-6">
+{(vaultTokensOnchainLoading || vaultTokenRefetching) && !isError && !vaultTokensOnchainData && <div  className="w-full flex items-center gap-6">
 <div className='flex items-center gap-1'>
   <FaBitcoin className='text-orange-500'/> 
 <PriceSkeleton/>
@@ -375,15 +415,18 @@ const UserCollaterals=()=>{
  </div>
 <div className='flex items-center gap-1'>
   <SiChainlink className='text-blue-500'/>
-  <p className='text-sm sm:text-base'>
 <PriceSkeleton/>
-  </p>
   <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} />
   </div>
 </div>}
 
 
-      {!vaultTokensOnchainLoading &&  vaultTokensOnchainData && <div  className="w-full flex items-center flex-wrap gap-6">
+
+{isError && <p className='text-red-500 flex items-center gap-2'>
+        <MdCancel/>
+        Error occured while loading collateral balances...</p>}
+
+      {!vaultTokensOnchainLoading && !vaultTokenRefetching && !isError && vaultTokensOnchainData && <div  className="w-full flex items-center flex-wrap gap-6">
 <div className='flex items-center gap-1'>
   <FaBitcoin className='text-orange-500'/> 
   <p className='text-sm sm:text-base'>{vaultTokensOnchainData[0] && vaultTokensOnchainData[0].result as unknown as bigint && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result) / 1e18).toFixed(2)}</p>
@@ -407,13 +450,18 @@ const UserCollaterals=()=>{
 
     case BASE_SEPOLIA_CHAINID:
       return (<>
-    {vaultTokensOnchainLoading && <div  className="w-full flex-wrap flex items-center gap-6">
+    {(vaultTokensOnchainLoading || vaultTokenRefetching) && !isError && !vaultTokensOnchainData && <div  className="w-full flex-wrap flex items-center gap-6">
 <div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> <PriceSkeleton/>  <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> <PriceSkeleton/> <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>}
 
 
-      {!vaultTokensOnchainLoading && vaultTokensOnchainData && <div  className="w-full flex-wrap flex items-center gap-6">
+{isError && <p className='text-red-500 flex items-center gap-2'>
+        <MdCancel/>
+        Error occured while loading collateral balances...</p>}
+
+
+      {!vaultTokensOnchainLoading && !vaultTokenRefetching  && !isError && vaultTokensOnchainData && <div  className="w-full flex-wrap flex items-center gap-6">
 <div className='flex items-center gap-1'><FaEthereum className='text-zinc-500'/> {vaultTokensOnchainData[1] && vaultTokensOnchainData[1].result as unknown as bigint   && Number(vaultTokensOnchainData[1].result)  && (Number(vaultTokensOnchainData[1].result)/ 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultTokensOnchainData[0]&& vaultTokensOnchainData[0].result as unknown as bigint && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>}
@@ -421,11 +469,16 @@ const UserCollaterals=()=>{
 
      case ARBITRUM_SEPOLIA_CHAINID:
       return (<>
-      {vaultTokensOnchainLoading && <div  className="w-full flex-wrap  flex items-center gap-6">
+      {vaultTokensOnchainLoading || vaultTokenRefetching && !isError && !vaultTokensOnchainData && <div  className="w-full flex-wrap  flex items-center gap-6">
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> <PriceSkeleton/> <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>}
 
-      {!vaultTokensOnchainLoading && vaultTokensOnchainData && <div  className="w-full flex-wrap  flex items-center gap-6">
+
+{isError && <p className='text-red-500 flex items-center gap-2'>
+        <MdCancel/>
+        Error occured while loading collateral balances...</p>}
+
+      {!vaultTokensOnchainLoading && !vaultTokenRefetching && !isError && vaultTokensOnchainData && <div  className="w-full flex-wrap  flex items-center gap-6">
 <div className='flex items-center gap-1'><SiChainlink className='text-blue-500'/> {vaultTokensOnchainData[0] && vaultTokensOnchainData[0].result as unknown as bigint && Number(vaultTokensOnchainData[0].result)  && (Number(vaultTokensOnchainData[0].result) / 1e18).toFixed(2)} <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} /></div>
 </div>}
       </>)
@@ -438,36 +491,36 @@ const UserCollaterals=()=>{
    
         <div className="flex flex-col gap-3 overflow-y-auto max-w-md border w-full bg-neutral-800 text-white border-red-500 shadow-md shadow-black p-4 rounded-lg h-64">
 <CollateralTokenPriceOnChainData/>
+<CollateralizationRates/>
+</div>
 
-
-
-<div className="flex flex-col  gap-1">
+<div className="flex flex-col gap-3 overflow-y-auto max-w-md border w-full bg-neutral-800 text-white border-red-500 shadow-md shadow-black p-4 rounded-lg h-64">
+ <div className="flex flex-col  gap-1">
 <p className='text-red-500'>Your Collateral</p>
 <UserCollaterals/>
 </div>
 
-
-
-<p className='py-2 flex md:items-center flex-col md:flex-row items-start gap-2'>
+  <div className='py-2 flex md:items-center flex-col md:flex-row items-start gap-2'>
   Your PLST Balance
-  {balancePLSTLoading && <PriceSkeleton/>}
-  {!balancePLSTLoading && balancePLST as unknown as bigint
+  {balancePLSTLoading || balancePLSTRefetching && <PriceSkeleton/>}
+  {balancePLSTError && !balancePLST && <p className='text-red-500 text-sm line-clamp-1'>{balancePLSTErrorMsg.message}</p>  }
+  {!balancePLSTLoading && !balancePLSTRefetching && !balancePLSTError && balancePLST as unknown as bigint
    && <span
    className='text-red-500
-   flex items-center gap-1
-   '
-   >
+   flex items-center gap-1' >
     {(Number(balancePLST) / 1e18).toFixed(2)}
+  
    <Image src={StabilskiStableCoin} alt="alt" width={24} height={24} />
-   </span>
-    
+   </span>  
    }
-</p>
+</div>
 
-<p className="text-sm text-white sm:text-base tracking">USD/PLN <span className='text-red-500 font-bold'>
-{oraclePriceLoading && <PriceSkeleton/>}
-  {!oraclePriceLoading && oraclePrice as unknown as bigint && (Number(oraclePrice) / 1e4).toFixed(4)} PLN</span></p>
+<div className="text-sm text-white sm:text-base tracking flex flex-row items-center gap-1">USD/PLN <span className='text-red-500 font-bold'>
+{(oraclePriceLoading || oraclePriceRefetching) && <PriceSkeleton/>}
+{oraclePriceError && !oraclePrice && <p className='text-red-500 text-sm font-light line-clamp-1'>Could not retrieve USDPLN rate</p>}
+{!oraclePriceLoading && !oraclePriceRefetching && !oraclePriceError && oraclePrice as unknown as bigint && (Number(oraclePrice) / 1e4).toFixed(4)}</span>
 
+  </div>
 </div>
 
 {vaultManagerAddress && currentCollateralManagerAddress && <>

@@ -18,6 +18,8 @@ import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { CollateralDeposited, ethereumAddress, EventType, singleResultType } from '@/lib/types/onChainData/OnChainDataTypes';
 import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import z from 'zod';
 
 
 
@@ -26,8 +28,7 @@ function BorrowTab() {
 
   useSwitchChain({mutation:{
     onSuccess:()=>{
-      setToken(undefined);
-      setAmount(0);
+reset();
       setMaximumAmount(0);
     }
   }});
@@ -36,12 +37,22 @@ const {writeContract}=useWriteContract({
 });
 const {handleKeyDown, handlePaste, handleBlur, handleChange}=usePreventInvalidInput();
 
+
+
 const { sendToastContent}=useToastContent();
 
- const [amount, setAmount] = useState<number>(0);
-  const [token, setToken] = useState<ethereumAddress | undefined>(undefined);
 const {chainId, address}=useAccount();
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
+
+
+   const borrowPlstType = z.object({
+    amount: z.number().gt(0, {'error':'The amount deposited must be greater than 0'}).max(maximumAmount, {error:'Deposited amount cannot surpass '}),
+    collateralAddress: z.string().startsWith('0x', {message:"The selected token address hasn't been "}).length(42, {'message':'You selected invalid collateral token.'})
+  });
+
+ const {register, handleSubmit, watch, clearErrors,reset, setValue, formState }=useForm<z.infer<typeof borrowPlstType>>();
+
+   const {errors}=formState;
  
     const arrayOfContracts =[
        {
@@ -172,32 +183,6 @@ const {chainId, address}=useAccount();
 
     const {currentChainVaultManagerAddress}=useBlockchainData();
 
-const borrowPolishStableCoin= ()=>{
-  try{
-  const txHash = writeContract({
-    abi:vaultManagerAbi,
-    address: currentChainVaultManagerAddress as `0x${string}`,
-    functionName:'mintPLST',
-    args:[token, amount * 1e18],
-    chainId
-});
-
-
-
-sendToastContent({toastText:'Borrowing PLST...',
-    icon:'⏳'
-});
-
-  }catch(err){
-console.log(err);
-sendToastContent({toastText:'Something went wrong',
-icon:'❌',
-type:'error'
-});
-  
-}
-}
-
 
 useWatchContractEvent({
   address: currentChainVaultManagerAddress as ethereumAddress,
@@ -216,8 +201,9 @@ onLogs:(logs)=>{
 },
 args:{
   vaultOwner: address,
-  amount: BigInt(amount * 10 ** 18),
-}
+  amount: watch('amount') ? BigInt(watch('amount') * 10 ** 18) : 0,
+},
+enabled: typeof watch('amount') === 'number'
 });
 
 
@@ -254,20 +240,62 @@ const TokensOptions = ()=>{
 
 }
 
+const borrowPolishStableCoin= (amount:number, collateralAddress:ethereumAddress)=>{
+  try{
+writeContract({
+    abi:vaultManagerAbi,
+    address: currentChainVaultManagerAddress as `0x${string}`,
+    functionName:'mintPLST',
+    args:[watch('collateralAddress'), watch('amount') * 1e18],
+    chainId
+});
+
+
+
+sendToastContent({toastText:'Borrowing PLST...',
+    icon:'⏳'
+});
+
+  }catch(err){
+console.log(err);
+sendToastContent({toastText:'Something went wrong',
+icon:'❌',
+type:'error'
+});
+  
+}
+}
+
+const handleBorrowStabilski:SubmitHandler<z.infer<typeof borrowPlstType>>=async(value)=>{
+try {
+  borrowPolishStableCoin(value.amount, value.collateralAddress as ethereumAddress);
+} catch (error) {
+  sendToastContent({'toastText':'Error occured while borrowing', 'type':'error'})
+}
+}
+
+
   return (
       <TabsContent value="borrow" className="flex flex-col gap-4 max-w-7xl w-full">
       
+      <form onSubmit={handleSubmit(handleBorrowStabilski,(error)=>{
+        console.log('errors', error);
+      })} className='w-full max-w-xl self-center flex flex-col gap-3'>
 <Card className=" w-full max-w-xl bg-neutral-800 self-center shadow-sm border-red-500 border shadow-black h-96">
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-2 flex-col">
   <Label className="text-lg text-red-500">You Borrow</Label>
 <div className="flex items-center gap-4">
   <Input 
+  {...register('amount')}
+  value={watch('amount')}
   onPaste={handlePaste} 
   onKeyDown={handleKeyDown} 
-  onBlur={(e)=>{handleBlur(e.target.value, setAmount)}}
-  onChange={(e)=>handleChange(e, setAmount)}type="number" step={0.01} min={0} max={maximumAmount} className="w-full text-white"/>
- <Select onValueChange={(value)=>{
- setToken(value as `0x${string}`);
+  onBlur={(e)=>{handleBlur(e.target.value, (amount)=>setValue('amount', amount))}}
+  onChange={(e)=>handleChange(e, (amount)=>setValue('amount', amount))}type="number" step={0.01} min={0} max={maximumAmount} className="w-full text-white"/>
+ <Select 
+  {...register('collateralAddress')}
+ onValueChange={(value)=>{
+ setValue('collateralAddress', value as `0x${string}`);
  if(maxBorrowableData){
    const selectedContractNumber=Number(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)].result as bigint / BigInt(1e18));
 
@@ -290,21 +318,23 @@ const maxAmount = selectedContractNumber;
  className="text-red-500 text-2xl font-semibold tracking">Your can still borrow</p>
 <p className='text-white flex items-center gap-2'>{maxBorrowableData as unknown as singleResultType<bigint>
  && vaultContractInfo as unknown as singleResultType<bigint>[]
-&& token && arrayOfContracts.find((contract) => contract.address === token) || arrayOfContracts.findIndex((contract) => contract.address === token) !== -1   ?  (((Number((maxBorrowableData as unknown as 
+&& watch('collateralAddress') && arrayOfContracts.find((contract) => contract.address === watch('collateralAddress')) || arrayOfContracts.findIndex((contract) => contract.address === watch('collateralAddress')) !== -1   ?  (((Number((maxBorrowableData as unknown as 
 singleResultType<bigint>[]
-)[arrayOfContracts.findIndex((contract) => contract.address === token)].result)) - (amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18))) /  1e18).toFixed(2) : 0 } <span className='text-red-500'>PLST</span></p>
+)[arrayOfContracts.findIndex((contract) => contract.address === watch('collateralAddress'))].result)) - (watch('amount') * (watch('collateralAddress') === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18))) /  1e18).toFixed(2) : 0 } <span className='text-red-500'>PLST</span></p>
 
   </div>
+  {errors.amount && <p className='text-sm text-red-500'>{errors.amount.message}</p>}
+  {errors.collateralAddress && <p className='text-sm text-red-500'>{errors.collateralAddress.message}</p>}
 </Card>
 
-<Button onClick={borrowPolishStableCoin} 
+<Button type='submit'
 className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Borrow Stabilski (PLST)</Button>
+      </form>
 
-<div className="flex items-center w-full gap-6">
 
 <OnChainDataContainer/>
 
-</div>
+
 
   </TabsContent>
   )

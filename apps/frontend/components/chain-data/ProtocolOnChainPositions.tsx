@@ -28,8 +28,6 @@ vaultManagerAddress={vaultManagerAddress}
 </>
 
 }
-
-
       const {data:collateralTokens, isLoading:collateralTokensLoading}=useReadContract({
           abi: stabilskiTokenCollateralManagerAbi,
           address: collateralManagerAddress,
@@ -63,7 +61,7 @@ vaultManagerAddress={vaultManagerAddress}
     
      <p className='text-red-500 font-bold text-base'>No Deposits Yet Commited</p>
      <FaMagnifyingGlass className='text-red-500 text-4xl'/>
-     <p className='text-xs font-semibold'>Deposit some tokens and feel the real power of Stabilski !</p>
+     <p className='text-xs text-white font-light'>Deposit some tokens and feel the real power of Stabilski !</p>
     </div>}
 
 {collateralTokens as unknown as ethereumAddress[] && depositors as unknown as ethereumAddress[] && (depositors as unknown as ethereumAddress[]).length > 0  &&  (collateralTokens as unknown as ethereumAddress[]).length > 0 && 

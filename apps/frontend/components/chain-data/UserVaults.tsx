@@ -25,10 +25,10 @@ function UserVaults({collateralManagerAddress, chainId, vaultManager}: Props) {
     });
 
   return (
-    <div className='border p-2 rounded-lg bg-neutral-800 border-red-500 shadow-md shadow-black max-w-xl w-full h-72 flex flex-col gap-2'>
+    <div className='border p-2 rounded-lg bg-neutral-800 border-red-500 shadow-md shadow-black max-w-lg w-full h-64 flex flex-col gap-2'>
         <p className='text-lg text-red-500'>Your Vaults</p>
 
-        {address && <div className="flex flex-col gap-2">
+        {address && <div className="flex overflow-y-auto h-full flex-col gap-2">
           {isLoading && <>
           <PositionSkeleton />
           <PositionSkeleton />

@@ -28,6 +28,8 @@ import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
 import { Skeleton } from '../ui/skeleton';
 import PriceSkeleton from '../skeletons/PriceSkeleton';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import z from 'zod';
 
 function BridgeTab() {
 const chainSelectorArbitrumSepolia = BigInt('3478487238524512106');
@@ -35,8 +37,6 @@ const chainSelectorSepoliaEth = BigInt('16015286601757825753');
 const chainSelectorBaseSepolia= BigInt('10344971235874465080');
 const {handleKeyDown, handlePaste, handleBlur, handleChange}=usePreventInvalidInput();
 const {chainId, address}=useAccount();
-const [tokenAmountToSend, setTokenAmountToSend] = useState<number>(0);
-const [destinationChainSelector, setDestinationChainSelector]=useState<string>();
 const [approved, setApproved]=useState<boolean>(false);
 
   const [sourceChainTx, setSourceChainTx]=useState<ethereumAddress>();
@@ -46,7 +46,9 @@ const {currentStabilskiContractAddress, getCurrentRouter, getCurrentCcipRetrieve
 
 const {sendToastContent}= useToastContent();
 
+  const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.infer<typeof bridgePLST>>({'mode':'all'});
 
+  const {errors}=formState;
 
 const {writeContract, writeContractAsync}=useWriteContract();
 
@@ -63,26 +65,24 @@ const {data, isLoading, isRefetching, isError}=useReadContract({
 });
 
 
-const {data:feeData, isLoading:isFeeDataLoading, isRefetching:isFeeDataRefetching, isError:isFeeDataError}=useReadContract({
+const {data:feeData, isLoading:isFeeDataLoading, isRefetching:isFeeDataRefetching, isError:isFeeDataError, error}=useReadContract({
    abi:ccipInformationRetrieverAbi,
     address: currentRetriever as `0x${string}`,
     functionName:"getCcipTotalFees",
-    args:[address, BigInt(tokenAmountToSend * 1e18), destinationChainSelector],
+    args:[address, watch('amount') && BigInt(watch('amount') * 1e18), watch('destinationChainSelector') && watch('destinationChainSelector')],
     'query':{
-      enabled: typeof address === 'string' && typeof destinationChainSelector === 'string' && tokenAmountToSend > 0,
+      enabled: address !== undefined && watch('destinationChainSelector') !== undefined && watch('amount') !== undefined && watch('amount') > 0,
       'subscribed':true
     }
-})
-
-
+});
 
 const maxAmountToBeTransferred= useMemo(()=>{
   return Number(data ?? 0) / 1e18;
 },[data])
 
 const amountToBeTransfered = useMemo(()=>{
-return (Number(data ?? 0) / 1e18) - tokenAmountToSend;
-},[tokenAmountToSend, data])
+return (Number(data ?? 0) / 1e18) - watch('amount');
+},[watch('amount'), data])
 
 const approveStabilskiTokens = async () => {
 try {
@@ -95,7 +95,7 @@ if(!currentRouter){
   return;
 }
 
-if(!destinationChainSelector){
+if(!watch('destinationChainSelector')){
   sendToastContent({toastText:"Destination Chain Has Not been selected",
   icon:'❌',
   type:'error'
@@ -103,7 +103,7 @@ if(!destinationChainSelector){
   return;
 }
 
-if(tokenAmountToSend === 0){
+if(watch('amount') === 0){
   sendToastContent({toastText:'Amount to send cross-chain cannot be equal 0',
   icon:'❌',
   type:'error'
@@ -111,7 +111,7 @@ if(tokenAmountToSend === 0){
   return;
 }
 
-const turnedTokenAmountToSend= BigInt(tokenAmountToSend * 1e18);
+const turnedTokenAmountToSend= BigInt(watch('amount') * 1e18);
 
 writeContract({
   abi:stabilskiTokenABI,
@@ -132,7 +132,7 @@ writeContract({
 
 const commitCCIPTransfer= async ()=>{
 
-  if(!destinationChainSelector){
+  if(!watch('destinationChainSelector')){
     sendToastContent({toastText:`You haven't selected the destination chain.`,
     icon:'❌',
     type:'error'
@@ -152,12 +152,12 @@ const allowanceStabilskiToken= await readContract(config, {
     abi:ccipInformationRetrieverAbi,
     address: currentRetriever as `0x${string}`,
     functionName:"getCCIPMessageFee",
-    args:[address, allowanceStabilskiToken, destinationChainSelector]
+    args:[address, allowanceStabilskiToken, watch('destinationChainSelector')]
   });
 
   const totalFees = (getFees as unknown as bigint[])[0]  + (getFees as unknown as bigint[])[1];
   
-  const destPoolAddr = getPoolAddressByChainSelector(destinationChainSelector);
+  const destPoolAddr = getPoolAddressByChainSelector(String(watch('destinationChainSelector')));
 
   setDestinationPoolAddress(destPoolAddr);
 
@@ -165,7 +165,7 @@ const allowanceStabilskiToken= await readContract(config, {
     abi:routerAbi,
     address: currentRetriever as `0x${string}`,
     functionName:"sendCcipMessage",
-    args:[address, destinationChainSelector, amountToBeTransfered],
+    args:[address, watch('destinationChainSelector'), amountToBeTransfered],
     chainId,
     value: totalFees as bigint
   });
@@ -177,7 +177,6 @@ const allowanceStabilskiToken= await readContract(config, {
   });
 
   setSourceChainTx(txData);
-  setTokenAmountToSend(0);
 }
 
 const SelectOptions= ()=>{
@@ -272,47 +271,76 @@ const SelectOptions= ()=>{
     'eventName':'Minted',
     args:{
       recipient: address,
-      value: BigInt(tokenAmountToSend * 1e18)
+      value: watch('amount') && BigInt(watch('amount') * 1e18)
     },
+    enabled: watch('amount') !== undefined, 
    'onLogs':(logs)=>{
     console.log(logs, 'Logs from Transfer');
     sendToastContent({toastText:'Successfuly Received PLST Tokens',
     icon:'✅',
     type:'success'
-  });
+  }
+);
     setApproved(false);
     setSourceChainTx(undefined);
+    reset();
    },
     'strict':true,
   
   });
 
+  const bridgePLST = z.object({
+    amount: z.number().gt(0, {'error':'The amount deposited must be greater than 0'}).max(maxAmountToBeTransferred, {error:'Deposited amount cannot surpass '}),
+    destinationChainSelector: z.bigint({'message':'Wrong Type provided'})
+  });
 
+  const handleBorrowPLST:SubmitHandler<z.infer<typeof bridgePLST>>= async (value)=>{
+    try {
+      if(approved){
+        await commitCCIPTransfer();
+        return;
+      }
+
+      await approveStabilskiTokens();
+
+    } catch (error) {
+      console.log(error);
+      sendToastContent({'toastText':'Something went wrong while bridging', type:'error'})
+    }
+  }
   
+
+
 
   return (
   <TabsContent value="bridge" className="flex flex-col gap-4 max-w-xl w-full">
-    <Card className=" w-full shadow-sm border-red-500 border bg-neutral-800 shadow-black ">
+    
+<form onSubmit={handleSubmit(handleBorrowPLST, (err)=>{
+  console.log(err);
+  sendToastContent({type:'error', 'toastText':'Something went wrong.'})
+})} className='flex flex-col gap-4 w-full'>
+      <Card className=" w-full shadow-sm border-red-500 border bg-neutral-800 shadow-black ">
   <div className="pb-4 px-3 border-b border-red-500 flex gap-3 flex-col">
   <Label className="text-xl text-red-500">Root Chain PLST</Label>
 <div className="flex items-center gap-4">
 <div className="w-full flex-col gap-2">
   <Label className='text-white text-base'>Amount</Label>
     <Input 
-    onBlur={(e)=>handleBlur(e.target.value, setTokenAmountToSend)}
+    {...register('amount')}
+    onBlur={(e)=>handleBlur(e.target.value, (amount)=>setValue('amount', amount))}
        onPaste={handlePaste} 
   onKeyDown={handleKeyDown} 
-    onChange={(e) => handleChange(e, setTokenAmountToSend)} type="number" step={0.001} min={0} max={maxAmountToBeTransferred} className="w-full text-white"/>
+    onChange={(e) => handleChange(e, (amount)=>setValue('amount', amount))} type="number" step={0.001} min={0} max={maxAmountToBeTransferred} className="w-full text-white"/>
 </div>
 
 </div>
 
 <div className="flex items-center gap-1">
     <p className='text-white'>Balance
-      {isLoading || isRefetching && <PriceSkeleton/>}
+      {(data as unknown as bigint) && <span className='text-white pl-1 font-bold'>{amountToBeTransfered.toFixed(4)}</span>} 
       </p>
-      {isError && <span className='text-sm text-red-500'>{"Error occured whilst fetching Balance"}}</span> }
-      {(data as unknown as bigint) && <span className='text-white font-bold'>{amountToBeTransfered.toFixed(4)}</span>} 
+      {isLoading || isRefetching && <PriceSkeleton/>}
+      {isError && <span className='text-sm text-red-500'>{"Error occured whilst fetching Balance"}</span> }
       {!isError &&
       <span className='text-red-500 font-bold'>PLST</span>
       }
@@ -321,9 +349,11 @@ const SelectOptions= ()=>{
   </div>
     <div className="h-1/2 w-full py-1 px-3 flex gap-3 flex-col">
   <Label className="text-base text-red-500">Destination Chain</Label>
-   <Select onValueChange={(value)=>{
+   <Select
+   {...register('destinationChainSelector')}
+   onValueChange={(value)=>{
     console.log(value, 'Selected Value');
-    setDestinationChainSelector(value)
+    setValue('destinationChainSelector', BigInt(value));
    }}>
   <SelectTrigger className="w-full p-4  text-white border-red-500">
     <SelectValue placeholder="Token" />
@@ -339,6 +369,7 @@ const SelectOptions= ()=>{
      <div className="p-3 border-t border-red-500 flex flex-col w-full gap-2">
       <p className='text-lg font-bold text-red-500'>Fees Summary</p>
 {isFeeDataError && <p className='text-red-500 text-sm font-semibold'>Error occured while loading fees.</p>}
+{error && <p className='text-red-500 text-xs font-light'>{error.cause.message}</p>}
    
       <div className="w-full flex flex-col gap-2 justify-center items-center">
         {(isFeeDataLoading || isFeeDataRefetching || (feeData as bigint[])) && <>
@@ -351,7 +382,7 @@ const SelectOptions= ()=>{
      <div className='flex text-white items-center gap-4 p-3 bg-neutral-700/20 rounded-md justify-between max-w-4/5 w-full'>
 <p className='text-sm font-light'>Protocol Fee</p>
       {(isFeeDataLoading || isFeeDataRefetching) && !feeData && <Skeleton className='bg-gray-500 w-24 h-6 rounded-sm'/>} 
-      {!isFeeDataLoading && !isFeeDataRefetching && feeData as bigint[] && <span className='text-red-500 text-sm font-bold'>{(Number((feeData as bigint[])[1]) / 1e18).toFixed(6)} <span className='text-white pl-1'>ETH</span></span>}
+      {!isFeeDataLoading && !isFeeDataRefetching && feeData as bigint[] && <span className='text-red-500 text-sm font-bold'>{(Number((feeData as bigint[])[0] ) / 1e18).toFixed(6)} <span className='text-white pl-1'>ETH</span></span>}
     </div>
         
         </>
@@ -361,14 +392,15 @@ const SelectOptions= ()=>{
       </div>
     </div>
 
-
-
+{errors.amount?.message && <p className='text-red-500 text-xs'>{errors.amount.message}</p>}
+{errors.destinationChainSelector?.message && <p className='text-red-500 text-xs'>{errors.destinationChainSelector.message}</p>}
     </Card>
 
    <div className="flex flex-col sm:flex-row items-center w-full justify-center gap-3">
-     <Button onClick={approveStabilskiTokens} className="p-6  transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-base md:text-lg max-w-64  sm:max-w-72 self-center w-full bg-red-500">Approve Tokens</Button>
-      <Button disabled={!approved} onClick={commitCCIPTransfer} className={`p-6 disabled:bg-blue-400 disabled:opacity-95 transition-all shadow-sm shadow-black hover:bg-blue-600 cursor-pointer hover:scale-95 text-base md:text-lg max-w-64 sm:max-w-72 self-center w-full bg-blue-500`}>Bridge Tokens</Button>
+     <Button disabled={approved} type='submit' className="p-6  transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-base md:text-lg max-w-64  sm:max-w-72 self-center w-full bg-red-500">Approve Tokens</Button>
+      <Button disabled={!approved} type='submit' className={`p-6 disabled:bg-blue-400 disabled:opacity-95 transition-all shadow-sm shadow-black hover:bg-blue-600 cursor-pointer hover:scale-95 text-base md:text-lg max-w-64 sm:max-w-72 self-center w-full bg-blue-500`}>Bridge Tokens</Button>
    </div>
+</form>
 
    {sourceChainTx &&
   <div className=''>

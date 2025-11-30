@@ -18,24 +18,32 @@ import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { CollateralDeposited, ethereumAddress, EventType } from '@/lib/types/onChainData/OnChainDataTypes';
 import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
+import * as z from 'zod';
 
+import {useForm, SubmitHandler} from "react-hook-form";
 
 function ColltateralTab() {
     useSwitchChain({mutation:{
       onSuccess:(data)=>{
         console.log(data);
-        setToken(undefined);
         setMaximumAmount(0);
-        setAmount(0);
+        reset();
         setApproved(false);
       }
     }});
 
   const {handlePaste, handleKeyDown, handleBlur, handleChange}=usePreventInvalidInput();
-  const [amount, setAmount] = useState<number>(0);
-  const [token, setToken] = useState<`0x${string}` | undefined>(undefined);
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
   const [approved, setApproved] = useState<boolean>(false);
+    const depositCollateral = z.object({
+    amount: z.number().gt(0, {'error':'The amount deposited must be greater than 0'}).max(maximumAmount, {error:'Deposited amount cannot surpass '}),
+    depositCollateralAddress: z.string().startsWith('0x', {message:"The selected token address hasn't been "}).length(42, {'message':'You selected invalid collateral token.'})
+  });
+
+  const {register, handleSubmit, watch, clearErrors,reset, setValue, formState }=useForm<z.infer<typeof depositCollateral>>({'mode':'all'});
+
+  const {errors}=formState;
+
     const {chainId, address}=useAccount();
 
     const {writeContract}=useWriteContract();
@@ -45,9 +53,9 @@ function ColltateralTab() {
     const {getTokenAbi, currentChainVaultManagerAddress, currentOraclePriceAddress, currentBlockchainScanner}=useBlockchainData();
 
 
-    const currentAbi = getTokenAbi(token as `0x${string}`);
+    const currentAbi = getTokenAbi(watch('depositCollateralAddress') as `0x${string}`);
 
-    const currentTokenArgs= token === BASE_SEPOLIA_WETH_ADDR || token === SEPOLIA_ETH_WETH_ADDR ? 
+    const currentTokenArgs= watch('depositCollateralAddress') === BASE_SEPOLIA_WETH_ADDR || watch('depositCollateralAddress') === SEPOLIA_ETH_WETH_ADDR ? 
      {
     src:address,
     guy: currentChainVaultManagerAddress
@@ -254,14 +262,18 @@ function ColltateralTab() {
 
 
     const getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken= useCallback(()=>{
-      if(!collateralTokenPriceData || !usdplnOraclePrice || !token || !collateralData) return 0;
+      if(!collateralTokenPriceData || !usdplnOraclePrice || !watch('depositCollateralAddress') || !collateralData) return 0;
 
-      if(collateralData && collateralTokenPriceData && usdplnOraclePrice && token){
+      if(collateralData && collateralTokenPriceData && usdplnOraclePrice && watch('depositCollateralAddress')){
         
-        const convertedNumber= Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === token)].result);
+        const convertedNumber= Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === watch('depositCollateralAddress'))].result);
+        
+        const selectedCollateralTokenInfo = collateralData[arrayOfContracts.findIndex((val)=>val.address === watch('depositCollateralAddress'))].result;
+
+        console.log(selectedCollateralTokenInfo);
 
 
-        const main =((amount * convertedNumber) * Number(usdplnOraclePrice) * 1e18) / 1e22;
+        const main =((watch('amount') * convertedNumber) * Number(usdplnOraclePrice) * 1e18) / 1e22;
         
         const maxToBorrow = (main / 1e18);
         return (maxToBorrow / 1.4);
@@ -269,7 +281,7 @@ function ColltateralTab() {
 
 return 0;
 
-},[collateralTokenPriceData, usdplnOraclePrice, token, collateralData, arrayOfContracts, amount]);
+},[collateralTokenPriceData, usdplnOraclePrice, watch('depositCollateralAddress'), collateralData, arrayOfContracts, watch('amount')]);
 
 
 const TokensOptions = ()=>{
@@ -340,13 +352,74 @@ case ARBITRUM_SEPOLIA_CHAINID:
 
 }
 
-const collaterlizePosition=()=>{
+
+
+useWatchContractEvent({
+    address: watch('depositCollateralAddress') as ethereumAddress,
+    abi: currentAbi,
+    eventName: 'Approval',
+  'onLogs':(logs)=>{
+    console.log('New logs!', logs);
+    setApproved(true);
+    sendToastContent({toastText:'Stabilski Tokens Approved Successfully',
+    icon:'✅',
+    type:'success'
+  });
+  },
+  enabled: typeof watch('depositCollateralAddress') === 'string' && watch('depositCollateralAddress').length === 42,
+  args:currentTokenArgs
+  });
+
+  useWatchContractEvent({
+    address: currentChainVaultManagerAddress as `0x${string}`,
+    abi: vaultManagerAbi,
+    eventName: 'CollateralDeposited',
+  'onLogs':(logs)=>{
+    const eventLog= logs[0] as EventType<CollateralDeposited>;
+    sendToastContent({toastText:`Collateral successfully deposited ${
+ ( Number(
+ eventLog.args?.amount
+  ) / (eventLog.args?.token !== SEPOLIA_ETH_WBTC_ADDR ? 1e18 : 1e8)).toFixed(4)} ${eventLog.args?.token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : eventLog.args?.token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : eventLog.args?.token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : eventLog.args?.token === BASE_SEPOLIA_WETH_ADDR ? 'WETH' : 'LINK'  
+  }`, 
+  'icon':'✅',
+    type:'success'
+  });
+  setApproved(false);
+  reset();
+  setMaximumAmount(0);
+  },
+  args:{
+    vaultOwner: address,
+    token: watch('depositCollateralAddress'),
+  },
+  'enabled': watch('amount') > 0 && watch('depositCollateralAddress') !== undefined && address !== undefined && chainId !== undefined,
+  });
+
+  const internalizedMaxBorrowable= useMemo(()=>{
+
+    const maxAmountValue = getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken();
+    if(maxAmountValue === 0) return '0.00 zł';
+
+    const returnValue =  new Intl.NumberFormat('pl-PL',{
+    'style':'currency',
+    'currency':'PLN',
+    maximumFractionDigits:6,
+    minimumFractionDigits:2
+  }).format(getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken());
+
+    return returnValue;
+    
+  },[getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken]);
+
+
+
+  const collaterlizePosition=()=>{
 try {
   writeContract({
     'abi':vaultManagerAbi,
     'address':currentChainVaultManagerAddress as ethereumAddress,
     'functionName':'depositCollateral',
-    'args':[token],
+    'args':[watch('depositCollateralAddress')],
   });
 
  
@@ -366,13 +439,13 @@ try {
 
 const approveCollateral=()=>{
   try {
-if(token){
-  console.log(arrayOfContracts.find(contract => contract.address === token));
+if(watch('depositCollateralAddress')){
+  console.log(arrayOfContracts.find(contract => contract.address === watch('depositCollateralAddress')));
      writeContract({
-    'abi':arrayOfContracts.find(contract => contract.address === token)!.abi,
-    'address':arrayOfContracts.find(contract => contract.address === token)!.address as ethereumAddress,
+    'abi':arrayOfContracts.find(contract => contract.address === watch('depositCollateralAddress'))!.abi,
+    'address':arrayOfContracts.find(contract => contract.address === watch('depositCollateralAddress'))!.address as ethereumAddress,
     'functionName':'approve',
-    'args':[currentChainVaultManagerAddress, amount * 1e18],
+    'args':[currentChainVaultManagerAddress, watch('amount') * 1e18],
   }, {
     onError(error) {
         sendToastContent({toastText:`Error approving collateral:${error.message}`,
@@ -401,77 +474,41 @@ if(token){
 }
 
 
-useWatchContractEvent({
-    address: token,
-    abi: currentAbi,
-    eventName: 'Approval',
-  'onLogs':(logs)=>{
-    console.log('New logs!', logs);
-    setApproved(true);
-    sendToastContent({toastText:'Stabilski Tokens Approved Successfully',
-    icon:'✅',
-    type:'success'
-  });
-  },
-  args:currentTokenArgs
-  });
 
-  useWatchContractEvent({
-    address: currentChainVaultManagerAddress as `0x${string}`,
-    abi: vaultManagerAbi,
-    eventName: 'CollateralDeposited',
-  'onLogs':(logs)=>{
-    const eventLog= logs[0] as EventType<CollateralDeposited>;
-    sendToastContent({toastText:`Collateral successfully deposited ${
- ( Number(
- eventLog.args?.amount
-  ) / (eventLog.args?.token !== SEPOLIA_ETH_WBTC_ADDR ? 1e18 : 1e8)).toFixed(4)} ${eventLog.args?.token === SEPOLIA_ETH_WBTC_ADDR ? 'WBTC' : eventLog.args?.token === SEPOLIA_ETH_WETH_ADDR ? 'WETH' : eventLog.args?.token === SEPOLIA_ETH_LINK_ADDR ? 'LINK' : eventLog.args?.token === BASE_SEPOLIA_WETH_ADDR ? 'WETH' : 'LINK'  
-  }`, 
-  'icon':'✅',
-    type:'success'
-  });
-  setApproved(false);
-  setAmount(0);
-  setMaximumAmount(0);
-  setToken(undefined);
-  },
-  args:{
-    vaultOwner: address,
-    token: token,
-  },
-  'enabled': amount > 0 && token !== undefined && address !== undefined && chainId !== undefined,
-  });
+const handleSubmitApproval:SubmitHandler<z.infer<typeof depositCollateral>> = async ()=>{
+try{
+  if(approved){
+    collaterlizePosition();
+    return;
+  }
+  approveCollateral();
+}catch(err){
+  sendToastContent({'toastText':'Something went wrong', 'type':'error'})
+}
 
-  const internalizedMaxBorrowable= useMemo(()=>{
+}
 
-    const maxAmountValue = getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken();
-    if(maxAmountValue === 0) return '0.00 zł';
 
-    const returnValue =  new Intl.NumberFormat('pl-PL',{
-    'style':'currency',
-    'currency':'PLN',
-    maximumFractionDigits:6,
-    minimumFractionDigits:2
-  }).format(getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken());
 
-    return returnValue;
-    
-  },[getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken]);
   return (
-    <TabsContent value="collateral" className="flex flex-col gap-4 max-w-7xl w-full">
+    <TabsContent value="collateral" className="max-w-7xl w-full">
 
+<form onSubmit={handleSubmit(handleSubmitApproval,(error)=>{
+ console.log(error); 
+})} className='w-full flex flex-col gap-4'>
 <Card className=" w-full max-w-lg bg-neutral-800 self-center shadow-sm border-red-500 border shadow-black h-96">
+  
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
   <Label className="text-xl text-white">You Give</Label>
 <div className="flex items-center gap-4 text-white">
-  <Input step={0.01} value={amount} inputMode='decimal' 
+  <Input {...register('amount')} step={0.000001}  value={watch('amount')} inputMode='decimal' 
    onPaste={handlePaste} 
   onKeyDown={handleKeyDown} 
-  onBlur={(e)=>{handleBlur(e.target.value, setAmount)}}
-  onChange={(e)=>handleChange(e, setAmount)} type="number" min={0} 
+  onBlur={(e)=>{handleBlur(e.target.value, (collateralAmount)=>{setValue('amount', collateralAmount)})}}
+  onChange={(e)=>handleChange(e, (collateralAmount)=>{setValue('amount', collateralAmount)})} type="number" min={0} 
   max={maximumAmount}  className="w-full"/>
- <Select value={token} onValueChange={(value) => {
-setToken(value as `0x${string}`);
+ <Select  {...register('depositCollateralAddress')}  value={watch('depositCollateralAddress')} onValueChange={(value) => {
+setValue('depositCollateralAddress', value as `0x${string}`);
 if(data && data[arrayOfContracts.findIndex(contract => contract.address === value)].result){
 
   const maxCollateral= Number(data[arrayOfContracts.findIndex(contract => contract.address === value)].result) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18);
@@ -487,7 +524,11 @@ if(data && data[arrayOfContracts.findIndex(contract => contract.address === valu
   </SelectContent>
 </Select>
 </div>
+  
+  {errors.amount?.message && <p className='text-sm text-red-500'>{errors.amount?.message}</p>}
+  {errors.depositCollateralAddress?.message &&  <p className='text-sm text-red-500'>{errors.depositCollateralAddress?.message}</p>}
   </div>
+
     <div className="h-1/2 py-1 px-3 flex gap-3 flex-col w-full">
   <Label className="text-lg text-white">You Will Be Able To Borrow (Max.)</Label>
 <div className="flex w-full items-center gap-2">
@@ -501,12 +542,14 @@ if(data && data[arrayOfContracts.findIndex(contract => contract.address === valu
 </Card>
 
 <div className="flex flex-wrap w-full gap-2 justify-center">
-<Button onClick={approveCollateral} className="p-6 cursor-pointer transition-all shadow-sm shadow-black hover:bg-blue-900 hover:scale-95 text-lg max-w-64 self-center w-full bg-blue-500">Approve Collateral</Button>
+<Button disabled={approved} type='submit' className="p-6 cursor-pointer transition-all shadow-sm shadow-black hover:bg-blue-900 hover:scale-95 text-lg max-w-64 self-center w-full bg-blue-500">Approve Collateral</Button>
   
-<Button disabled={!approved} onClick={collaterlizePosition} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-red-500">Put Collateral</Button>
+<Button type='submit' disabled={!approved} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-red-500">Put Collateral</Button>
 </div>
 
 <OnChainDataContainer/>
+</form>
+
 
 
   </TabsContent>
