@@ -19,7 +19,7 @@ import { CollateralDeposited, ethereumAddress, EventType } from '@/lib/types/onC
 import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
 import * as z from 'zod';
-
+import { zodResolver } from '@hookform/resolvers/zod';
 import {useForm, SubmitHandler} from "react-hook-form";
 
 function ColltateralTab() {
@@ -40,7 +40,10 @@ function ColltateralTab() {
     depositCollateralAddress: z.string().startsWith('0x', {message:"The selected token address hasn't been "}).length(42, {'message':'You selected invalid collateral token.'})
   });
 
-  const {register, handleSubmit, watch, clearErrors,reset, setValue, formState }=useForm<z.infer<typeof depositCollateral>>({'mode':'all'});
+  const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.input<typeof depositCollateral>, any, z.output<typeof depositCollateral>>({'mode':'all', 
+    resolver: zodResolver(depositCollateral),
+
+  });
 
   const {errors}=formState;
 
@@ -50,7 +53,7 @@ function ColltateralTab() {
 
     const { sendToastContent}=useToastContent();
 
-    const {getTokenAbi, currentChainVaultManagerAddress, currentOraclePriceAddress, currentBlockchainScanner}=useBlockchainData();
+    const {getTokenAbi, currentChainVaultManagerAddress, currentOraclePriceAddress}=useBlockchainData();
 
 
     const currentAbi = getTokenAbi(watch('depositCollateralAddress') as `0x${string}`);
@@ -281,7 +284,7 @@ function ColltateralTab() {
 
 return 0;
 
-},[collateralTokenPriceData, usdplnOraclePrice, watch('depositCollateralAddress'), collateralData, arrayOfContracts, watch('amount')]);
+},[collateralTokenPriceData, watch, usdplnOraclePrice, collateralData, arrayOfContracts]);
 
 
 const TokensOptions = ()=>{
@@ -483,6 +486,7 @@ try{
   }
   approveCollateral();
 }catch(err){
+  console.log(err);
   sendToastContent({'toastText':'Something went wrong', 'type':'error'})
 }
 
@@ -557,3 +561,5 @@ if(data && data[arrayOfContracts.findIndex(contract => contract.address === valu
 }
 
 export default ColltateralTab
+
+

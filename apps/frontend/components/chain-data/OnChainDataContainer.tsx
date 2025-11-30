@@ -58,7 +58,7 @@ const collateralInfoContracts= chainCollateralInfoContracts();
 }[]
   });
 
-  const {data:collateralInfos, isLoading:collateralInfosLoading, isRefetching:collateralInfosRefetching, isError:collateralInfosPriceError, error:collateralInfosErrorMsg }=useReadContracts({contracts:collateralInfoContracts as readonly {
+  const {data:collateralInfos, isLoading:collateralInfosLoading, isRefetching:collateralInfosRefetching, isError:collateralInfosPriceError }=useReadContracts({contracts:collateralInfoContracts as readonly {
     abi?: Abi | undefined;
     functionName?: string | undefined;
     args?: readonly unknown[] | undefined;
@@ -77,7 +77,7 @@ const collateralInfoContracts= chainCollateralInfoContracts();
             }
         );
 
-  const {data:oraclePrice, isLoading:oraclePriceLoading, isRefetching:oraclePriceRefetching, isError:oraclePriceError, error:oraclePriceErrorMsg}=useReadContract({
+  const {data:oraclePrice, isLoading:oraclePriceLoading, isRefetching:oraclePriceRefetching, isError:oraclePriceError}=useReadContract({
           abi:usdplnOracleABI,
           address: oracleAddress,
           functionName:'getPLNPrice',

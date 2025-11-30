@@ -48,7 +48,7 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress}: Prop
         args:[depositor, tokenAddress],
     });
 
-    const {getToastContent, sendToastContent}=useToastContent();
+    const { sendToastContent}=useToastContent();
 
     const approvePLST=()=>{
 try {

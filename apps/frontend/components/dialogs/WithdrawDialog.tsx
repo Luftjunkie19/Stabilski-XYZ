@@ -94,7 +94,7 @@ function WithdrawDialog() {
   }=useBlockchainData();
 
 
-  const {isLoading, data}=useReadContract({
+  const {data}=useReadContract({
     'abi':vaultManagerAbi,
     'address':currentChainVaultManagerAddress as ethereumAddress,
     'functionName':'getIsHealthyAfterWithdrawal',
@@ -278,13 +278,13 @@ return (
 </Select>
 </div>
 
-
+{healthFactorLoading &&<p>Loading Health Factor...</p>}
 {healthFactor as bigint && <p>{Number(healthFactor)}</p>}
 {data as boolean && <p className='text-green-600 italic text-sm'>After withdrawal, your vault will not remain healthy.</p>}
 
 </div>
 
-<p>{JSON.stringify(data)}</p>
+
 
 <Button disabled={data as boolean ?? false} onClick={
   withdrawCollateral

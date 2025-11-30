@@ -12,7 +12,6 @@ import { Input } from '../ui/input'
 import { useAccount, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
 import {  ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ABI, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ABI, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { CollateralDeposited, ethereumAddress, EventType, singleResultType } from '@/lib/types/onChainData/OnChainDataTypes';
@@ -20,7 +19,7 @@ import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import z from 'zod';
-
+import { zodResolver } from '@hookform/resolvers/zod';
 
 
 
@@ -50,7 +49,10 @@ const {chainId, address}=useAccount();
     collateralAddress: z.string().startsWith('0x', {message:"The selected token address hasn't been "}).length(42, {'message':'You selected invalid collateral token.'})
   });
 
- const {register, handleSubmit, watch, clearErrors,reset, setValue, formState }=useForm<z.infer<typeof borrowPlstType>>();
+ const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.input<typeof borrowPlstType>, any, z.output<typeof borrowPlstType>>({
+  mode:'all',
+  resolver:zodResolver(borrowPlstType)
+ });
 
    const {errors}=formState;
  
@@ -246,7 +248,7 @@ writeContract({
     abi:vaultManagerAbi,
     address: currentChainVaultManagerAddress as `0x${string}`,
     functionName:'mintPLST',
-    args:[watch('collateralAddress'), watch('amount') * 1e18],
+    args:[collateralAddress, amount * 1e18],
     chainId
 });
 
@@ -270,6 +272,7 @@ const handleBorrowStabilski:SubmitHandler<z.infer<typeof borrowPlstType>>=async(
 try {
   borrowPolishStableCoin(value.amount, value.collateralAddress as ethereumAddress);
 } catch (error) {
+  console.log(error);
   sendToastContent({'toastText':'Error occured while borrowing', 'type':'error'})
 }
 }
@@ -342,3 +345,4 @@ className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-poi
 
 
 export default BorrowTab
+

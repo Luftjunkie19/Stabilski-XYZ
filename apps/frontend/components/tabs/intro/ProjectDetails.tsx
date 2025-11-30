@@ -2,7 +2,6 @@ import React from 'react'
 import { FaBitcoin, FaEthereum } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
 import { ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
-import useToastContent from '@/lib/hooks/useToastContent';
 import ContractAddress, { ContractsType } from './elements/ContractAddress';
 
 function ProjectDetails() {

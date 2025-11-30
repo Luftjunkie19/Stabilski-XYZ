@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useMemo, useState } from 'react'
+import React, {useMemo, useState } from 'react'
 
 import { Card } from "./../ui/card"
 import { TabsContent } from './../ui/tabs'
@@ -30,6 +30,7 @@ import { Skeleton } from '../ui/skeleton';
 import PriceSkeleton from '../skeletons/PriceSkeleton';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 function BridgeTab() {
 const chainSelectorArbitrumSepolia = BigInt('3478487238524512106');
@@ -43,10 +44,15 @@ const [approved, setApproved]=useState<boolean>(false);
   const [destinationPoolAddress, setDestinationPoolAddress]=useState<ethereumAddress>();
 
 const {currentStabilskiContractAddress, getCurrentRouter, getCurrentCcipRetriever, getCurrentPoolAddress, getPoolAddressByChainSelector, currentBlockchainScanner}=useBlockchainData();
-
+  const bridgePLST = z.object({
+    amount: z.number().gt(0, {'error':'The amount deposited must be greater than 0'}).max(maxAmountToBeTransferred, {error:'Deposited amount cannot surpass '}),
+    destinationChainSelector: z.bigint({'message':'Wrong Type provided'})
+  });
 const {sendToastContent}= useToastContent();
 
-  const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.infer<typeof bridgePLST>>({'mode':'all'});
+  const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.input<typeof bridgePLST>, any, z.output<typeof bridgePLST>>({'mode':'all',
+resolver: zodResolver(bridgePLST)
+  });
 
   const {errors}=formState;
 
@@ -82,7 +88,7 @@ const maxAmountToBeTransferred= useMemo(()=>{
 
 const amountToBeTransfered = useMemo(()=>{
 return (Number(data ?? 0) / 1e18) - watch('amount');
-},[watch('amount'), data])
+},[data, watch])
 
 const approveStabilskiTokens = async () => {
 try {
@@ -289,12 +295,8 @@ const SelectOptions= ()=>{
   
   });
 
-  const bridgePLST = z.object({
-    amount: z.number().gt(0, {'error':'The amount deposited must be greater than 0'}).max(maxAmountToBeTransferred, {error:'Deposited amount cannot surpass '}),
-    destinationChainSelector: z.bigint({'message':'Wrong Type provided'})
-  });
 
-  const handleBorrowPLST:SubmitHandler<z.infer<typeof bridgePLST>>= async (value)=>{
+  const handleBorrowPLST:SubmitHandler<z.infer<typeof bridgePLST>>= async ()=>{
     try {
       if(approved){
         await commitCCIPTransfer();
