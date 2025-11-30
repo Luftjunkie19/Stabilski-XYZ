@@ -40,7 +40,7 @@ function ColltateralTab() {
     depositCollateralAddress: z.string().startsWith('0x', {message:"The selected token address hasn't been "}).length(42, {'message':'You selected invalid collateral token.'})
   });
 
-  const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.input<typeof depositCollateral>, any, z.output<typeof depositCollateral>>({'mode':'all', 
+  const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.infer<typeof depositCollateral>>({'mode':'all', 
     resolver: zodResolver(depositCollateral),
 
   });

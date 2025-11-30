@@ -29,7 +29,7 @@ import useToastContent from '@/lib/hooks/useToastContent';
 import { Skeleton } from '../ui/skeleton';
 import PriceSkeleton from '../skeletons/PriceSkeleton';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import z from 'zod';
+import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 function BridgeTab() {
@@ -39,18 +39,29 @@ const chainSelectorBaseSepolia= BigInt('10344971235874465080');
 const {handleKeyDown, handlePaste, handleBlur, handleChange}=usePreventInvalidInput();
 const {chainId, address}=useAccount();
 const [approved, setApproved]=useState<boolean>(false);
-
+const {currentStabilskiContractAddress, getCurrentRouter, getCurrentCcipRetriever, getCurrentPoolAddress, getPoolAddressByChainSelector, currentBlockchainScanner}=useBlockchainData();
   const [sourceChainTx, setSourceChainTx]=useState<ethereumAddress>();
   const [destinationPoolAddress, setDestinationPoolAddress]=useState<ethereumAddress>();
 
-const {currentStabilskiContractAddress, getCurrentRouter, getCurrentCcipRetriever, getCurrentPoolAddress, getPoolAddressByChainSelector, currentBlockchainScanner}=useBlockchainData();
+const {data, isLoading, isRefetching, isError}=useReadContract({
+    abi:stabilskiTokenABI,
+    address: currentStabilskiContractAddress as `0x${string}`,
+    functionName: 'balanceOf',
+    args: [address],
+    chainId: chainId
+});
+
+const maxAmountToBeTransferred= useMemo(()=>{
+  return Number(data ?? 0) / 1e18;
+},[data])
+
   const bridgePLST = z.object({
     amount: z.number().gt(0, {'error':'The amount deposited must be greater than 0'}).max(maxAmountToBeTransferred, {error:'Deposited amount cannot surpass '}),
     destinationChainSelector: z.bigint({'message':'Wrong Type provided'})
   });
 const {sendToastContent}= useToastContent();
 
-  const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.input<typeof bridgePLST>, any, z.output<typeof bridgePLST>>({'mode':'all',
+const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.infer<typeof bridgePLST>>({'mode':'all',
 resolver: zodResolver(bridgePLST)
   });
 
@@ -62,13 +73,7 @@ const currentRouter= getCurrentRouter();
 const currentRetriever = getCurrentCcipRetriever();
 const currentPoolAddr= getCurrentPoolAddress();
 
-const {data, isLoading, isRefetching, isError}=useReadContract({
-    abi:stabilskiTokenABI,
-    address: currentStabilskiContractAddress as `0x${string}`,
-    functionName: 'balanceOf',
-    args: [address],
-    chainId: chainId
-});
+
 
 
 const {data:feeData, isLoading:isFeeDataLoading, isRefetching:isFeeDataRefetching, isError:isFeeDataError, error}=useReadContract({
@@ -82,9 +87,7 @@ const {data:feeData, isLoading:isFeeDataLoading, isRefetching:isFeeDataRefetchin
     }
 });
 
-const maxAmountToBeTransferred= useMemo(()=>{
-  return Number(data ?? 0) / 1e18;
-},[data])
+
 
 const amountToBeTransfered = useMemo(()=>{
 return (Number(data ?? 0) / 1e18) - watch('amount');

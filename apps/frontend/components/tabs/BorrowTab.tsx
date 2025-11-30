@@ -18,7 +18,7 @@ import { CollateralDeposited, ethereumAddress, EventType, singleResultType } fro
 import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import z from 'zod';
+import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 
@@ -49,7 +49,7 @@ const {chainId, address}=useAccount();
     collateralAddress: z.string().startsWith('0x', {message:"The selected token address hasn't been "}).length(42, {'message':'You selected invalid collateral token.'})
   });
 
- const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.input<typeof borrowPlstType>, any, z.output<typeof borrowPlstType>>({
+ const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.infer<typeof borrowPlstType>>({
   mode:'all',
   resolver:zodResolver(borrowPlstType)
  });
