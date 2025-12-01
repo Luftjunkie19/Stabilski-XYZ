@@ -319,9 +319,11 @@ type:'error'
     <div className="h-1/2 py-1 px-3 items-center flex gap-3 flex-col">
  <p 
  className="text-red-500 text-2xl font-semibold tracking">Your can still borrow</p>
-<p className='text-white flex items-center gap-2'>{maxBorrowableData as unknown as singleResultType<bigint>
+<p className='text-white flex items-center gap-2'>{maxBorrowableData && maxBorrowableData as unknown as singleResultType<bigint>
  && vaultContractInfo as unknown as singleResultType<bigint>[]
-&& token && arrayOfContracts.find((contract) => contract.address === token) || arrayOfContracts.findIndex((contract) => contract.address === token) !== -1   ?  (((Number((maxBorrowableData as unknown as 
+&& token && arrayOfContracts.find((contract) => contract.address === token) || arrayOfContracts.findIndex((contract) => contract.address === token) !== -1  && !isNaN(((Number((maxBorrowableData as unknown as 
+singleResultType<bigint>[]
+)[arrayOfContracts.findIndex((contract) => contract.address === token)].result)) - (amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18)))) ? (((Number((maxBorrowableData as unknown as 
 singleResultType<bigint>[]
 )[arrayOfContracts.findIndex((contract) => contract.address === token)].result)) - (amount * (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18))) /  1e18).toFixed(2) : 0 } <span className='text-red-500'>PLST</span></p>
 
