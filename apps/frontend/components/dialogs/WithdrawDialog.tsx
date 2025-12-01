@@ -5,7 +5,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } 
 import React, { useState } from 'react'
 import { DialogHeader } from '../ui/dialog'
 import { Button } from '../ui/button'
-import {  useAccount, useReadContract, useReadContracts, useWatchContractEvent, useWriteContract } from 'wagmi';
+import {  useAccount, useAccountEffect, useReadContract, useReadContracts, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { Label } from '../ui/label';
@@ -216,6 +216,11 @@ writeContract({
           }
       })
   
+      useAccountEffect({onDisconnect() {
+        setToken(undefined);
+      setAmount(0);
+      setMaximumAmount(0);
+      }});
 
 
 
@@ -280,7 +285,7 @@ return (
 
 {healthFactorLoading &&<p>Loading Health Factor...</p>}
 {healthFactor as bigint && <p>{Number(healthFactor)}</p>}
-{data as boolean && <p className='text-green-600 italic text-sm'>After withdrawal, your vault will not remain healthy.</p>}
+{data as boolean && <p className='text-orange-500 italic text-sm'>After withdrawal, your vault will not remain healthy.</p>}
 
 </div>
 

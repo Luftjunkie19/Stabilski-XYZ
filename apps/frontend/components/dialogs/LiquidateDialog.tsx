@@ -11,10 +11,11 @@ type Props = {
     commitLiquidation: ()=>void,
     approvePLST: ()=>void,
     vaultDebt: bigint,
-    userBalance:bigint
+    userBalance:bigint,
+    isApproved:boolean,
 }
 
-function LiquidateDialog({isLiquidatable, approvePLST, commitLiquidation, vaultDebt, userBalance}: Props) {
+function LiquidateDialog({isLiquidatable, approvePLST, isApproved, commitLiquidation, vaultDebt, userBalance}: Props) {
   return (
    <Dialog>
   <DialogTrigger className={` p-2 rounded-lg text-sm text-white ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ?  'bg-red-500 cursor-pointer' : 'bg-red-800 cursor-not-allowed'}  hover:bg-red-800 hover:scale-95`} disabled={isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) === false ? true : false}>
@@ -61,8 +62,8 @@ function LiquidateDialog({isLiquidatable, approvePLST, commitLiquidation, vaultD
 
 
 <div className="flex items-center justify-center gap-3">
-<Button onClick={approvePLST} className='bg-blue-600 cursor-pointer'>Approve PLST</Button>
-    <Button className={`p-2 rounded-lg text-sm text-white ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ?  'bg-red-500 cursor-pointer' : 'bg-red-800 cursor-not-allowed'}  hover:bg-red-800 hover:scale-95`}  disabled={isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) === false ? true : false} variant={'destructive'} onClick={commitLiquidation}>
+<Button disabled={isApproved} onClick={approvePLST} className='bg-blue-600 cursor-pointer'>Approve PLST</Button>
+    <Button className={`p-2 rounded-lg text-sm text-white ${isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) ?  'bg-red-500 cursor-pointer' : 'bg-red-800 cursor-not-allowed'}  hover:bg-red-800 hover:scale-95`}  disabled={(isLiquidatable as unknown as boolean && (isLiquidatable as unknown as boolean) === false ? true : false) || !isApproved} variant={'destructive'} onClick={commitLiquidation}>
     Liquidate Position
 </Button>
 </div>

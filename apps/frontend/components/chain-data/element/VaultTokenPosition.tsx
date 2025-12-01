@@ -2,7 +2,7 @@
 import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import { ApprovalInterface, ethereumAddress, EventType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
-import React from 'react'
+import React, { useState } from 'react'
 import Image from "next/image";
 import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
 import stabilskiStableCoin from "@/public/Logox32.png"
@@ -18,6 +18,8 @@ type Props = {
 }
 
 function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress}: Props) {
+const [approved, setApproved]=useState<boolean>(false);
+
  const {writeContract}=useWriteContract({});
     const { chainId, address}=useAccount();
     const {data:collateralValue}=useReadContract({
@@ -48,13 +50,33 @@ function VaultTokenPosition({depositor, tokenAddress, vaultManagerAddress}: Prop
         args:[depositor, tokenAddress],
     });
 
+        const {currentStabilskiContractAddress, currentChainVaultManagerAddress}=useBlockchainData();
+
+    const {data:stabilskiUserBalance}=useReadContract({
+        abi: stabilskiTokenABI,
+        address: currentStabilskiContractAddress as ethereumAddress,
+        functionName:'balanceOf',
+        args:[address]
+    });
+
     const { sendToastContent}=useToastContent();
+
+
 
     const approvePLST=()=>{
 try {
             if(depositor === address){
             sendToastContent({
                 toastText:'Bro cmon, you cannot liquidate yourself XD',
+                icon:'❌',
+                type:'error'
+            });
+            return;
+        }
+
+        if(stabilskiUserBalance && stabilskiUserBalance as bigint < (vaultInfo as vaultInfoReturnType)[1]){
+            sendToastContent({
+                toastText:'You have not enough PLST to liquidate this position.',
                 icon:'❌',
                 type:'error'
             });
@@ -93,6 +115,17 @@ sendToastContent({
 
     const commitLiquidation= ()=>{
     try{
+
+        if(stabilskiUserBalance && stabilskiUserBalance as bigint < (vaultInfo as vaultInfoReturnType)[1]){
+            sendToastContent({
+                toastText:'You have not enough PLST to liquidate this position.',
+                icon:'❌',
+                type:'error'
+            });
+            return;
+        }
+
+    
             if((isLiquidatable as unknown as boolean) && (isLiquidatable as unknown as boolean) === true){  
             writeContract({
                 chainId,
@@ -118,14 +151,6 @@ sendToastContent({
     }
     }
 
-    const {currentStabilskiContractAddress, currentChainVaultManagerAddress}=useBlockchainData();
-
-    const {data:stabilskiUserBalance}=useReadContract({
-        abi: stabilskiTokenABI,
-        address: currentStabilskiContractAddress as ethereumAddress,
-        functionName:'balanceOf',
-        args:[address]
-    });
 
     useWatchContractEvent({
         address:currentStabilskiContractAddress as ethereumAddress,
@@ -136,7 +161,7 @@ sendToastContent({
             spender: currentChainVaultManagerAddress
         },
         onLogs:(logs)=>{
-            
+            setApproved(true);
             sendToastContent({
                 toastText:`Stabilski Tokens Approved Correctly (${(logs[0] as EventType<ApprovalInterface>).args?.value}) !`,
                 icon:'✅',
@@ -179,7 +204,7 @@ sendToastContent({
     <Image src={stabilskiStableCoin} alt='' width={64} height={64} className='w-8 h-8'/>
     </div>
 
-   <LiquidateDialog approvePLST={approvePLST} userBalance={stabilskiUserBalance as unknown as bigint} vaultDebt={(vaultInfo as vaultInfoReturnType)[1]} commitLiquidation={commitLiquidation} isLiquidatable={isLiquidatable as unknown as boolean}/>
+   <LiquidateDialog isApproved={approved} approvePLST={approvePLST} userBalance={stabilskiUserBalance as unknown as bigint} vaultDebt={(vaultInfo as vaultInfoReturnType)[1]} commitLiquidation={commitLiquidation} isLiquidatable={isLiquidatable as unknown as boolean}/>
     
     
     </div>

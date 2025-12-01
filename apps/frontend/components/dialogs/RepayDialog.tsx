@@ -5,23 +5,24 @@ import { Button } from '../ui/button'
 import { DialogHeader,Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Input } from '../ui/input';
-import { useAccount,  useReadContract,  useReadContracts, useWriteContract } from 'wagmi';
+import { useAccount,  useAccountEffect,  useReadContract,  useReadContracts, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { SEPOLIA_ETH_WETH_ADDR, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_LINK_ADDR, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, SEPOLIA_ETH_CHAINID, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { FaEthereum, FaBitcoin } from 'react-icons/fa6';
 import { SiChainlink } from 'react-icons/si';
 import { Label } from '../ui/label';
 import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import { ethereumAddress, singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
+import { ApprovalInterface, CollateralDeposited, ethereumAddress, EventType, singleResultType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import useToastContent from '@/lib/hooks/useToastContent';
 
 
 
 
-function RepayDialog() {
+function RepayDialog({vaultManagerAddress}:{vaultManagerAddress:ethereumAddress}) {
  const [amount, setAmount] = useState<number>(0);
   const [token, setToken] = useState<`0x${string}` | undefined>(undefined);
+  const [approved, setApproved]=useState<boolean>(false);
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
 const { address, chainId }=useAccount();
 
@@ -145,6 +146,77 @@ const {writeContract}=useWriteContract({
 });
 
 
+const approvePLST =()=>{
+  writeContract({
+    'abi':stabilskiTokenABI,
+    'address':currentStabilskiContractAddress as ethereumAddress,
+    'functionName':'approve',
+    'args':[currentChainVaultManagerAddress, (amount * 
+      (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18))
+    ],
+    chainId
+  });
+}
+
+const repayDebtInPLST=()=>{
+  writeContract({
+    'abi':vaultManagerAbi,
+    'address':currentChainVaultManagerAddress as ethereumAddress,
+    'functionName':'repayPLST',
+    'args':[token],
+    chainId
+  });
+}
+
+useAccountEffect({onDisconnect() {
+  setToken(undefined);
+setApproved(false);
+setAmount(0);
+setMaximumAmount(0);
+}});
+
+    useWatchContractEvent({
+  address: vaultManagerAddress,
+  abi: vaultManagerAbi,
+  eventName: 'DebtRepaid',
+  onLogs: (logs) => {
+const eventLogs= logs.sort((a, b)=> Number(b.blockNumber) - Number(a.blockNumber)) as EventType<CollateralDeposited>[];
+    sendToastContent({toastText:`
+    🎉 Debt Repaid: ${ (Number(eventLogs[0].args?.amount as bigint)/1e18).toFixed(2)} PLST by ${eventLogs[0].args?.vaultOwner.slice(0,6)}...
+    `, icon:'✅', type:'success'
+});
+setToken(undefined);
+setApproved(false);
+setAmount(0);
+setMaximumAmount(0);
+  },
+  args:{
+    vaultOwner: address,
+    token: currentStabilskiContractAddress,
+  },
+
+});
+
+  useWatchContractEvent({
+    address: currentStabilskiContractAddress as ethereumAddress,
+    abi: stabilskiTokenABI,
+    eventName: 'Approval',
+  'onLogs':(logs)=>{
+    console.log('New logs!', logs[0] as EventType<ApprovalInterface>);
+    setApproved(true);
+    sendToastContent({toastText:`Stabilski Tokens Approved Successfully (${
+     ( Number((logs[0] as EventType<ApprovalInterface>).args?.value) / 1e18).toFixed(3)
+      }) PLST`,
+    icon:'✅',
+    type:'success'
+  });
+  },
+  args:{
+    owner: address,
+  },
+   'strict':true,
+  });
+
 
 
   return (
@@ -221,27 +293,9 @@ setMaximumAmount(Number(((vaultInfo as unknown as vaultInfoReturnType)[indexOfTh
 
 
 <div className="flex w-full flex-wrap items-center justify-center gap-2">
-  <Button onClick={()=>{
-  writeContract({
-    'abi':stabilskiTokenABI,
-    'address':currentStabilskiContractAddress as ethereumAddress,
-    'functionName':'approve',
-    'args':[currentChainVaultManagerAddress, (amount * 
-      (token === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18))
-    ],
-    chainId
-  });
-}} className={`bg-blue-500 max-w-40 w-full cursor-pointer hover:bg-blue-800 hover:scale-95`}>Approve PLST</Button>
+  <Button disabled={approved} onClick={approvePLST} className={`bg-blue-500 disabled:bg-blue-950 max-w-40 w-full cursor-pointer hover:bg-blue-800 hover:scale-95`}>Approve PLST</Button>
 
-<Button onClick={()=>{
-  writeContract({
-    'abi':vaultManagerAbi,
-    'address':currentChainVaultManagerAddress as ethereumAddress,
-    'functionName':'repayPLST',
-    'args':[token],
-    chainId
-  });
-}} className={`bg-green-500 max-w-40 w-full cursor-pointer hover:bg-green-800 hover:scale-95`}>Repay</Button>
+<Button disabled={!approved} onClick={repayDebtInPLST} className={`bg-green-500 disabled:bg-green-950 max-w-40 w-full cursor-pointer hover:bg-green-800 hover:scale-95`}>Repay</Button>
 </div>
 
   </DialogContent>

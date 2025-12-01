@@ -43,25 +43,6 @@ function UserVaultHandlePosition({vaultManagerAddress, depositor, tokenAddress}:
 
 const { sendToastContent}=useToastContent();
 
-    useWatchContractEvent({
-  address: vaultManagerAddress,
-  abi: vaultManagerAbi,
-  eventName: 'DebtRepaid',
-  onLogs: (logs) => {
-const eventLogs= logs.sort((a, b)=> Number(b.blockNumber) - Number(a.blockNumber)) as EventType<CollateralDeposited>[];
-    sendToastContent({toastText:`
-    🎉 Debt Repaid: ${ (Number(eventLogs[0].args?.amount as bigint)/1e18).toFixed(2)} PLST by ${eventLogs[0].args?.vaultOwner.slice(0,6)}...
-    `, icon:'✅', type:'success'
-});
-
-
-  },
-  args:{
-    vaultOwner: depositor,
-    token: tokenAddress,
-  },
-
-});
 
 
 
@@ -100,7 +81,7 @@ const eventLogs= logs.sort((a, b)=> Number(b.blockNumber) - Number(a.blockNumber
     
     
     <div className='flex gap-1 items-end '>
-   <RepayDialog/>
+   <RepayDialog vaultManagerAddress={vaultManagerAddress}/>
      <WithdrawDialog/>
     </div>
 
