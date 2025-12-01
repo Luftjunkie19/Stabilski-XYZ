@@ -190,17 +190,17 @@ enabled: typeof amount === 'number'
 });
   useSwitchChain({mutation:{
     onSuccess:()=>{
-      setToken(undefined);
       setAmount(0);
       setMaximumAmount(0);
+      setToken(undefined);
     }
   }});
 
    useAccountEffect({
       'onDisconnect':()=>{
- setToken(undefined);
-      setAmount(0);
-      setMaximumAmount(0);
+        setAmount(0);
+        setMaximumAmount(0);
+        setToken(undefined);
       }
     });
 
@@ -209,7 +209,7 @@ const TokensOptions = ()=>{
     case SEPOLIA_ETH_CHAINID:
       return(<>
  
-        <SelectItem className="flex text-white focus:bg-neutral-800 focus:text-white hover:bg-neutral-900 items-center gap-2 p-1" value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
+      <SelectItem className="flex text-white focus:bg-neutral-800 focus:text-white hover:bg-neutral-900 items-center gap-2 p-1" value={SEPOLIA_ETH_WETH_ADDR}> <FaEthereum className="text-zinc-500"/> <span className="text-sm">Wrapped Ethereum (WETH)</span></SelectItem>
     <SelectItem className="flex text-white focus:bg-neutral-800 focus:text-white hover:bg-neutral-900 items-center gap-2 p-1"  value={SEPOLIA_ETH_WBTC_ADDR}><FaBitcoin className="text-orange-500"/> <span className="text-sm">Wrapped Bitcoin (WBTC)</span></SelectItem>
     <SelectItem className="flex text-white focus:bg-neutral-800 focus:text-white hover:bg-neutral-900 items-center gap-2 p-1"  value={SEPOLIA_ETH_LINK_ADDR}><SiChainlink className="text-blue-500" /> <span className="text-sm">Chainlink (LINK)</span></SelectItem>
 
@@ -294,10 +294,16 @@ type:'error'
  onValueChange={(value)=>{
  setToken(value as ethereumAddress);
  if(maxBorrowableData){
-   const selectedContractNumber=Number(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)].result as bigint / BigInt(1e18));
 
-const maxAmount = selectedContractNumber;
-   setMaximumAmount(maxAmount);
+  console.log(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)], 'result of finding max borrowable');
+
+   const selectedContractNumber=Number(maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)].result && maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)].result as bigint ? maxBorrowableData[arrayOfContracts.findIndex(contract => contract.address === value)].result :  BigInt(0) / BigInt(1e18));
+
+   if(isNaN(selectedContractNumber)){
+    setMaximumAmount(0);
+  return; 
+  }
+   setMaximumAmount(selectedContractNumber);
  }
 
  }}>
