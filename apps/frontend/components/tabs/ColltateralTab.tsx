@@ -8,7 +8,7 @@ import { SiChainlink } from 'react-icons/si'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Input } from '../ui/input'
-import { useAccount, useReadContract, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
+import { useAccount, useAccountEffect, useDisconnect, useReadContract, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
 import { usdplnOracleABI } from '@/lib/smart-contracts-abi/USDPLNOracle';
 import { ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ABI, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ABI, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
@@ -18,31 +18,29 @@ import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { CollateralDeposited, ethereumAddress, EventType } from '@/lib/types/onChainData/OnChainDataTypes';
 import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
-import * as z from 'zod';
-import {useForm, SubmitHandler} from "react-hook-form";
+
 
 function ColltateralTab() {
     useSwitchChain({mutation:{
       onSuccess:(data)=>{
         console.log(data);
-        setMaximumAmount(0);
-        reset();
-        setApproved(false);
+
       }
     }});
 
+    useAccountEffect({
+      'onDisconnect':()=>{
+        resetAll();
+      }
+    });
+
   const {handlePaste, handleKeyDown, handleBlur, handleChange}=usePreventInvalidInput();
+  const [amount, setAmount] = useState<number>(0);
+  const [token, setToken] = useState<`0x${string}` | undefined>(undefined);
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
   const [approved, setApproved] = useState<boolean>(false);
-    const depositCollateral = z.object({
-    amount: z.number().gt(0, {'error':'The amount deposited must be greater than 0'}).max(maximumAmount, {error:'Deposited amount cannot surpass '}),
-    depositCollateralAddress: z.string().startsWith('0x', {message:"The selected token address hasn't been "}).length(42, {'message':'You selected invalid collateral token.'})
-  }).required();
+  
 
-  const {register, handleSubmit, watch,reset, setValue, formState }=useForm<z.infer<typeof depositCollateral>>({'mode':'all', 
-  });
-
-  const {errors}=formState;
 
     const {chainId, address}=useAccount();
 
@@ -53,9 +51,9 @@ function ColltateralTab() {
     const {getTokenAbi, currentChainVaultManagerAddress, currentOraclePriceAddress}=useBlockchainData();
 
 
-    const currentAbi = getTokenAbi(watch('depositCollateralAddress') as `0x${string}`);
+    const currentAbi = getTokenAbi(token as `0x${string}`);
 
-    const currentTokenArgs= watch('depositCollateralAddress') === BASE_SEPOLIA_WETH_ADDR || watch('depositCollateralAddress') === SEPOLIA_ETH_WETH_ADDR ? 
+    const currentTokenArgs= token === BASE_SEPOLIA_WETH_ADDR || token === SEPOLIA_ETH_WETH_ADDR ? 
      {
     src:address,
     guy: currentChainVaultManagerAddress
@@ -262,18 +260,18 @@ function ColltateralTab() {
 
 
     const getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken= useCallback(()=>{
-      if(!collateralTokenPriceData || !usdplnOraclePrice || !watch('depositCollateralAddress') || !collateralData) return 0;
+      if(!collateralTokenPriceData || !usdplnOraclePrice || !token || !collateralData) return 0;
 
-      if(collateralData && collateralTokenPriceData && usdplnOraclePrice && watch('depositCollateralAddress')){
+      if(collateralData && collateralTokenPriceData && usdplnOraclePrice && token){
         
-        const convertedNumber= Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === watch('depositCollateralAddress'))].result);
+        const convertedNumber= Number(collateralTokenPriceData[arrayOfContracts.findIndex(c => c.address === token)].result);
         
-        const selectedCollateralTokenInfo = collateralData[arrayOfContracts.findIndex((val)=>val.address === watch('depositCollateralAddress'))].result;
+        const selectedCollateralTokenInfo = collateralData[arrayOfContracts.findIndex((val)=>val.address === token)].result;
 
         console.log(selectedCollateralTokenInfo);
 
 
-        const main =((watch('amount') * convertedNumber) * Number(usdplnOraclePrice) * 1e18) / 1e22;
+        const main =((amount * convertedNumber) * Number(usdplnOraclePrice) * 1e18) / 1e22;
         
         const maxToBorrow = (main / 1e18);
         return (maxToBorrow / 1.4);
@@ -281,7 +279,7 @@ function ColltateralTab() {
 
 return 0;
 
-},[collateralTokenPriceData, watch, usdplnOraclePrice, collateralData, arrayOfContracts]);
+},[collateralTokenPriceData, token, amount, usdplnOraclePrice, collateralData, arrayOfContracts]);
 
 
 const TokensOptions = ()=>{
@@ -355,7 +353,7 @@ case ARBITRUM_SEPOLIA_CHAINID:
 
 
 useWatchContractEvent({
-    address: watch('depositCollateralAddress') as ethereumAddress,
+    address: token as ethereumAddress,
     abi: currentAbi,
     eventName: 'Approval',
   'onLogs':(logs)=>{
@@ -366,7 +364,7 @@ useWatchContractEvent({
     type:'success'
   });
   },
-  enabled: typeof watch('depositCollateralAddress') === 'string' && watch('depositCollateralAddress').length === 42,
+  enabled: token !== undefined,
   args:currentTokenArgs
   });
 
@@ -384,15 +382,13 @@ useWatchContractEvent({
   'icon':'✅',
     type:'success'
   });
-  setApproved(false);
-  reset();
-  setMaximumAmount(0);
+ resetAll();
   },
   args:{
     vaultOwner: address,
-    token: watch('depositCollateralAddress'),
+    token: token,
   },
-  'enabled': watch('amount') > 0 && watch('depositCollateralAddress') !== undefined && address !== undefined && chainId !== undefined,
+  'enabled': amount > 0 && token !== undefined && address !== undefined && chainId !== undefined,
   });
 
   const internalizedMaxBorrowable= useMemo(()=>{
@@ -412,6 +408,12 @@ useWatchContractEvent({
   },[getTheMaxAmountOfTokensToBorrowBasedOnAmountAndToken]);
 
 
+  const resetAll=()=>{
+            setMaximumAmount(0);
+        setAmount(0);
+        setToken(undefined);
+        setApproved(false);
+  }
 
   const collaterlizePosition=()=>{
 try {
@@ -419,7 +421,7 @@ try {
     'abi':vaultManagerAbi,
     'address':currentChainVaultManagerAddress as ethereumAddress,
     'functionName':'depositCollateral',
-    'args':[watch('depositCollateralAddress')],
+    'args':[token],
   });
 
  
@@ -439,13 +441,24 @@ try {
 
 const approveCollateral=()=>{
   try {
-if(watch('depositCollateralAddress')){
-  console.log(arrayOfContracts.find(contract => contract.address === watch('depositCollateralAddress')));
+
+    if(!token){
+      sendToastContent({'toastText':`You haven't selected token :)`, type:"error"});
+      return;
+    }
+
+    if(amount <= 0 || amount < maximumAmount){
+       sendToastContent({'toastText':`Invalid amount provided`, type:'error'});
+      return;
+    }
+
+if(token){
+  console.log(arrayOfContracts.find(contract => contract.address === token));
      writeContract({
-    'abi':arrayOfContracts.find(contract => contract.address === watch('depositCollateralAddress'))!.abi,
-    'address':arrayOfContracts.find(contract => contract.address === watch('depositCollateralAddress'))!.address as ethereumAddress,
+    'abi':arrayOfContracts.find(contract => contract.address === token)!.abi,
+    'address':arrayOfContracts.find(contract => contract.address === token)!.address as ethereumAddress,
     'functionName':'approve',
-    'args':[currentChainVaultManagerAddress, watch('amount') * 1e18],
+    'args':[currentChainVaultManagerAddress, amount * 1e18],
   }, {
     onError(error) {
         sendToastContent({toastText:`Error approving collateral:${error.message}`,
@@ -475,41 +488,26 @@ if(watch('depositCollateralAddress')){
 
 
 
-const handleSubmitApproval:SubmitHandler<z.infer<typeof depositCollateral>> = async ()=>{
-try{
-  if(approved){
-    collaterlizePosition();
-    return;
-  }
-  approveCollateral();
-}catch(err){
-  console.log(err);
-  sendToastContent({'toastText':'Something went wrong', 'type':'error'})
-}
-
-}
 
 
 
   return (
-    <TabsContent value="collateral" className="max-w-7xl w-full">
+    <TabsContent value="collateral" className="max-w-7xl w-full flex flex-col gap-4">
 
-<form onSubmit={handleSubmit(handleSubmitApproval,(error)=>{
- console.log(error); 
-})} className='w-full flex flex-col gap-4'>
+
 <Card className=" w-full max-w-lg bg-neutral-800 self-center shadow-sm border-red-500 border shadow-black h-96">
   
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-3 flex-col">
   <Label className="text-xl text-white">You Give</Label>
 <div className="flex items-center gap-4 text-white">
-  <Input {...register('amount')} step={0.000001}  value={watch('amount')} inputMode='decimal' 
+  <Input  step={0.000001}  value={amount} inputMode='decimal' 
    onPaste={handlePaste} 
   onKeyDown={handleKeyDown} 
-  onBlur={(e)=>{handleBlur(e.target.value, (collateralAmount)=>{setValue('amount', collateralAmount)})}}
-  onChange={(e)=>handleChange(e, (collateralAmount)=>{setValue('amount', collateralAmount)})} type="number" min={0} 
+  onBlur={(e)=>{handleBlur(e.target.value, setAmount)}}
+  onChange={(e)=>handleChange(e, setAmount)} type="number" min={0} 
   max={maximumAmount}  className="w-full"/>
- <Select  {...register('depositCollateralAddress')}  value={watch('depositCollateralAddress')} onValueChange={(value) => {
-setValue('depositCollateralAddress', value as `0x${string}`);
+ <Select  value={token} onValueChange={(value) => {
+setToken(value as ethereumAddress);
 if(data && data[arrayOfContracts.findIndex(contract => contract.address === value)].result){
 
   const maxCollateral= Number(data[arrayOfContracts.findIndex(contract => contract.address === value)].result) / (value === SEPOLIA_ETH_WBTC_ADDR ? 1e8 : 1e18);
@@ -526,8 +524,6 @@ if(data && data[arrayOfContracts.findIndex(contract => contract.address === valu
 </Select>
 </div>
   
-  {errors.amount?.message && <p className='text-sm text-red-500'>{errors.amount?.message}</p>}
-  {errors.depositCollateralAddress?.message &&  <p className='text-sm text-red-500'>{errors.depositCollateralAddress?.message}</p>}
   </div>
 
     <div className="h-1/2 py-1 px-3 flex gap-3 flex-col w-full">
@@ -543,13 +539,12 @@ if(data && data[arrayOfContracts.findIndex(contract => contract.address === valu
 </Card>
 
 <div className="flex flex-wrap w-full gap-2 justify-center">
-<Button disabled={approved} type='submit' className="p-6 cursor-pointer transition-all shadow-sm shadow-black hover:bg-blue-900 hover:scale-95 text-lg max-w-64 self-center w-full bg-blue-500">Approve Collateral</Button>
+<Button disabled={approved} onClick={approveCollateral} className="p-6 cursor-pointer transition-all shadow-sm shadow-black hover:bg-blue-900 hover:scale-95 text-lg max-w-64 self-center w-full bg-blue-500">Approve Collateral</Button>
   
-<Button type='submit' disabled={!approved} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-red-500">Put Collateral</Button>
+<Button  disabled={!approved} onClick={collaterlizePosition} className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-64 self-center w-full bg-red-500">Put Collateral</Button>
 </div>
 
 <OnChainDataContainer/>
-</form>
 
 
 
