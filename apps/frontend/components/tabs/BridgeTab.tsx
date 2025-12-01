@@ -12,14 +12,12 @@ import Image from 'next/image';
 import arbitrumLogo from "@/public/arbitrum-logo.png";
 import baseLogo from "@/public/base-logo.png";
 import { FaEthereum } from 'react-icons/fa6';
-import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
+import { useAccount, useAccountEffect, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { ARBITRUM_SEPOLIA_CHAINID, BASE_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
 import { routerAbi } from '@/lib/smart-contracts-abi/ccip/Router';
 import { config } from '@/lib/Web3Provider';
 import { readContract } from '@wagmi/core'
-
-
 import { ccipInformationRetrieverAbi, stabilskiTokenPoolAbi } from '@/lib/smart-contracts-abi/ccip/StabilskiTokenCCIPNeededData';
 import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { ApprovalInterface, BurnedInterface, ethereumAddress, EventType } from '@/lib/types/onChainData/OnChainDataTypes';
@@ -28,8 +26,7 @@ import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
 import { Skeleton } from '../ui/skeleton';
 import PriceSkeleton from '../skeletons/PriceSkeleton';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { z } from 'zod'; // or 'zod/v4'
+
 
 
 function BridgeTab() {
@@ -295,6 +292,16 @@ const SelectOptions= ()=>{
   
   });
 
+
+  useAccountEffect({
+    onDisconnect(){
+      setApproved(false);
+      setDestinationChainSelector(undefined);
+      setDestinationPoolAddress(undefined);
+      setSourceChainTx(undefined);
+      setTokenAmountToSend(0);
+    }
+  });
 
 
 

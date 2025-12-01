@@ -21,20 +21,8 @@ import useToastContent from '@/lib/hooks/useToastContent';
 
 
 function ColltateralTab() {
-    useSwitchChain({mutation:{
-      onSuccess:(data)=>{
-        console.log(data);
-
-      }
-    }});
-
-    useAccountEffect({
-      'onDisconnect':()=>{
-        resetAll();
-      }
-    });
-
-  const {handlePaste, handleKeyDown, handleBlur, handleChange}=usePreventInvalidInput();
+  
+const {handlePaste, handleKeyDown, handleBlur, handleChange}=usePreventInvalidInput();
   const [amount, setAmount] = useState<number>(0);
   const [token, setToken] = useState<`0x${string}` | undefined>(undefined);
   const [maximumAmount, setMaximumAmount] = useState<number>(0);
@@ -350,6 +338,18 @@ case ARBITRUM_SEPOLIA_CHAINID:
 
 }
 
+  useSwitchChain({mutation:{
+      onSuccess:(data)=>{
+        console.log(data);
+
+      }
+    }});
+
+    useAccountEffect({
+      'onDisconnect':()=>{
+        resetAll();
+      }
+    });
 
 
 useWatchContractEvent({

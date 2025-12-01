@@ -9,7 +9,7 @@ import { SiChainlink } from 'react-icons/si'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Input } from '../ui/input'
-import { useAccount, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
+import { useAccount, useAccountEffect, useReadContracts, useSwitchChain, useWatchContractEvent, useWriteContract } from 'wagmi'
 import {  ARBITRUM_SEPOLIA_ABI, ARBITRUM_SEPOLIA_CHAINID, ARBITRUM_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_CHAINID, BASE_SEPOLIA_LINK_ABI, BASE_SEPOLIA_LINK_ADDR, BASE_SEPOLIA_WETH_ABI, BASE_SEPOLIA_WETH_ADDR, SEPOLIA_ETH_CHAINID, SEPOLIA_ETH_LINK_ABI, SEPOLIA_ETH_LINK_ADDR, SEPOLIA_ETH_WBTC_ABI, SEPOLIA_ETH_WBTC_ADDR, SEPOLIA_ETH_WETH_ABI, SEPOLIA_ETH_WETH_ADDR } from '@/lib/CollateralContractAddresses';
 import { arbitrumSepoliaVaultManagerAddress, baseSepoliaVaultManagerAddress, ethSepoliaVaultManagerAddress, vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
 import OnChainDataContainer from '../chain-data/OnChainDataContainer';
@@ -17,22 +17,12 @@ import useBlockchainData from '@/lib/hooks/useBlockchainData';
 import { CollateralDeposited, ethereumAddress, EventType, singleResultType } from '@/lib/types/onChainData/OnChainDataTypes';
 import usePreventInvalidInput from '@/lib/hooks/usePreventInvalidInput';
 import useToastContent from '@/lib/hooks/useToastContent';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import * as z from 'zod';
 
 
 
 function BorrowTab() {
 
-  useSwitchChain({mutation:{
-    onSuccess:()=>{
-      setToken(undefined);
-      setAmount(0);
-      setMaximumAmount(0);
-    }
-  }});
-
-const {writeContract}=useWriteContract({
+  const {writeContract}=useWriteContract({
 });
 const {handleKeyDown, handlePaste, handleBlur, handleChange}=usePreventInvalidInput();
 
@@ -198,7 +188,21 @@ args:{
 },
 enabled: typeof amount === 'number'
 });
+  useSwitchChain({mutation:{
+    onSuccess:()=>{
+      setToken(undefined);
+      setAmount(0);
+      setMaximumAmount(0);
+    }
+  }});
 
+   useAccountEffect({
+      'onDisconnect':()=>{
+ setToken(undefined);
+      setAmount(0);
+      setMaximumAmount(0);
+      }
+    });
 
 const TokensOptions = ()=>{
  switch(chainId){
