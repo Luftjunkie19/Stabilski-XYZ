@@ -447,7 +447,7 @@ const approveCollateral=()=>{
       return;
     }
 
-    if(amount <= 0 || amount < maximumAmount){
+    if(amount <= 0 || amount > maximumAmount){
        sendToastContent({'toastText':`Invalid amount provided`, type:'error'});
       return;
     }

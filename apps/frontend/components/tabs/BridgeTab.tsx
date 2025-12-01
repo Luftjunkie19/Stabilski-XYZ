@@ -105,7 +105,7 @@ if(!destinationChainSelector){
   return;
 }
 
-if(tokenAmountToSend <= 0 || tokenAmountToSend < maxAmountToBeTransferred || BigInt(tokenAmountToSend* 1e18) > BigInt(1e24)){
+if(tokenAmountToSend <= 0 || tokenAmountToSend > maxAmountToBeTransferred || BigInt(tokenAmountToSend* 1e18) > BigInt(1e24)){
   sendToastContent({toastText:'Impossible amount to be transfered...',
   icon:'❌',
   type:'error'
