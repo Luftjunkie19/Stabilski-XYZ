@@ -1,14 +1,13 @@
 'use client';
 import { vaultManagerAbi } from '@/lib/smart-contracts-abi/VaultManager';
-import { CollateralDeposited, ethereumAddress, EventType, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
+import {  ethereumAddress, vaultInfoReturnType } from '@/lib/types/onChainData/OnChainDataTypes';
 import React from 'react'
 import { GiPayMoney, GiReceiveMoney } from 'react-icons/gi';
-import { useReadContract, useWatchContractEvent } from 'wagmi';
+import { useReadContract } from 'wagmi';
 import Image from "next/image";
 import stabilskiStableCoin from '@/public/Logox32.png'
 import RepayDialog from '@/components/dialogs/RepayDialog';
 import WithdrawDialog from '@/components/dialogs/WithdrawDialog';
-import useToastContent from '@/lib/hooks/useToastContent';
 
 type Props = {vaultManagerAddress:ethereumAddress, depositor:ethereumAddress, tokenAddress:ethereumAddress,}
 
@@ -41,7 +40,6 @@ function UserVaultHandlePosition({vaultManagerAddress, depositor, tokenAddress}:
         args:[depositor, tokenAddress],
     });
 
-const { sendToastContent}=useToastContent();
 
 
 
