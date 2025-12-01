@@ -279,8 +279,8 @@ type:'error'
   return (
       <TabsContent value="borrow" className="flex flex-col gap-4 max-w-7xl w-full">
       
-      <form  className='w-full max-w-xl self-center flex flex-col gap-3'>
-<Card className=" w-full max-w-xl bg-neutral-800 self-center shadow-sm border-red-500 border shadow-black h-96">
+
+<Card className="w-full max-w-xl self-center flex flex-col gap-3 bg-neutral-800  shadow-sm border-red-500 border shadow-black h-96">
   <div className="h-1/2 py-1 px-3 border-b border-red-500 flex gap-2 flex-col">
   <Label className="text-lg text-red-500">You Borrow</Label>
 <div className="flex items-center gap-4">
@@ -331,10 +331,10 @@ singleResultType<bigint>[]
 
 </Card>
 
-<Button type='submit'
+<Button
 onClick={borrowPolishStableCoin}
 className="p-6 transition-all shadow-sm shadow-black hover:bg-red-600 cursor-pointer hover:scale-95 text-lg max-w-sm self-center w-full bg-red-500">Borrow Stabilski (PLST)</Button>
-      </form>
+
 
 
 <OnChainDataContainer/>
