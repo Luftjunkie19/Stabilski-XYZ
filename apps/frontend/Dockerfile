@@ -12,6 +12,9 @@ ENV NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=$NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
 
 RUN npm install --force
 
+RUN npm install react@19.2.0 react-dom@19.2.0
+
+
 RUN npm run build
 
 EXPOSE 3000
