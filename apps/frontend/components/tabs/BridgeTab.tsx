@@ -121,7 +121,15 @@ writeContract({
     functionName:"approve",
     args:[currentRouter, turnedTokenAmountToSend],
     chainId
+},{onSuccess(data, variables, onMutateResult, context) {
+    sendToastContent({toastText:"Approval in precedure...",
+  type:'loading'
 });
+},});
+
+
+
+
 
 } catch (error) {
   console.log(error);
@@ -142,15 +150,6 @@ const commitCCIPTransfer= async ()=>{
     return;
   }
 
-
-const allowanceStabilskiToken= await readContract(config, {
-    abi:stabilskiTokenABI,
-    address: currentStabilskiContractAddress as ethereumAddress,
-    functionName:"allowance",
-    args:[address, currentRouter]
-});
-
-
   const totalFees = (feeData as unknown as bigint[])[0]  + (feeData as unknown as bigint[])[1];
   
   const destPoolAddr = getPoolAddressByChainSelector(String(destinationChainSelector));
@@ -158,12 +157,19 @@ const allowanceStabilskiToken= await readContract(config, {
   setDestinationPoolAddress(destPoolAddr);
 
   const txData = await writeContractAsync({
-    abi:routerAbi,
+    abi:ccipInformationRetrieverAbi,
     address: currentRetriever as `0x${string}`,
     functionName:"sendCcipMessage",
     args:[address, destinationChainSelector, amountToBeTransfered],
     chainId,
     value: totalFees as bigint
+  }, {
+    onError:()=>{
+         sendToastContent({toastText:`An error occured to commit Cross-Chain Transfer   .`,
+    icon:'❌',
+    type:'error'
+  });
+    }
   });
 
 
