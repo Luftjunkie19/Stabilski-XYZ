@@ -12,7 +12,7 @@ import Image from 'next/image';
 import arbitrumLogo from "@/public/arbitrum-logo.png";
 import baseLogo from "@/public/base-logo.png";
 import { FaEthereum } from 'react-icons/fa6';
-import { useAccount, useAccountEffect, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
+import { useAccount, useAccountEffect, useBalance, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { stabilskiTokenABI } from '@/lib/smart-contracts-abi/StabilskiToken';
 import { ARBITRUM_SEPOLIA_CHAINID, BASE_SEPOLIA_CHAINID, SEPOLIA_ETH_CHAINID } from '@/lib/CollateralContractAddresses';
 import { routerAbi } from '@/lib/smart-contracts-abi/ccip/Router';
@@ -35,6 +35,7 @@ const chainSelectorSepoliaEth = BigInt('16015286601757825753');
 const chainSelectorBaseSepolia= BigInt('10344971235874465080');
 const {handleKeyDown, handlePaste, handleBlur, handleChange}=usePreventInvalidInput();
 const {chainId, address}=useAccount();
+const {data:dataBalance} =useBalance();
 const [tokenAmountToSend, setTokenAmountToSend] = useState<number>(0);
 const [destinationChainSelector, setDestinationChainSelector]=useState<string>();
 const [approved, setApproved]=useState<boolean>(false);
@@ -125,7 +126,14 @@ writeContract({
     sendToastContent({toastText:"Approval in precedure...",
   type:'loading'
 });
-},});
+},
+onError(error, variables, onMutateResult, context) {
+    sendToastContent({toastText:"Approval failed",
+  type:'error',
+  icon:"⛔"
+});
+},
+});
 
 
 
@@ -152,6 +160,16 @@ const commitCCIPTransfer= async ()=>{
 
   const totalFees = (feeData as unknown as bigint[])[0]  + (feeData as unknown as bigint[])[1];
   
+
+  if(dataBalance && totalFees > dataBalance.value){
+    sendToastContent({toastText:`You have not enough ETH to pay the fees.`,
+    icon:'❌',
+    type:'error'
+  });
+    return;
+  }
+
+
   const destPoolAddr = getPoolAddressByChainSelector(String(destinationChainSelector));
 
   setDestinationPoolAddress(destPoolAddr);
