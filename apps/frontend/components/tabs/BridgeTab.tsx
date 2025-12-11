@@ -352,6 +352,7 @@ const SelectOptions= ()=>{
 <div className="w-full flex-col gap-2">
   <Label className='text-white text-base'>Amount</Label>
     <Input 
+    value={tokenAmountToSend}
     onBlur={(e)=>handleBlur(e.target.value, setTokenAmountToSend)}
        onPaste={handlePaste} 
   onKeyDown={handleKeyDown} 
