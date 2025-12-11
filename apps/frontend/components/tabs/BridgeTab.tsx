@@ -35,7 +35,9 @@ const chainSelectorSepoliaEth = BigInt('16015286601757825753');
 const chainSelectorBaseSepolia= BigInt('10344971235874465080');
 const {handleKeyDown, handlePaste, handleBlur, handleChange}=usePreventInvalidInput();
 const {chainId, address}=useAccount();
-const {data:dataBalance} =useBalance();
+const {data:dataBalance} =useBalance({address,'query':{
+  enabled:address !== undefined || address !== null
+}});
 const [tokenAmountToSend, setTokenAmountToSend] = useState<number>(0);
 const [destinationChainSelector, setDestinationChainSelector]=useState<string>();
 const [approved, setApproved]=useState<boolean>(false);
