@@ -150,14 +150,8 @@ const allowanceStabilskiToken= await readContract(config, {
     args:[address, currentRouter]
 });
 
-  const getFees = await readContract(config, {
-    abi:ccipInformationRetrieverAbi,
-    address: currentRetriever as `0x${string}`,
-    functionName:"getCCIPMessageFee",
-    args:[address, allowanceStabilskiToken, destinationChainSelector]
-  });
 
-  const totalFees = (getFees as unknown as bigint[])[0]  + (getFees as unknown as bigint[])[1];
+  const totalFees = (feeData as unknown as bigint[])[0]  + (feeData as unknown as bigint[])[1];
   
   const destPoolAddr = getPoolAddressByChainSelector(String(destinationChainSelector));
 
