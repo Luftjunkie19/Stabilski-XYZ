@@ -39,6 +39,7 @@ const {data:dataBalance} =useBalance({address,'query':{
   enabled:address !== undefined || address !== null
 }});
 const [tokenAmountToSend, setTokenAmountToSend] = useState<number>(0);
+const [tokenAmountSent, setTokenAmountSent]=useState<bigint>();
 const [destinationChainSelector, setDestinationChainSelector]=useState<string>();
 const [approved, setApproved]=useState<boolean>(false);
 
@@ -200,7 +201,9 @@ const allowanceStabilskiToken= await readContract(config, {
   });
     }
   });
+setTokenAmountSent(BigInt(allowanceStabilskiToken as unknown as bigint));
 
+setTokenAmountToSend(0);
 
   sendToastContent({toastText:'Depositing Collateral, Please Wait...',
     Link: <Link target='_blank' href={`${currentBlockchainScanner}/tx/${txData}`} className='font-semibold underline'>See your tx</Link>,
@@ -276,8 +279,10 @@ const SelectOptions= ()=>{
   },
   args:{
     owner: address,
+    amount: tokenAmountToSend
   },
    'strict':true,
+   enabled: tokenAmountToSend > 0 || Number(tokenAmountSent) > 0
   });
 
   useWatchContractEvent({
@@ -302,9 +307,9 @@ const SelectOptions= ()=>{
     'eventName':'Minted',
     args:{
       recipient: address,
-      value: tokenAmountToSend && BigInt(tokenAmountToSend * 1e18)
+      value: tokenAmountSent && tokenAmountSent,
     },
-    enabled: tokenAmountToSend !== undefined, 
+    enabled: tokenAmountSent !== undefined, 
    'onLogs':(logs)=>{
     console.log(logs, 'Logs from Transfer');
     sendToastContent({toastText:'Successfuly Received PLST Tokens',
@@ -315,6 +320,7 @@ const SelectOptions= ()=>{
     setApproved(false);
     setSourceChainTx(undefined);
     setTokenAmountToSend(0);
+    setTokenAmountSent(undefined);
     setDestinationChainSelector(undefined);
    },
     'strict':true,
