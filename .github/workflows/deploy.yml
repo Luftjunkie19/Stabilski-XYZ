@@ -34,7 +34,7 @@ jobs:
           context: ./apps/frontend
           file: ./apps/frontend/Dockerfile
           push: true
-          tags: ghcr.io/luftjunkie19/stabilski-nextjs-app:latest
+          tags: ghcr.io/luftietheanonymous/stabilski-nextjs-app:latest
           build-args: |
             NEXT_PUBLIC_ALCHEMY_ID=${{ secrets.NEXT_PUBLIC_ALCHEMY_ID }}
             NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=${{ secrets.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
