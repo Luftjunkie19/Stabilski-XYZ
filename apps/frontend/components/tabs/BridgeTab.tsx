@@ -119,7 +119,7 @@ writeContract({
   abi:stabilskiTokenABI,
     address: currentStabilskiContractAddress as `0x${string}`,
     functionName:"approve",
-    args:[currentRouter, turnedTokenAmountToSend],
+    args:[currentRetriever, turnedTokenAmountToSend],
     chainId
 },{onSuccess(data, variables, onMutateResult, context) {
     sendToastContent({toastText:"Approval in precedure...",
