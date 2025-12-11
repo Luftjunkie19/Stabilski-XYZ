@@ -126,7 +126,7 @@ writeContract({
     chainId
 },{onSuccess(data, variables, onMutateResult, context) {
     sendToastContent({toastText:"Approval in precedure...",
-  type:'loading'
+  type:'info'
 });
 },
 onError(error, variables, onMutateResult, context) {
@@ -161,7 +161,9 @@ const commitCCIPTransfer= async ()=>{
   }
 
   const totalFees = (feeData as unknown as bigint[])[0]  + (feeData as unknown as bigint[])[1];
+
   
+  console.log(dataBalance);
 
   if(dataBalance && totalFees > dataBalance.value){
     sendToastContent({toastText:`You have not enough ETH to pay the fees.`,
@@ -176,11 +178,18 @@ const commitCCIPTransfer= async ()=>{
 
   setDestinationPoolAddress(destPoolAddr);
 
+const allowanceStabilskiToken= await readContract(config, {
+    abi:stabilskiTokenABI,
+    address: currentStabilskiContractAddress as ethereumAddress,
+    functionName:"allowance",
+    args:[address, currentRetriever]
+});
+
   const txData = await writeContractAsync({
     abi:ccipInformationRetrieverAbi,
     address: currentRetriever as `0x${string}`,
     functionName:"sendCcipMessage",
-    args:[address, destinationChainSelector, amountToBeTransfered],
+    args:[address,BigInt(allowanceStabilskiToken as unknown as bigint), destinationChainSelector],
     chainId,
     value: totalFees as bigint
   }, {
@@ -413,7 +422,7 @@ const SelectOptions= ()=>{
    className={`flex flex-col gap-2`}>
      <Link 
    target="_blank"
-   href={`https://ccip.chain.link/#/side-drawer/msg/${sourceChainTx}`} className="text-blue-500 hover:text-blue-900 transition-all underline ">Click to see your transaction</Link>
+   href={`https://ccip.chain.link`} className="text-white hover:text-gray-600 transition-all underline ">Visit Tx-explorer</Link>
   
   <Button className='p-3 max-w-52 w-full cursor-pointer hover:bg-gray-800'
 onClick={()=>{
